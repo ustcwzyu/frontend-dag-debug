@@ -1,0 +1,15 @@
+schema_version: 1
+feature_id: F-YYYY-NNN
+nodes:
+  - id: BE-001
+    task: BE-001.yaml
+    type: backend-feature
+    depends_on: []
+  - id: QA-001
+    task: QA-001.yaml
+    type: qa-execute
+    depends_on:
+      - BE-001
+parallel_policy:
+  max_parallel_tasks: 2
+  disallow_same_file_parallel_writes: true

@@ -1,0 +1,74 @@
+{
+  "$schema": "./docs/templates/harness.schema.json",
+  "version": 1,
+  "project": "frontend-dag-debug",
+  "adapter": "loop-agent",
+  "governanceRoot": "docs",
+  "features": {},
+  "workflowPolicy": {
+    "defaultImplementationWorkflow": "agent-dag",
+    "dag": {
+      "defaultEntry": "dag run-task",
+      "outputLanguage": "zh-CN",
+      "profileRouting": {
+        "minimal": "standard-dag",
+        "standard": "standard-dag",
+        "reviewed": "review-gated-dag",
+        "supervised": "supervised-implementation"
+      }
+    },
+    "humanGatePolicy": {
+      "defaultMode": "record-only",
+      "pauseOn": [
+        "requirement-ambiguity",
+        "architecture-or-public-contract-risk",
+        "credential-cost-or-deployment-risk",
+        "repeated-gate-failure",
+        "high-or-critical-decision-risk"
+      ]
+    }
+  },
+  "entrypoints": {
+    "readme": "README.md",
+    "agents": "AGENTS.md",
+    "governanceIndex": "docs/README.md",
+    "principles": "docs/development-principles.md",
+    "workflow": "docs/feature-workflow.md",
+    "verificationMatrix": "docs/verification-matrix.md",
+    "loopAgentHarness": "docs/loop-agent-harness.md"
+  },
+  "artifacts": {
+    "templatesDir": "docs/templates",
+    "execPlansDir": "docs/exec-plans",
+    "progressDir": "docs/progress",
+    "reportsDir": "docs/reports",
+    "decisionsDir": "docs/decisions",
+    "taskPoolDir": ".harness/task-pool"
+  },
+  "scripts": {
+    "checkEngineeringStructure": "scripts/check-engineering-structure.sh",
+    "checkDocIndex": "scripts/check-doc-index.sh",
+    "checkDocLinks": "scripts/check-doc-links.sh",
+    "checkActivePlanStatus": "scripts/check-active-plan-status.sh",
+    "checkExecPlanIndexSync": "scripts/check-exec-plan-index-sync.sh",
+    "checkHarnessRuntimeClean": "scripts/check-harness-runtime-clean.sh",
+    "checkArchitectureBoundaries": "scripts/check-architecture-boundaries.sh",
+    "checkSkillEntry": "scripts/check-skill-entry.sh",
+    "checkRepo": "scripts/check-repo.sh",
+    "ciGovernance": "scripts/ci-governance.sh",
+    "ciTests": "scripts/ci-tests.sh",
+    "ci": "scripts/ci.sh",
+    "quickVerify": "bash scripts/check-repo.sh",
+    "standardVerify": "bash scripts/ci-governance.sh",
+    "fullVerify": "bash scripts/ci.sh"
+  },
+  "executors": {
+    "pi": {
+      "description": "Pi planning, review, diagnosis, and bounded writing when DAG toolProfile=write",
+      "defaultModel": "gpt-5.3-codex-spark",
+      "LOW": "gpt-5.3-codex-spark",
+      "MED": "glm-5.2",
+      "HIGH": "gpt-5.5"
+    }
+  }
+}

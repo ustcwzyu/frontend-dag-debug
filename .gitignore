@@ -1,0 +1,57 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# LOOP_AGENT_INIT_START
+# loop-agent runtime: ignore personal/session facts; keep prompts and directory placeholders shareable
+
+# tasks (source + runtime state per developer/session)
+.harness/tasks/*
+!.harness/tasks/.gitkeep
+
+# DAG runs
+.harness/dag-runs/active/*
+!.harness/dag-runs/active/.gitkeep
+.harness/dag-runs/completed/*
+!.harness/dag-runs/completed/.gitkeep
+.harness/dag-runs/paused/*
+!.harness/dag-runs/paused/.gitkeep
+
+# one-shot executor runs
+.harness/runs/*
+!.harness/runs/.gitkeep
+
+# session / cache / logs / recomputable surface state
+.harness/live/
+.harness/cache/
+.harness/*.log
+.harness/init-surface.json
+
+# worker task pool
+.harness/task-pool/*
+.task-pool/
+
+# multi-worktree parallel mode
+.worktrees/
+# LOOP_AGENT_INIT_END

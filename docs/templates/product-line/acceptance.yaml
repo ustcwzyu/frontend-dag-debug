@@ -1,0 +1,14 @@
+schema_version: 1
+feature_id: F-YYYY-NNN
+acceptance:
+  - id: AC-FEATURE-001
+    title: Observable outcome is delivered
+    priority: must
+    type: behavior
+    given: the documented precondition
+    when: the user or system performs the action
+    then: the observable result occurs
+    verification:
+      expected_task_refs:
+        - BE-001
+        - QA-001

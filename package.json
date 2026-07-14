@@ -1,0 +1,20 @@
+{
+  "name": "frontend-dag-debug",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "dag:generate": "node ../loop-agent/bin/loop-agent.js dag run-task add-homepage-hello-world --profile auto --strict-models --output .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json",
+    "dag:validate": "node ../loop-agent/bin/loop-agent.js dag validate --dag .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json --strict-models --strict-governance",
+    "dag:run": "node ../loop-agent/bin/loop-agent.js run-dag --dag .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json --cwd ."
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  }
+}

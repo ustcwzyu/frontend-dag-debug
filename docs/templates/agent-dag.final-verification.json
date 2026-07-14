@@ -1,0 +1,190 @@
+{
+  "version": 2,
+  "title": "Agent DAG final verification template",
+  "objective": "Run closeout verification gates in a fixed order: reconcile, coverage, static invariant scan, changeset impact, closeout artifact generation, final verification, and closeout summary.",
+  "successCriteria": [
+    "task-state-reconcile-shell runs a deterministic task drift report",
+    "requirement-coverage-shell runs deterministic requirement coverage audit",
+    "static-invariant-shell uses task-scoped constraints only",
+    "changeset-impact-shell can skip with an explicit reason when the repo has no changesets/release impact",
+    "closeout-artifact-shell runs before final-verify-shell",
+    "final-verify-shell uses repo manifest or task-provided commands without host-specific wrappers"
+  ],
+  "globalConstraints": [
+    "Do not implement Project Policy Gate",
+    "Do not add rtk or host-specific shell wrappers as loop-agent built-ins",
+    "Do not mutate .harness/dag-runs/completed facts",
+    "Final verification must run after closeout artifact creation"
+  ],
+  "defaults": {
+    "executor": "shell",
+    "contextProfile": "slim",
+    "writePolicy": "read-only",
+    "skills": [
+      "ai-engineering-context"
+    ]
+  },
+  "executorModels": {
+    "cursor": {
+      "LOW": "composer-2.5",
+      "MED": "composer-2.5",
+      "HIGH": "gpt-5.5"
+    },
+    "pi": {
+      "LOW": "gpt-5.3-codex-spark",
+      "MED": "glm-5.2",
+      "HIGH": "gpt-5.5"
+    }
+  },
+  "skillsByRole": {
+    "verifier": [
+      "verification-before-completion"
+    ],
+    "closeout": [
+      "loop-agent",
+      "verification-before-completion"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "task-state-reconcile-shell",
+      "depends_on": [],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "npm run dev -- dag reconcile-tasks --glob 'REPLACE_WITH_TASK_GLOB' --markdown"
+        ]
+      },
+      "outputContract": "Markdown task state/artifact/DAG/verification drift report.",
+      "subtask_prompt": "Run deterministic task reconcile audit."
+    },
+    {
+      "id": "requirement-coverage-shell",
+      "depends_on": [],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "npm run dev -- handoff coverage REPLACE_WITH_TASK_ID --markdown"
+        ]
+      },
+      "outputContract": "Markdown requirement coverage audit.",
+      "subtask_prompt": "Run deterministic requirement coverage audit."
+    },
+    {
+      "id": "static-invariant-shell",
+      "depends_on": [],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "node -e 'const fs=require(\"fs\"); const task=\"REPLACE_WITH_TASK_ID\"; const cfg=JSON.parse(fs.readFileSync(`.harness/tasks/${task}/task.json`,\"utf8\")); const forbidden=cfg.forbiddenPaths||[]; const hard=cfg.hardConstraints||[]; console.log(`# Static invariant scan for ${task}`); console.log(`forbiddenPaths=${forbidden.length}`); console.log(`hardConstraints=${hard.length}`); if (forbidden.some((entry)=>String(entry).includes(\"harness.json\"))) console.log(\"invariant: harness.json remains forbidden by task source\"); console.log(\"No global shellPolicy or host wrapper policy was introduced by this scan.\");'"
+        ]
+      },
+      "outputContract": "Task-scoped static invariant scan result.",
+      "subtask_prompt": "Run only task-scoped invariant checks."
+    },
+    {
+      "id": "changeset-impact-shell",
+      "depends_on": [],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "node -e 'const fs=require(\"fs\"); const task=\"REPLACE_WITH_TASK_ID\"; const cfg=JSON.parse(fs.readFileSync(`.harness/tasks/${task}/task.json`,\"utf8\")); const haystack=[cfg.notes||\"\",...(cfg.hardConstraints||[]),...(cfg.sourceFiles||[])].join(\"\\n\"); process.exit(/changeset|release|publish|version/i.test(haystack)?0:2);' && { test -d .changeset || test -f .changeset/config.json || { echo \"changeset impact declared by task but no .changeset metadata found\"; exit 1; }; echo \"changeset impact metadata present\"; } || { code=$?; if test \"$code\" = 2; then if test -d .changeset || test -f .changeset/config.json; then echo \"changeset metadata present; review release notes before final verify\"; else echo \"SKIP: no changesets directory/config and task declares no release impact\"; fi; else exit \"$code\"; fi; }"
+        ]
+      },
+      "outputContract": "Changeset impact audit or explicit skip reason.",
+      "subtask_prompt": "Audit changeset/release impact or emit a skip reason."
+    },
+    {
+      "id": "closeout-artifact-shell",
+      "depends_on": [
+        "task-state-reconcile-shell",
+        "requirement-coverage-shell",
+        "static-invariant-shell",
+        "changeset-impact-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "none",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "mkdir -p \"$(dirname \"REPLACE_WITH_CLOSEOUT_PATH\")\"",
+          "printf '%s\\n' '# Final Verification Closeout' '' 'task: REPLACE_WITH_TASK_ID' 'generated before final verification; do not treat as verify evidence' > \"REPLACE_WITH_CLOSEOUT_PATH\"",
+          "test -s \"REPLACE_WITH_CLOSEOUT_PATH\""
+        ]
+      },
+      "outputContract": "Derived closeout artifact exists before final verification.",
+      "subtask_prompt": "Create closeout artifact before final verification."
+    },
+    {
+      "id": "final-verify-shell",
+      "depends_on": [
+        "closeout-artifact-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/dag-runs/completed/**",
+        "artifacts/**"
+      ],
+      "shell": {
+        "commands": [
+          "CHECK_REPO=$(node -e 'const fs=require(\"fs\"); const manifest=JSON.parse(fs.readFileSync(\"harness.json\",\"utf8\")); process.stdout.write((manifest.scripts&&manifest.scripts.checkRepo)||\"scripts/check-repo.sh\");'); HARNESS_ALLOW_ACTIVE_DAG_RUNS=1 bash \"$CHECK_REPO\""
+        ]
+      },
+      "outputContract": "Final verification evidence captured after closeout artifact creation.",
+      "subtask_prompt": "Run final verification after closeout artifact exists."
+    },
+    {
+      "id": "closeout-summary-pi",
+      "depends_on": [
+        "final-verify-shell"
+      ],
+      "executor": "pi",
+      "role": "closeout",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown final closeout summary. No file writes.",
+      "subtask_prompt": "Summarize final verification evidence. Do not write files."
+    }
+  ]
+}
