@@ -65,10 +65,10 @@
   "executors": {
     "pi": {
       "description": "Pi planning, review, diagnosis, and bounded writing when DAG toolProfile=write",
-      "defaultModel": "gpt-5.3-codex-spark",
-      "LOW": "gpt-5.3-codex-spark",
-      "MED": "glm-5.2",
-      "HIGH": "gpt-5.5"
+      "defaultModel": "deepseek-v4-flash",
+      "LOW": "deepseek-v4-flash",
+      "MED": "deepseek-v4-flash",
+      "HIGH": "deepseek-v4-flash"
     }
   }
 }
