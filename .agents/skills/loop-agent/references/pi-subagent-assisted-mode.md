@@ -62,20 +62,23 @@ pi -p --no-session --no-context-files --no-skills --tools subagent "Reply with e
 
 **Agents**（`.pi/agents/`）
 
-| Agent | Role | Model |
-|-------|------|-------|
-| `loop-agent-scout` | Read-only recon：code、tests、docs、governance | `cursor/composer-2.5` |
-| `loop-agent-planner` | Implementation planning：最小可执行 plan | `cursor/composer-2.5` |
-| `loop-agent-reviewer` | Strict review：scope drift、verification gap、contract break | `cursor/composer-2.5` |
-| `loop-agent-worker` | General execution：bounded implementation 与 fix | `cursor/composer-2.5` |
+| Agent | Role | 对应阶段 |
+|-------|------|----------|
+| `loop-agent-scout` | 只读侦察：code、tests、docs、governance | Scout |
+| `loop-agent-planner` | 最小可执行计划；强调验证与回退 | Plan |
+| `loop-agent-reviewer` | 严格审查：范围漂移、验证缺口、契约破坏 | Verify / Review |
+| `loop-agent-worker` | 有界实现与修补 | Implement |
 
-**Prompt Templates**（`.pi/prompts/`）：输入 `/loop-agent-*` 调用
+另有通用 agents：`scout` / `planner` / `worker` / `reviewer`（中文提示，可被通用 prompt 模板调用）。模型以各 agent frontmatter 为准（当前仓库默认对齐 `harness.json` 的 Pi executor）。
+
+**Prompt Templates**（`.pi/prompts/`）：输入 `/loop-agent-*` 或通用模板名调用
 
 | Template | Flow |
 |----------|------|
-| `loop-agent-scout-and-plan` | scout → planner chain |
-| `loop-agent-analyze-wide` | 3 parallel scouts → analysis |
-| `loop-agent-review-only` | 独立 review plan/implementation/verification |
-| `loop-agent-implement-and-review` | worker → reviewer → worker loop |
+| `loop-agent-scout-and-plan` | parallel scout → planner |
+| `loop-agent-analyze-wide` | 3 parallel scouts → 结构化分析 |
+| `loop-agent-review-only` | 独立审查计划/实现/验证 |
+| `loop-agent-implement-and-review` | worker → reviewer → worker |
+| `scout-and-plan` / `implement` / `implement-and-review` | 通用 chain（调用 `scout`/`planner`/`worker`/`reviewer`） |
 
 传 `agentScope: "both"` + `confirmProjectAgents: false` 以访问 repo-local agents。

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "defaultVerifyPassed": false,
+  "results": [
+    {
+      "split": "public",
+      "verifyPassed": true
+    }
+  ]
+}

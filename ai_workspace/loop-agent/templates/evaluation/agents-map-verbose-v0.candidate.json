@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "candidateKind": "prompt",
+  "variant": "verbose-v0",
+  "bodyPath": "docs/templates/evaluation/agents-map-verbose-v0.md",
+  "bodySha256": "50af8ea3c7058071f249f9b45bd8c05fb1b1aa257ec6b2667aa91346c106cf81",
+  "lineCount": 153,
+  "purpose": "Eval Lab context-engineering AGENTS map A/B companion body; JSON contentRef avoids private-verifier token leak"
+}

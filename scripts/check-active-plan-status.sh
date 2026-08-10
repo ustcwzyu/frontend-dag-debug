@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-active_dir="docs/exec-plans/active"
+active_dir="ai_workspace/loop-agent/exec-plans/active"
 [[ -d "${active_dir}" ]] || { echo "active plan 检查失败：缺少 ${active_dir}" >&2; exit 1; }
 
 bad=()

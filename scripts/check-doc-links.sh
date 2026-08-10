@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-if [[ ! -d "docs" ]]; then
-  echo "docs 链接检查失败：缺少 docs/" >&2
+if [[ ! -d "ai_workspace/loop-agent" ]]; then
+  echo "docs 链接检查失败：缺少 ai_workspace/loop-agent/" >&2
   exit 1
 fi
 
@@ -23,7 +23,7 @@ while IFS= read -r -d '' file; do
       missing+=("${file}: ${link}")
     fi
   done < <(grep -Eo '\[[^]]+\]\([^)]+\)' "${file}" | sed -E 's/^.*\(([^)]+)\)$/\1/' || true)
-done < <(find "docs" -type f -name '*.md' -print0)
+done < <(find "ai_workspace/loop-agent" -type f -name '*.md' -print0)
 
 if (( ${#missing[@]} > 0 )); then
   echo "docs 链接检查失败：" >&2

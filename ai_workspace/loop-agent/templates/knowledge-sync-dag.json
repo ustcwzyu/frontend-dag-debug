@@ -1,0 +1,178 @@
+{
+  "$schema": "./agent-dag.schema.json",
+  "version": 2,
+  "title": "Knowledge-sync DAG template",
+  "objective": "After final verification, draft and apply stable testing knowledge: acceptance verdict, cases, coverage, defects, requirement delta pointers, and run audit records under features/*/testing/**.",
+  "successCriteria": [
+    "knowledge-sync-collect-pi inventories final verification evidence, ACs, cases, and defect candidates without writing files",
+    "knowledge-sync-draft-pi writes schemaVersion 1 knowledge-sync-draft.json under features/<feature-id>/testing/sync/pending/",
+    "knowledge-sync-validate-shell fails closed on missing draft, invalid schema, or non-pass finalVerification when gated",
+    "multi-perspective review (qa/domain/evidence) each emit VERDICT; aggregate gate requires all pass before apply",
+    "knowledge-sync-apply-pi upserts acceptance-verdict, coverage-matrix, cases, automation-map, and defects only within writeSet",
+    "knowledge-sync-pointer-pi writes runs/latest.md and sync/applied/KS-*.json audit pointers",
+    "No writes to src/**, .harness/**, or knowledge/testing/standards/**"
+  ],
+  "globalConstraints": [
+    "Replace feature-id placeholders with the concrete Feature id before production runs.",
+    "Do not commit runtime traces under .harness/dag-runs/.",
+    "Use only existing executors: pi, shell. Pi writer nodes must set toolProfile=write.",
+    "Read-only nodes must not write repository files.",
+    "Exclusive writer nodes must stay within declared writeSet.",
+    "Final verification shell evidence remains completion authority; knowledge-sync stores stable facts and path pointers only.",
+    "High-risk requirement/acceptance body changes require human approval via requirement-delta; do not silently rewrite requirement.md.",
+    "Prefer structured YAML/Markdown L1 knowledge pack over vector-store-only writes."
+  ],
+  "defaults": {
+    "executor": "pi",
+    "contextProfile": "slim",
+    "skills": [
+      "ai-engineering-context"
+    ],
+    "writePolicy": "read-only"
+  },
+  "skillsByRole": {
+    "planner": [
+      "loop-agent"
+    ],
+    "implementer": [
+      "verification-before-completion"
+    ],
+    "reviewer": [
+      "requesting-code-review"
+    ],
+    "verifier": [
+      "verification-before-completion",
+      "systematic-debugging"
+    ],
+    "closeout": [
+      "loop-agent",
+      "verification-before-completion"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "knowledge-sync-collect-pi",
+      "depends_on": [],
+      "role": "planner",
+      "executor": "pi",
+      "complexity": "MED",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "./**",
+        "docs/**",
+        "features/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown inventory of evidence and knowledge-sync candidates; no file writes.",
+      "subtask_prompt": "Collect final-verification evidence, AC list, cases, defects, and requirement-delta candidates. Read-only."
+    },
+    {
+      "id": "knowledge-sync-draft-pi",
+      "depends_on": [
+        "knowledge-sync-collect-pi"
+      ],
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "features/**/testing/sync/pending/**"
+      ],
+      "allowedPaths": [
+        "features/**/testing/sync/pending/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**",
+        "src/**"
+      ],
+      "outputContract": "Pending knowledge-sync-draft.json + markdown summary under features/<feature-id>/testing/sync/pending/.",
+      "subtask_prompt": "Write schemaVersion 1 draft with operations, payload, and gates. Stay within writeSet."
+    },
+    {
+      "id": "knowledge-sync-validate-shell",
+      "depends_on": [
+        "knowledge-sync-draft-pi"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "features/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Deterministic draft schema validation; exit non-zero on invalid draft.",
+      "subtask_prompt": "Validate pending knowledge-sync-draft.json files.",
+      "shell": {
+        "commands": [
+          "node -e \"const fs=require('fs');const path=require('path');function walk(d,a=[]){if(!fs.existsSync(d))return a;for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,a);else if(e.name==='knowledge-sync-draft.json')a.push(p);}return a;}const drafts=walk('features');if(!drafts.length){console.error('no draft');process.exit(1);}for(const f of drafts){const d=JSON.parse(fs.readFileSync(f,'utf8'));if(d.schemaVersion!==1)process.exit(1);}console.log('ok');\""
+        ],
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "knowledge-sync-apply-pi",
+      "depends_on": [
+        "knowledge-sync-validate-shell"
+      ],
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "features/**/testing/**",
+        "features/**/requirement-delta.md",
+        "docs/test-reports/**"
+      ],
+      "allowedPaths": [
+        "features/**/testing/**",
+        "features/**/requirement-delta.md",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**",
+        "src/**",
+        "knowledge/testing/standards/**"
+      ],
+      "outputContract": "Applied L1 knowledge files: acceptance-verdict, coverage-matrix, cases, defects, optional requirement-delta.",
+      "subtask_prompt": "Apply validated draft into Feature testing knowledge paths. Do not touch standards or src."
+    },
+    {
+      "id": "knowledge-sync-pointer-pi",
+      "depends_on": [
+        "knowledge-sync-apply-pi"
+      ],
+      "role": "closeout",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "MED",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "features/**/testing/runs/**",
+        "features/**/testing/sync/applied/**"
+      ],
+      "allowedPaths": [
+        "features/**/testing/runs/**",
+        "features/**/testing/sync/applied/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**",
+        "src/**"
+      ],
+      "outputContract": "runs/latest.md and sync/applied/KS-*.json audit pointers.",
+      "subtask_prompt": "Write run pointers and applied audit record only."
+    }
+  ]
+}

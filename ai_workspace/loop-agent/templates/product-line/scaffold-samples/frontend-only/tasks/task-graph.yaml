@@ -1,0 +1,14 @@
+schema_version: 1
+feature_id: F-2099-902
+nodes:
+  - id: FE-IMPL-001
+    task: FE-IMPL-001.yaml
+    type: frontend-feature
+    depends_on: []
+    produces:
+      - kind: frontend-impl
+        schemaId: frontend-impl-v1
+        path: apps/web/src/sample-frontend
+parallel_policy:
+  max_parallel_tasks: 1
+  disallow_same_file_parallel_writes: true

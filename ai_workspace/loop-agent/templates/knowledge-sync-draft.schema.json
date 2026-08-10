@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loop-agent.local/schemas/knowledge-sync-draft.schema.json",
+  "title": "Knowledge Sync Draft",
+  "description": "Pending package written by knowledge-sync-draft-pi before validate/apply.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "featureId",
+    "taskId",
+    "runId",
+    "finalVerification",
+    "operations",
+    "payload",
+    "gates"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "featureId": { "type": "string", "minLength": 1 },
+    "taskId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "headSha": { "type": "string" },
+    "finalVerification": {
+      "type": "string",
+      "enum": ["pass", "fail", "partial", "pass-with-waivers"]
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["op", "target", "risk", "reason"],
+        "properties": {
+          "op": { "type": "string", "enum": ["upsert", "create", "append"] },
+          "target": { "type": "string", "minLength": 1 },
+          "risk": { "type": "string", "enum": ["low", "medium", "high"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "acceptanceVerdict": { "type": ["object", "null"] },
+        "coverageMatrix": { "type": ["object", "null"] },
+        "caseIndex": { "type": ["object", "null"] },
+        "automationMap": { "type": ["object", "null"] },
+        "defects": { "type": ["object", "null"] },
+        "requirementDelta": { "type": ["object", "string", "null"] },
+        "retrospectiveRef": { "type": ["string", "null"] },
+        "evidencePointers": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requireHumanIfHighRisk", "blockIfFinalVerificationNotPass"],
+      "properties": {
+        "requireHumanIfHighRisk": { "type": "boolean" },
+        "blockIfFinalVerificationNotPass": { "type": "boolean" },
+        "blockIfCoverageP0Missing": { "type": "boolean" }
+      }
+    }
+  }
+}

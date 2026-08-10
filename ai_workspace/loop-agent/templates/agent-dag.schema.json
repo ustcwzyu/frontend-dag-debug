@@ -1,0 +1,581 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loop-agent.local/schemas/agent-dag.schema.json",
+  "title": "Agent DAG Spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "title", "tasks"],
+  "allOf": [
+    {
+      "if": { "properties": { "version": { "const": 3 } }, "required": ["version"] },
+      "then": { "required": ["runtimeContract"] }
+    },
+    {
+      "if": { "required": ["runtimeContract"] },
+      "then": { "properties": { "version": { "const": 3 } } }
+    }
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "enum": [1, 2, 3],
+      "default": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtimeContract": { "$ref": "#/$defs/runtimeContract" },
+    "sourceBinding": { "$ref": "#/$defs/sourceBinding" },
+    "objective": {
+      "type": "string"
+    },
+    "successCriteria": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "globalConstraints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "verifyStrategy": { "$ref": "#/$defs/verifyStrategy" },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executor": { "$ref": "#/$defs/executor" },
+        "model": { "type": "string" },
+        "piBackend": {
+          "enum": ["sdk-first", "cli-only"],
+          "description": "Accepted metadata only. Runtime Pi backend selection is controlled by CODE_AGENT_PI_BACKEND."
+        },
+        "contextProfile": { "type": "string" },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "writePolicy": { "$ref": "#/$defs/writePolicy" }
+      }
+    },
+    "skillsByRole": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      }
+    },
+    "executorModels": {
+      "type": "object",
+      "description": "Executor-owned model routing template keyed by executor then complexity. Do not use legacy top-level models or defaults.model.",
+      "additionalProperties": false,
+      "properties": {
+        "pi": { "$ref": "#/$defs/complexityModelMap" }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/task" }
+    }
+  },
+  "not": {
+    "required": ["models"]
+  },
+  "$defs": {
+    "runtimeContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "agentRuntime", "repairWriterProtocol"],
+      "description": "DagSpec v3 controller capability handshake. Compatibility is decided by capability fields first; minimumControllerVersion is enforced when present. Legacy v1/v2 DAGs may omit this block.",
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "agentRuntime": { "const": "pi-only" },
+        "repairWriterProtocol": { "const": "explicit-node-v1" },
+        "minimumControllerVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+([-+].+)?$"
+        }
+      }
+    },
+    "sourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "taskId", "sources", "requirementIds"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "taskId": { "type": "string", "minLength": 1 },
+        "sources": { "type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "path", "sha256"],
+          "properties": {
+            "kind": { "enum": ["requirement", "constraint", "reference"] },
+            "path": { "type": "string", "minLength": 1 },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        } },
+        "requirementIds": { "type": "array", "items": { "type": "string", "pattern": "^(?:REQ|BR|AC)-[A-Z0-9]+(?:-[A-Z0-9]+)*$" } }
+      }
+    },
+    "complexity": {
+      "enum": ["LOW", "MED", "HIGH"]
+    },
+    "executor": {
+      "enum": ["pi", "shell", "static"]
+    },
+    "toolProfile": {
+      "enum": ["read-only", "write"]
+    },
+    "role": {
+      "enum": ["planner", "scout", "implementer", "reviewer", "supervisor", "verifier", "closeout"]
+    },
+    "writePolicy": {
+      "enum": ["read-only", "docs-only", "exclusive", "none"]
+    },
+    "complexityModelMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "LOW": { "type": "string", "minLength": 1 },
+        "MED": { "type": "string", "minLength": 1 },
+        "HIGH": { "type": "string", "minLength": 1 }
+      }
+    },
+    "verifyQuota": {
+      "enum": ["1", "3", "full"]
+    },
+    "verifyStrategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intermediateQuota": { "$ref": "#/$defs/verifyQuota" },
+        "finalQuota": {
+          "const": "full",
+          "default": "full",
+          "description": "Final completion verification cannot be quota-reduced."
+        },
+        "focusedCommandSource": {
+          "const": "adapter",
+          "default": "adapter"
+        }
+      }
+    },
+    "shellVerifyEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "quota", "commandSource", "commandCount"],
+      "properties": {
+        "phase": { "enum": ["intermediate", "final"] },
+        "quota": { "$ref": "#/$defs/verifyQuota" },
+        "commandSource": { "enum": ["adapter", "inline"] },
+        "commandCount": { "type": "integer", "minimum": 0 },
+        "commandLabels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "commandTexts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "finalFullRequired": { "type": "boolean" }
+      }
+    },
+    "repairArtifactGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromNodeId"],
+      "properties": {
+        "fromNodeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "repairNodeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Explicit governed Pi repair writer this gate feeds (executor=pi, toolProfile=write, writePolicy=exclusive, non-empty allowedPaths+writeSet, depends_on the gate). New DAGs must set this; legacy DAGs are only accepted when a unique safe downstream Pi writer can be derived."
+        }
+      }
+    },
+    "shellConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "default": []
+        },
+        "preset": {
+          "enum": ["loop-agent-standard-verify"]
+        },
+        "verdictGate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fromNodeId", "accept"],
+          "properties": {
+            "fromNodeId": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Primary upstream node id whose canonical JSON output in the runner-injected current run directory ($HARNESS_DAG_RUN_DIR/<fromNodeId>.json) supplies the verdict line."
+            },
+            "fallbackFromNodeIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "description": "Optional fallback upstream node ids tried in order when the primary JSON output is absent, for example when an exclusive condition branch was skipped. Each source must also appear in the gate task depends_on list."
+            },
+            "accept": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Exact assistantText/stdout verdict lines that pass the gate."
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional human-readable gate label for error messages."
+            },
+            "lineMode": {
+              "type": "string",
+              "enum": ["first-non-empty", "first-verdict-line"],
+              "default": "first-non-empty",
+              "description": "Selects how verdict gates parse assistant output: first non-empty line (legacy) or first normalized line starting with 'VERDICT:' (common whole-line Markdown emphasis is normalized before exact accept matching)."
+            }
+          }
+        },
+        "projectGovernanceGate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["contextPath"],
+          "properties": {
+            "contextPath": {
+              "const": ".runtime/project-governance-context.json",
+              "description": "Run-owned project governance context. When applicable=false the gate is a deterministic no-op; otherwise verdictGate remains authoritative."
+            }
+          }
+        },
+        "requirementCoverageGate": {
+          "type": "object", "additionalProperties": false,
+          "required": ["fromNodeIds", "requiredIds"],
+          "allOf": [
+            {
+              "if": { "required": ["fallbackFromNodeIds"] },
+              "then": { "properties": { "fromNodeIds": { "maxItems": 1 } } }
+            }
+          ],
+          "properties": {
+            "fromNodeIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+            "fallbackFromNodeIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+              "description": "Optional effective-source fallbacks tried in order only when the single primary node output is absent. Each source must also appear in depends_on."
+            },
+            "requiredIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^(?:REQ|BR|AC)-[A-Z0-9]+(?:-[A-Z0-9]+)*$" } },
+            "label": { "type": "string", "minLength": 1 }
+          }
+        },
+        "jsonArtifactGate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fromNodeId", "schemaId", "artifactName", "outputDir"],
+          "properties": {
+            "fromNodeId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+            "fallbackFromNodeIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+              "description": "Optional effective-source fallbacks tried in order only when the primary current-run node output is absent. Existing malformed or schema-invalid primary output fails closed. Each source must also appear in depends_on."
+            },
+            "schemaId": {
+              "enum": [
+                "backend-test-analysis-v1",
+                "backend-test-analysis-v2",
+                "backend-test-execution-v1",
+                "backend-test-result-v1",
+                "backend-test-classification-v1",
+                "backend-test-semantic-review-v1",
+                "backend-test-case-manifest-v1",
+                "frontend-implementation-contract-v1",
+                "frontend-test-result-v1"
+              ]
+            },
+            "artifactName": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*\\.json$" },
+            "outputDir": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+            "junitRelativePath": { "type": "string", "minLength": 1 }
+          }
+        },
+        "frontendPrewriteGate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "planFromNodeId", "reviewFromNodeId", "allowedMockStrategies", "artifactName", "outputDir", "requireSourceFreshness"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "planFromNodeId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+            "planFallbackFromNodeIds": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+            "reviewFromNodeId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+            "reviewFallbackFromNodeIds": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+            "requiredRequirementIds": { "type": "array", "items": { "type": "string", "pattern": "^(?:REQ|BR|AC)-[A-Z0-9]+(?:-[A-Z0-9]+)*$" } },
+            "allowedMockStrategies": { "type": "array", "minItems": 1, "items": { "enum": ["native", "browser-intercept", "request-adapter", "not-needed"] } },
+            "artifactName": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*\\.json$" },
+            "outputDir": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+            "requireSourceFreshness": { "const": true },
+            "implementationWriteSet": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "frontendVerificationBundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "staticCommands", "behaviorCommands", "staticEvidence", "behaviorEvidence", "mode"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "mockCommands": { "type": "array", "items": { "type": "string" } },
+            "staticCommands": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "behaviorCommands": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "mockEvidence": { "$ref": "#/$defs/shellVerifyEvidence" },
+            "staticEvidence": { "$ref": "#/$defs/shellVerifyEvidence" },
+            "behaviorEvidence": { "$ref": "#/$defs/shellVerifyEvidence" },
+            "mode": { "enum": ["initial", "repair"] }
+          },
+          "allOf": [
+            { "properties": { "staticEvidence": { "required": ["commandTexts"], "properties": { "commandTexts": { "minItems": 1 } } }, "behaviorEvidence": { "required": ["commandTexts"], "properties": { "commandTexts": { "minItems": 1 } } } } }
+          ]
+        },
+        "frontendReviewContext": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "requireBaseline"],
+          "properties": { "schemaVersion": { "const": 1 }, "requireBaseline": { "const": true } }
+        },
+        "frontendTestCaseChecklist": { "type": "object", "additionalProperties": false },
+        "frontendTestEvidenceValidation": { "type": "object", "additionalProperties": false },
+        "frontendTestHtmlReport": { "type": "object", "additionalProperties": false },
+        "backendTestPipeline": {
+          "enum": ["contracts", "semantic-initial", "execute-parse-initial", "classification-result-context"]
+        },
+        "verifyEvidence": { "$ref": "#/$defs/shellVerifyEvidence" },
+        "repairArtifactGate": { "$ref": "#/$defs/repairArtifactGate" },
+        "envAllowlist": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z_][A-Z0-9_]*$"
+          }
+        },
+        "timeoutMs": { "type": "number" },
+        "cwd": { "type": "string", "minLength": 1 }
+      },
+      "anyOf": [
+        { "required": ["commands"], "properties": { "commands": { "minItems": 1 } } },
+        { "required": ["preset"] },
+        { "required": ["verdictGate"] },
+        { "required": ["requirementCoverageGate"] },
+        { "required": ["jsonArtifactGate"] },
+        { "required": ["frontendPrewriteGate"] },
+        { "required": ["frontendVerificationBundle"] },
+        { "required": ["frontendReviewContext"] },
+        { "required": ["frontendTestCaseChecklist"] },
+        { "required": ["frontendTestEvidenceValidation"] },
+        { "required": ["frontendTestHtmlReport"] },
+        { "required": ["backendTestPipeline"] }
+      ]
+    },
+    "staticConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resultMarkdown"],
+      "properties": {
+        "resultMarkdown": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["success", "error"] }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxAttempts"],
+      "description": "Retry policy for safe read-only planner/scout/reviewer/verifier/closeout Pi nodes. Total attempts include the first try and are capped at five. Supervisors, implementers, and side-effecting nodes are ineligible. Only the categories listed in retryCategories are retried; quota/auth/invalid-output/write-guard are never retried.",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Total attempts including the first try. 1 disables retry."
+        },
+        "backoff": { "const": "exponential", "default": "exponential" },
+        "initialDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 2000
+        },
+        "maxDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 30000
+        },
+        "retryCategories": {
+          "type": "array",
+          "items": {
+            "enum": ["timeout", "network", "rate-limit", "unavailable", "output-too-large", "protocol-invalid"]
+          },
+          "default": ["timeout", "network", "rate-limit", "unavailable"],
+          "description": "Failure categories eligible for retry. quota is never eligible. output-too-large is reserved for explicit structured-required nodes. protocol-invalid is for nodes that declare outputProtocol with retryOnInvalid."
+        }
+      }
+    },
+    "promptSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256"],
+      "properties": {
+        "type": { "const": "markdown" },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "minLength": 1 }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "depends_on", "complexity"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "default": []
+        },
+        "dependsPolicy": {
+          "type": "string",
+          "enum": ["all", "all-or-condition-skip"],
+          "default": "all",
+          "description": "Dependency join policy. all is fail-closed on any skipped/error dependency. all-or-condition-skip treats only condition-branch skips as soft and runs after all dependencies settle when at least one dependency finished."
+        },
+        "runIf": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional fail-closed node execution condition evaluated after dependencies settle. False records an explicit condition skip; malformed selectors fail the node."
+        },
+        "complexity": { "$ref": "#/$defs/complexity" },
+        "subtask_prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtask_prompt_markdown": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtask_prompt_source": { "$ref": "#/$defs/promptSource" },
+        "executor": {
+          "$ref": "#/$defs/executor",
+          "default": "pi"
+        },
+        "role": { "$ref": "#/$defs/role" },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "toolProfile": { "$ref": "#/$defs/toolProfile" },
+        "governanceStandardReview": {
+          "type": "boolean",
+          "description": "Explicitly opts this node into writer-change-scoped AGENTS.md and repository-local code-standard review. Never inferred from node id or role."
+        },
+        "writePolicy": { "$ref": "#/$defs/writePolicy" },
+        "writeSet": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "piStep": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shell": {
+          "$ref": "#/$defs/shellConfig"
+        },
+        "static": {
+          "$ref": "#/$defs/staticConfig"
+        },
+        "outputContract": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputMode": {
+          "enum": ["default", "structured-required"],
+          "description": "Optional output semantics for Pi nodes. structured-required means oversized assistant output must not be accepted as a truncated success; eligible read-only nodes may compact-retry and downstream gates should rely on canonical structured artifacts."
+        },
+        "firstProtocolLine": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional protocol prefix whose first matching Pi assistant-output line is promoted to the canonical first line. Missing matches are not synthesized."
+        },
+        "outputProtocol": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "validLines"],
+          "description": "Machine-readable output protocol for safe read-only Pi nodes. Phase 1 supports first-line-enum only (e.g. VERDICT lines). Invalid output may auto-retry when retryOnInvalid is true.",
+          "properties": {
+            "type": { "const": "first-line-enum" },
+            "validLines": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1
+            },
+            "retryOnInvalid": { "type": "boolean", "default": true }
+          }
+        },
+        "writerOutcomePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "description": "Fail-closed outcome/diff consistency protocol for bounded Pi writers. The first non-empty assistant line must be IMPLEMENTATION_OUTCOME: changed, already-satisfied, or blocked.",
+          "properties": {
+            "type": { "const": "implementation-outcome-v1" }
+          }
+        },
+        "allowedPaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "default": []
+        },
+        "forbiddenPaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "default": []
+        },
+        "decisionGate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "schemaVersion": { "const": 1 },
+            "mode": {
+              "enum": ["record-only", "pause-on-human"],
+              "default": "record-only"
+            }
+          }
+        },
+        "retryPolicy": {
+          "$ref": "#/$defs/retryPolicy",
+          "description": "Opt-in retry policy. Allowed only on safe read-only planner/scout/reviewer/verifier/closeout non-dynamic Pi nodes; validation rejects it on supervisors, implementers, writers, dynamic, shell, static, docs-only, and decision-gate nodes. Generated DAGs declare the default policy on eligible nodes automatically."
+        }
+      },
+      "oneOf": [
+        {
+          "description": "Inline prompt only; subtask_prompt_markdown must be absent.",
+          "required": ["subtask_prompt"],
+          "not": { "required": ["subtask_prompt_markdown"] }
+        },
+        {
+          "description": "Markdown-backed prompt only; subtask_prompt must be absent until file loader resolves it.",
+          "required": ["subtask_prompt_markdown"],
+          "not": { "required": ["subtask_prompt"] }
+        }
+      ]
+    }
+  }
+}

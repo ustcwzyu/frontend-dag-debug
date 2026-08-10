@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "camp-dogfood-context-policy-ab",
+  "createdAt": "2026-07-19T00:00:00.000Z",
+  "status": "prepared",
+  "policyVersion": "promotion-policy-v1",
+  "incumbentCandidateId": "REPLACE_INCUMBENT_CANDIDATE_ID",
+  "challengerCandidateIds": ["REPLACE_CHALLENGER_CANDIDATE_ID"],
+  "corpusId": "corpus-dogfood-v0",
+  "corpusHash": "REPLACE_AFTER_CORPUS_REGISTER",
+  "privateVerifierId": "pv-dogfood-v0",
+  "privateVerifierManifestHash": "REPLACE_AFTER_PRIVATE_VERIFIER_REGISTER",
+  "budget": {
+    "schemaVersion": 1,
+    "mode": "hard",
+    "limits": {
+      "maxExecutorCalls": 500,
+      "maxWallTimeMs": 86400000,
+      "maxRepairPasses": 50,
+      "maxConcurrency": 2
+    }
+  },
+  "notes": "M4 dogfood: single-variable Context Policy A/B. Replace candidate/corpus/privateVerifier hashes after register. held_out cells are promotion_gate_only."
+}

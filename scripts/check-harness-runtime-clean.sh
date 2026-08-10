@@ -27,7 +27,7 @@ fi
 
 if [[ -d artifacts ]]; then
   artifact_count="$(find artifacts -mindepth 1 -maxdepth 1 ! -name .gitkeep | wc -l | tr -d ' ')"
-  [[ "${artifact_count}" == "0" ]] || failures+=("root artifacts/ contains ${artifact_count} entries; use docs/reports or .harness run artifacts")
+  [[ "${artifact_count}" == "0" ]] || failures+=("root artifacts/ contains ${artifact_count} entries; use ai_workspace/loop-agent/reports or .harness run artifacts")
 fi
 
 if (( ${#failures[@]} > 0 )); then

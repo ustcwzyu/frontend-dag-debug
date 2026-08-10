@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "candidateKind": "prompt",
+  "variant": "slim-v1",
+  "bodyPath": "docs/templates/evaluation/agents-map-slim-v1.md",
+  "bodySha256": "0101b0f85d1a78532d9f226f42ca1d3192d3bd421c82310621915b7f00b16968",
+  "lineCount": 87,
+  "purpose": "Eval Lab context-engineering AGENTS map A/B companion body; JSON contentRef avoids private-verifier token leak"
+}

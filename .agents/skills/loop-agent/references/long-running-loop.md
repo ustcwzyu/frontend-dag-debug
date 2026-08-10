@@ -9,11 +9,10 @@ loop-agent loop init <task-id>
 loop-agent loop status <task-id>
 loop-agent loop run <task-id> --action shell-verify --command "bash scripts/check-repo.sh"
 loop-agent loop run <task-id> --action pi-review
-loop-agent loop run <task-id> --action cursor-fix --model composer-2.5
 loop-agent loop run <task-id> --action dag
 loop-agent loop run <task-id> --action dag --execute
 loop-agent loop run <task-id> --auto --max-rounds 3
-loop-agent loop run <task-id> --auto --max-rounds 3 --allow-cursor-fix
+loop-agent loop run <task-id> --auto --max-rounds 3
 loop-agent loop add-signal <task-id> --type human_followup --message "review this boundary before closeout"
 loop-agent loop closeout <task-id>
 loop-agent loop record-round <task-id> \
@@ -36,15 +35,14 @@ loop-agent loop record-round <task-id> \
 
 - `loop run --action shell-verify` 是 deterministic action；命令 exit code 决定 verification result，输出摘要写入 `loop/verification/round-N.json`。
 - `loop run --action pi-review` 必须保持 read-only；工具 allowlist 固定为 `read,grep,find,ls`，输出必须包含 `findingSummary`、`failureCategory`、`nextHypothesis`、`recommendedAction`、`fixScope`、`rootCause`，其中 `recommendedAction` 只能是 `implement_fix|replan|pause|done`。
-- `loop run --action cursor-fix` 必须读取 task `allowedPaths` / `forbiddenPaths`，拒绝空 allowedPaths 或 allowed/forbidden overlap；对 `complexity=medium|large` 的任务，还必须已有 loop `dag` round 证据，或在 `task.json.dagFallbackReason` 中写明 DAG runtime fallback 原因。调用现有 Cursor bounded executor，并把 one-shot evidence 归档到 `.harness/runs/completed|failed/`。
-- `cursor-fix` 只表示 bounded write round 已执行；它不会把 loop 标记 complete，下一步必须进入 `shell-verify` 或 review。
+- 自动写入只能通过 `loop run --action dag --execute` / auto DAG execute；须读取 task `allowedPaths` / `forbiddenPaths` 并审查 writer writeSet。
 - `loop run --action dag` 默认是 review mode：调用 `dag run-task <task-id> --profile auto --strict-models` 生成 DAG，再用 `dag validate --strict-models --strict-governance` 校验，并记录 review packet。
 - `loop run --action dag --execute` 才会调用 `run-dag`，随后读取 `dag report --json` 作为 round result；paused DAG 会让 loop 进入 `paused`。
 
 ## Auto mode 与写入边界
 
-- `loop run --auto --max-rounds N` 使用 deterministic policy 选择下一轮 action；默认只会自动选择 shell-verify、pi-review、dag review 或 policy pause/block，不自动触发 Cursor 写入。
-- 自动 `cursor-fix` 必须显式 opt-in：`task.json.loopAutoWritePolicy="enabled"`，或 `loopAutoWritePolicy="approval-required"` 加 pending approval signal / `--allow-cursor-fix`。即使 opt-in，也必须通过 `allowedPaths`/`forbiddenPaths`/DAG evidence guard；guard 失败会 pause，不会绕过写入边界。
+- `loop run --auto --max-rounds N` 使用 deterministic policy 选择下一轮 action；默认只会自动选择 shell-verify、pi-review、dag review 或 policy pause/block。
+- 自动 DAG execute 必须显式 opt-in：`task.json.loopAutoExecutionPolicy="enabled"`，或 `approval-required` 加 pending approval；旧 `loopAutoWritePolicy` fail-fast。
 - auto mode 遇到同类 failure streak 达阈值会 blocked，避免无限重试。
 
 ## Signals

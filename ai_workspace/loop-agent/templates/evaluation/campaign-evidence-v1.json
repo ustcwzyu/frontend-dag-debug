@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "campaign-dogfood-v0",
+  "challengerCandidateId": "cand-challenger-example",
+  "cells": [
+    {
+      "candidateId": "cand-baseline-example",
+      "taskRef": "synthetic/private-1",
+      "seed": 1,
+      "split": "private",
+      "verifyPassed": false
+    },
+    {
+      "candidateId": "cand-challenger-example",
+      "taskRef": "synthetic/private-1",
+      "seed": 1,
+      "split": "private",
+      "verifyPassed": true
+    },
+    {
+      "candidateId": "cand-baseline-example",
+      "taskRef": "synthetic/heldout-1",
+      "seed": 1,
+      "split": "held_out",
+      "verifyPassed": true
+    },
+    {
+      "candidateId": "cand-challenger-example",
+      "taskRef": "synthetic/heldout-1",
+      "seed": 1,
+      "split": "held_out",
+      "verifyPassed": true
+    }
+  ],
+  "diffs": [],
+  "verifyCommands": {
+    "incumbent": ["npm test", "npm run typecheck"],
+    "challenger": ["npm test", "npm run typecheck"]
+  },
+  "budgetStatus": {
+    "incumbent": "ok",
+    "challenger": "ok"
+  }
+}

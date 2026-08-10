@@ -1,12 +1,12 @@
 # Verification 与失败处理
 
-选择 verify strategy knobs、解读 verify 结果、决定失败后是否继续，或 closeout workflow/runtime/docs/skill 变更时使用本文。
+选择 verify strategy knobs、解读 verify 结果、决定失败后是否继续，或 closeout workflow/runtime/ai_workspace/loop-agent/skill 变更时使用本文。
 
 ## Verify strategy 与 completion audit
 
 ## Production Readiness v0.1
 
-低/中风险单 repo DAG 任务如果声明 production-ready v0.1，必须按 `docs/production-readiness.md` 和 `docs/templates/production-readiness-checklist.md` 收口。
+低/中风险单 repo DAG 任务如果声明 production-ready v0.1，必须按 `ai_workspace/loop-agent/production-readiness.md` 和 `ai_workspace/loop-agent/templates/production-readiness-checklist.md` 收口。
 
 支持范围：
 
@@ -36,7 +36,7 @@ product_line_failure_category
 recommended_follow_up
 ```
 
-product-line taxonomy 的事实源是 `docs/design/state-and-failure-taxonomy.md`。
+product-line taxonomy 的事实源是 `ai_workspace/loop-agent/design/state-and-failure-taxonomy.md`。
 
 ### Verify 始终在本地跑
 `verify` step 跑确定性命令（check-repo.sh + tests + typecheck）。**不**调用 pi。因此快且可靠。
@@ -72,6 +72,14 @@ product-line taxonomy 的事实源是 `docs/design/state-and-failure-taxonomy.md
 - 独立 audit 报告用 `handoff coverage <task-id> [--json|--markdown]`。
 - task status、source/artifacts、DAG outcome、verification 记录可能 drift 时用 `dag reconcile-tasks --glob '<pattern>' [--json|--markdown]`。默认仅报告；`--patch` 不能伪造 verification evidence。
 
+### supervised repair gate 与 runtime contract 失败
+
+- `repair artifact gate failed: ... no unique governed Pi writer` / `declares repairNodeId "..." but no task with that id exists`：DagSpec 的 `shell.repairArtifactGate` 未声明 `repairNodeId`，或声明的修复节点缺失、不是 gate 直接下游、不是受治理 Pi writer（`executor: pi`、`toolProfile: write`、`writePolicy: exclusive`、`allowedPaths`/`writeSet` 非空且不与 `forbiddenPaths` 冲突）。用当前 controller 重新生成 supervised DAG，或按上述契约补齐修复节点，不要靠改节点名绕过。
+- `repair artifact field "rootCause" must be a non-empty string`：`request-revision` 的 `REPAIR_ARTIFACT_JSON.rootCause` 为空时 parser 不再容错，诊断必须明确根因。只有 `verdict: "pass"` 且 `rootCause` 为空白时才会被确定性规范化为 `No repair required.`，其余字段（fixScope、verdict mismatch、writer 边界）保持 fail-closed。
+- `missing DECISION_ENVELOPE_JSON fenced block` / `decision-envelope-invalid`：`DECISION_ENVELOPE_JSON` info string 的 Markdown 围栏必须存在且唯一。Parser 接受三反引号及更长围栏，但 opening/closing fence 必须同长度，closing 同行只能有空白；不匹配围栏、裸 JSON、多个围栏、malformed JSON、schema-invalid 与 semantic-invalid 仍 fail-closed。若错误 payload 含 `taskId`、`gate`、`verdict`、`summary` 或 `decision: proceed-to-closeout`，说明 decision prompt/schema 漂移；用包含 canonical schema 示例的当前 controller 重新生成 DAG，不要放宽 parser 接受 legacy 结构。
+- `incompatible DAG runtime contract` / `runtime contract requires ...`：DagSpec 的 `runtimeContract` 要求的能力超出当前 controller。升级 controller 或用当前 controller 重新生成 DAG；该 preflight 在任何节点执行前失败，不会留下半执行的 run。
+- `controller identity drifted` / `artifact was tampered with`：resume 时的 controller 与 run 创建时冻结的 identity 不一致（package 内容、binary 或 fingerprint 变化），或 `controller-identity.json` 被篡改。启动新 run，而不是在漂移后 resume；completed run facts 保持只读。
+
 ### Verify 默认保存进度
 `verify` 成功后，loop-agent 默认：
 
@@ -97,7 +105,7 @@ product-line taxonomy 的事实源是 `docs/design/state-and-failure-taxonomy.md
 
 ### Cursor bounded write 后的独立复核
 
-Cursor bounded execution 完成后，主会话必须独立执行：
+显式 `cursor-prompt` sidecar（非默认路径）完成后，主会话必须**独立跑验证命令**，不得用手改代码「补成绿色」：
 
 ```bash
 git status --short
@@ -111,18 +119,25 @@ loop-agent docs audit
 loop-agent handoff check <task-id>
 ```
 
-Cursor 自己报告的完成不算 verification fact；以上命令的 exit code 与输出才是完成声明的证据。
+Cursor / 主会话自述完成不算 verification fact；以上命令的 exit code 与输出才是完成声明的证据。
 
-### 失败处理
+### 失败处理（Compatibility / Operator Assist）
 
-child agent 失败时：
+主会话定位为 operator，**不是**失败后的实现后备通道。
 
-- **业务/测试失败**：让 child agent 在同一 task bounds 内修复
-- **Workflow runtime 失败**（如 `loop-agent` runtime 问题、部分 artifact 生成、输出聚合 crash）：保持 task contract，但允许 main agent 或 child agent 在同一 scoped implementation 内手动完成，仍跑 `verify`
-- **意外残留**（tmp 文件、探索性 mock、scratch 输出）：handoff 前删除
+| 失败类型 | 主会话允许 | 主会话禁止 |
+|---|---|---|
+| 业务/测试失败 | 在同一 bounds 内 **重跑** DAG writer / repair 节点；`dag doctor` / `dag report` | 直接 Edit 业务实现「先修好再说」 |
+| Workflow / runtime 失败 | `dag doctor`、`dag reconcile-run`、记 human gate、升级/重装已发布 controller 后 **新 run**；必要时修 **task source / DAG JSON** 再 validate | 主会话手动完成 scoped implementation 以绕过 CLI |
+| Write guard / path 冲突 | 收紧 `allowedPaths`/`writeSet` 后 regenerate/revalidate | 扩大权限后由主会话直接写 |
+| 需求/架构不清 | Decision Gate / human approval | 边猜边改业务代码 |
+| 意外残留（tmp/scratch） | handoff 前删除 scratch；记录在 report | 把清理当成「顺便重构实现」 |
+
+**默认恢复序列**：diagnose（doctor/report）→ classify → reconcile 或 replan → CLI 重跑 → shell verify。
+**永远不要**：`loop-agent` / `agent-worker` 失败 ⇒ 主会话直接改仓库实现。
 
 ### Closeout 规则
-workflow/runtime/docs/skill 变更结束时：
+workflow/runtime/ai_workspace/loop-agent/skill 变更结束时：
 ```bash
 loop-agent docs audit
 loop-agent handoff check <task-id>

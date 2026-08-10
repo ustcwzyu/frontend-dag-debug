@@ -1,0 +1,510 @@
+{
+  "$schema": "./agent-dag.schema.json",
+  "version": 3,
+  "title": "Frontend test RAG DAG template",
+  "runtimeContract": {
+    "schemaVersion": 1,
+    "agentRuntime": "pi-only",
+    "repairWriterProtocol": "explicit-node-v1"
+  },
+  "objective": "Build a frontend test RAG package, generate Markdown cases, mechanically checklist them (LLM review optional), execute each case serially through playwright-cli, materialize frontend-test-result-v1, and write retrospect report (pipeline acceptance).",
+  "globalConstraints": [
+    "Do not generate pytest or Playwright source code.",
+    "Only use declared isolated test environments; production URLs and real credentials are blocked.",
+    "Every generated browser start command is playwright-cli open --browser=chrome --headed <resolved-base-url> (from task source config.md when present, else http://localhost:5173); subsequent commands stay in that default session and must not use unverified named-session flags.",
+    "Case children execute serially. Persist each case result, logs and browser evidence before the next child starts.",
+    "A token threshold is a post-case stop check, not a model hard token cap; unstarted cases must be recorded as blocked: token-budget-exhausted.",
+    "Default pipeline acceptance is the final retrospect report under testcase/frontend/reports/; case full green is optional quality (frontendTest.strictOutcomeGate).",
+    "Default frontendTest.reviewMode=off uses mechanical checklist-shell before materialize; set reviewMode=blocking for legacy dual LLM review gate.",
+    "playwright-cli-only: generators and executors may call only skill-declared playwright-cli commands; bare playwright / npx playwright / @playwright/test / Playwright source are forbidden with no native Playwright fallback.",
+    "Environment preflight must curl-probe the frozen non-production baseUrl before generate; unreachable or curl-unavailable ends preflight as blocked (frontend-base-url-unreachable|curl-unavailable) so generate/map do not run.",
+    "U/D cases must prove current-user data ownership or create cleanable current-user data or authorized Mock; otherwise blocked (current-user-data-unavailable|data-ownership-unverifiable|safe-test-data-setup-unavailable) without cross-user mutation."
+  ],
+  "tasks": [
+    {
+      "id": "retrieve-frontend-test-context-pi",
+      "depends_on": [],
+      "executor": "pi",
+      "role": "planner",
+      "toolProfile": "write",
+      "complexity": "MED",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/rag/**"
+      ],
+      "allowedPaths": [
+        "REPLACE/WITH/SOURCE/PATH/**",
+        "testcase/frontend/rag/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "RAG context.md and coverage-map.md with baseUrl, baseUrlSource, environmentProbe=pending.",
+      "subtask_prompt_markdown": "./frontend-test-dag.retrieve-context.prompt.md"
+    },
+    {
+      "id": "materialize-frontend-test-execution-shell",
+      "depends_on": [
+        "retrieve-frontend-test-context-pi"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/rag/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/rag/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Fail-closed environment preflight: absolute non-production baseUrl + curl HTTP reachability; writes environmentProbe facts; unreachable => blockedReason frontend-base-url-unreachable (node ERROR so generate/map do not run).",
+      "subtask_prompt": "Parse frozen baseUrl from context.md (config.md preferred, else http://localhost:5173). Reject production / non-http(s). Probe with curl (HEAD then GET fallback; connect/max-time; no auth/cookie). 2xx/3xx => reachable and continue. 4xx/5xx/DNS/timeout/connection refused/TLS => blockedReason frontend-base-url-unreachable. Missing curl => blockedReason curl-unavailable. Do not start the app. Runtime hybrid generator embeds the authoritative probe script.",
+      "shell": {
+        "commands": [
+          "node -e \"console.log('template placeholder: runtime hybrid DAG embeds curl preflight; do not use this static command as source of truth')\""
+        ],
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "generate-frontend-functional-cases-pi",
+      "depends_on": [
+        "materialize-frontend-test-execution-shell"
+      ],
+      "executor": "pi",
+      "role": "implementer",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/cases/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Markdown cases, index.md and manifest.draft.json schemaVersion 1; materialize promotes the validated draft to manifest.json; no test source code.",
+      "subtask_prompt_markdown": "./frontend-test-dag.generate-cases.prompt.md"
+    },
+    {
+      "id": "review-frontend-cases-pi",
+      "depends_on": [
+        "generate-frontend-functional-cases-pi"
+      ],
+      "executor": "pi",
+      "role": "reviewer",
+      "complexity": "HIGH",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "First line VERDICT: pass or VERDICT: request-revision; request-revision blocks manifest materialization; no writes.",
+      "subtask_prompt_markdown": "./frontend-test-dag.review-cases.prompt.md"
+    },
+    {
+      "id": "review-frontend-cases-gate-shell",
+      "depends_on": [
+        "review-frontend-cases-pi"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Deterministic gate: block manifest materialization and browser execution unless review-frontend-cases-pi emits VERDICT: pass.",
+      "subtask_prompt": "Enforce the frontend case review verdict before manifest materialization.",
+      "shell": {
+        "commands": [],
+        "verdictGate": {
+          "fromNodeId": "review-frontend-cases-pi",
+          "accept": [
+            "VERDICT: pass"
+          ],
+          "label": "frontend case review",
+          "lineMode": "first-verdict-line"
+        },
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "revise-frontend-cases-pi",
+      "depends_on": [
+        "review-frontend-cases-pi"
+      ],
+      "runIf": "$.nodes['review-frontend-cases-pi'].firstVerdictLine == 'VERDICT: request-revision'",
+      "executor": "pi",
+      "role": "implementer",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/cases/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Apply the one permitted frontend case revision; no browser execution or evidence writes.",
+      "subtask_prompt": "Apply the sole allowed case revision from the first review. Change only testcase/frontend/cases/**; preserve AC traceability. Do not execute browsers or write evidence."
+    },
+    {
+      "id": "review-frontend-cases-final-pi",
+      "depends_on": [
+        "revise-frontend-cases-pi"
+      ],
+      "runIf": "$.nodes['review-frontend-cases-pi'].firstVerdictLine == 'VERDICT: request-revision'",
+      "executor": "pi",
+      "role": "reviewer",
+      "complexity": "HIGH",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "First line VERDICT: pass or VERDICT: request-revision after the single allowed revision; no writes.",
+      "subtask_prompt_markdown": "./frontend-test-dag.review-cases.prompt.md"
+    },
+    {
+      "id": "final-frontend-case-review-gate-shell",
+      "depends_on": [
+        "review-frontend-cases-pi",
+        "review-frontend-cases-final-pi"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Pass-only effective case review gate; final review takes precedence when revision ran.",
+      "subtask_prompt": "Enforce the frontend case review verdict before manifest materialization.",
+      "shell": {
+        "commands": [],
+        "verdictGate": {
+          "fromNodeId": "review-frontend-cases-final-pi",
+          "fallbackFromNodeIds": [
+            "review-frontend-cases-pi"
+          ],
+          "accept": [
+            "VERDICT: pass"
+          ],
+          "label": "effective frontend case review",
+          "lineMode": "first-verdict-line"
+        },
+        "cwd": ".",
+        "timeoutMs": 60000
+      },
+      "dependsPolicy": "all-or-condition-skip"
+    },
+    {
+      "id": "frontend-case-checklist-shell",
+      "depends_on": [
+        "final-frontend-case-review-gate-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/rag/**",
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Mechanical checklist: manifest/case paths, Case ID, non-production playwright-cli open prefix, and AC mapping; strongly recommend playwright-cli without blocking alternative executable tool commands.",
+      "subtask_prompt": "Run the native deterministic frontend case checklist without spawning Bash, PowerShell, or node -e.",
+      "shell": {
+        "commands": [],
+        "frontendTestCaseChecklist": {},
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "materialize-frontend-case-manifest-shell",
+      "depends_on": [
+        "frontend-case-checklist-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/cases/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Validated frontend manifest payload { cases: [...] }; ruleId-tagged fail-closed validation; atomically materialize testcase/frontend/cases/manifest.json via temp+rename then delete draft; stdout is exactly one final JSON line {cases}.",
+      "subtask_prompt": "Validate and materialize the generated frontend case manifest.",
+      "shell": {
+        "commands": [
+          "node -e \"const fs=require('fs'),path=require('path');const file='testcase/frontend/cases/manifest.json';if(!fs.existsSync(file))throw new Error('missing '+file);const manifest=JSON.parse(fs.readFileSync(file,'utf8'));if(manifest.schemaVersion!==1||!Array.isArray(manifest.cases))throw new Error('invalid frontend case manifest');const dims=new Set(['core','boundary','flow','backend']);const ids=new Set(),paths=new Set(),evidence=new Set();for(const c of manifest.cases){if(!c||typeof c.caseId!=='string'||!/^FE-[A-Za-z0-9][A-Za-z0-9-]*$/.test(c.caseId)||ids.has(c.caseId))throw new Error('invalid or duplicate caseId');ids.add(c.caseId);if(!dims.has(c.dimension))throw new Error('invalid dimension');if(!Array.isArray(c.acIds)||!c.acIds.length||c.acIds.some(a=>typeof a!=='string'||!a.trim()))throw new Error('invalid acIds');for(const key of ['casePath','evidenceDir']){const value=c[key];if(typeof value!=='string'||path.isAbsolute(value)||value.includes('..'))throw new Error('unsafe '+key);}if(c.casePath!=='testcase/frontend/cases/'+c.caseId+'.md')throw new Error('casePath must match caseId');if(!c.evidenceDir.startsWith('testcase/frontend/evidence/'+c.caseId+'/'))throw new Error('case path escapes frontend test roots');if(paths.has(c.casePath))throw new Error('duplicate casePath');paths.add(c.casePath);if(evidence.has(c.evidenceDir))throw new Error('duplicate evidenceDir');evidence.add(c.evidenceDir);}process.stdout.write(JSON.stringify({cases:manifest.cases}));\""
+        ],
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "execute-frontend-cases-map",
+      "depends_on": [
+        "materialize-frontend-case-manifest-shell"
+      ],
+      "executor": "static",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "none",
+      "allowedPaths": [],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Serial aggregate of browser case results.",
+      "subtask_prompt": "Expand the validated manifest into serial browser case children.",
+      "static": {
+        "resultMarkdown": "Frontend case map expansion barrier."
+      },
+      "dynamicExpansion": {
+        "type": "map_agent",
+        "workflowNodeId": "execute-frontend-cases-map",
+        "itemsFrom": "$.nodes['materialize-frontend-case-manifest-shell'].output.cases",
+        "itemName": "case",
+        "maxItems": 20,
+        "maxExpandedNodes": 20,
+        "childIdPrefix": "execute-frontend-case",
+        "tokenBudget": {
+          "maxTokensPerCase": 20000,
+          "maxTotalTokens": 200000
+        },
+        "childTask": {
+          "executor": "pi",
+          "role": "implementer",
+          "skills": [
+            "playwright-cli"
+          ],
+          "toolProfile": "write",
+          "complexity": "MED",
+          "subtaskPromptTemplate": "Primary job: EXECUTE {{case.caseId}} from {{case.casePath}} with skill playwright-cli (fresh Pi session). 1) Read baseUrl from testcase/frontend/rag/context.md (config.md preferred, else http://localhost:5173). 2) playwright-cli open --browser=chrome --headed <resolved-base-url> (default session; no -s=). 3) Follow case steps with snapshot before element refs. 4) If env/CLI/baseUrl missing, write blocked evidence and do not open a browser. Always persist {{case.evidenceDir}}execution.md and {{case.evidenceDir}}case-result.json (caseId, status passed|failed|blocked, evidencePaths; blocked needs blockedReason). Validate with node -e before return. Business failed/blocked is not a node failure. Close browser. Return compact JSON (<=1200 chars): {caseId,status,evidencePaths,errorSummary,tokens}.",
+          "outputContract": "Compact JSON <=1200 chars.",
+          "writePolicy": "exclusive",
+          "allowedPaths": [
+            "testcase/frontend/cases/{{case.caseId}}.md",
+            "testcase/frontend/rag/context.md",
+            "testcase/frontend/rag/coverage-map.md",
+            "testcase/frontend/evidence/{{case.caseId}}/**"
+          ],
+          "forbiddenPaths": [
+            ".harness/**",
+            "artifacts/**"
+          ],
+          "writeSet": [
+            "testcase/frontend/evidence/{{case.caseId}}/**"
+          ]
+        }
+      }
+    },
+    {
+      "id": "validate-frontend-case-evidence-shell",
+      "depends_on": [
+        "execute-frontend-cases-map"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/cases/**",
+        "testcase/frontend/evidence/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Deterministic validation that every manifest case has execution.md and valid matching case-result.json; blocked results require blockedReason.",
+      "subtask_prompt": "Validate all frontend case evidence before evidence review; fail closed on missing or malformed records.",
+      "shell": {
+        "commands": [
+          "node -e \"const fs=require('fs'),path=require('path');const file='testcase/frontend/cases/manifest.json';if(!fs.existsSync(file))throw new Error('missing '+file);const manifest=JSON.parse(fs.readFileSync(file,'utf8'));const statuses=new Set(['passed','failed','blocked']);let failed=false;for(const c of manifest.cases||[]){const dir=c&&c.evidenceDir;const execution=path.join(dir||'','execution.md'),resultPath=path.join(dir||'','case-result.json');if(!c||typeof c.caseId!=='string'||typeof dir!=='string'||path.isAbsolute(dir)||dir.includes('..')||!fs.existsSync(execution)||!fs.existsSync(resultPath)){failed=true;continue;}let r;try{r=JSON.parse(fs.readFileSync(resultPath,'utf8'));}catch{failed=true;continue;}if(!r||r.caseId!==c.caseId||!statuses.has(r.status)||!Array.isArray(r.evidencePaths)||(r.status==='blocked'&&!(typeof r.blockedReason==='string'&&r.blockedReason.trim())))failed=true;}if(failed)process.exit(1);\""
+        ],
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "finalize-frontend-test-result-shell",
+      "depends_on": [
+        "validate-frontend-case-evidence-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/frontend/cases/**",
+        "testcase/frontend/evidence/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned hash-bound frontend-test-result-v1 from manifest and validated evidence.",
+      "subtask_prompt": "Materialize the authoritative frontend-test-result-v1; never consume Pi prose.",
+      "shell": {
+        "commands": [],
+        "jsonArtifactGate": {
+          "fromNodeId": "validate-frontend-case-evidence-shell",
+          "schemaId": "frontend-test-result-v1",
+          "artifactName": "frontend-test-result.json",
+          "outputDir": "contracts"
+        },
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "frontend-outcome-gate-shell",
+      "depends_on": [
+        "finalize-frontend-test-result-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Pass only for a real passed frontend-test-result-v1.",
+      "subtask_prompt": "Delivery/Worker gate for authoritative frontend-test result. Retrospective does not depend on this node so failed runs can still write reports.",
+      "shell": {
+        "commands": [
+          "test -n \"${HARNESS_DAG_RUN_DIR:-}\" || { echo \"missing HARNESS_DAG_RUN_DIR for frontend-test outcome gate\" >&2; exit 2; }; RESULT=\"${HARNESS_DAG_RUN_DIR}/contracts/frontend-test-result.json\"; test -f \"${RESULT}\" || { echo \"missing frontend-test result: ${RESULT}\" >&2; exit 2; }; node -e 'const fs=require(\"fs\");const r=JSON.parse(fs.readFileSync(process.argv[1],\"utf8\"));const ok=r.outcome===\"passed\"&&r.integrationMode===\"real\"&&Number(r.totals?.failed||0)===0&&Number(r.totals?.blocked||0)===0&&Array.isArray(r.acceptanceCoverage?.missing)&&r.acceptanceCoverage.missing.length===0;if(!ok)process.exit(1);' \"${RESULT}\""
+        ],
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "frontend-test-retrospect-pi",
+      "depends_on": [
+        "finalize-frontend-test-result-shell",
+        "frontend-test-l5-report-shell"
+      ],
+      "executor": "pi",
+      "role": "closeout",
+      "toolProfile": "write",
+      "complexity": "MED",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/reports/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Write testcase/frontend/reports/frontend-test-retrospect-<date>.md with coverage, pass/fail/blocked, execution evidence review, risks, findings, and A/B/C/D rating — even when outcome is failed/incomplete.",
+      "subtask_prompt": "Write the frontend test retrospective under testcase/frontend/reports/ after result materialization (do not wait for outcome=pass). Combine AC→case→browser-evidence review with the closeout report. Blocked cases never count as passed. Do not write docs/**."
+    },
+    {
+      "id": "frontend-test-l5-report-shell",
+      "depends_on": [
+        "finalize-frontend-test-result-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/reports/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Deterministic frontend L-5 Markdown and self-contained HTML dashboard derived only from frontend-test-result-v1.",
+      "subtask_prompt": "Render the authoritative frontend L-5 report from frontend-test-result-v1. Do not use Pi prose or invent code coverage. Missing line/branch coverage remains unavailable and makes L-5 NOT READY.",
+      "shell": {
+        "commands": [],
+        "frontendTestL5Report": {},
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "frontend-test-html-report-shell",
+      "depends_on": [
+        "frontend-test-retrospect-pi",
+        "frontend-test-l5-report-shell"
+      ],
+      "executor": "shell",
+      "role": "verifier",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/frontend/reports/**"
+      ],
+      "allowedPaths": [
+        "testcase/frontend/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Write frontend-test-report.md and frontend-test-report.html containing only case execution results, case content, and failed/blocked error analysis.",
+      "subtask_prompt": "Render the formal frontend test report from frontend-test-result-v1 without evidence chains, advisory findings, suggestions, or ratings.",
+      "shell": {
+        "commands": [],
+        "frontendTestHtmlReport": {},
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    }
+  ]
+}

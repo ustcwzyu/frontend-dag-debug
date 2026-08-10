@@ -9,7 +9,7 @@ failure handling 与 workflow 细节放在这里，避免主 skill 变成百科�
 1. 先读 `../SKILL.md`，确认当前任务是否真的需要 `loop-agent`。
 2. 根据任务类型只打开相关 reference，不要一次加载整个目录。
 3. 执行时遵循 Agent DAG 路径；历史顺序式 `run ...` workflow 已移除。
-4. 如果 reference 与 `harness.json` 或 repo-local `docs/loop-agent-harness.md` / `specs/loop-agent-harness.md` 冲突，以
+4. 如果 reference 与 `harness.json` 或 repo-local `ai_workspace/loop-agent/loop-agent-harness.md` / `specs/loop-agent-harness.md` 冲突，以
    `harness.json` 的机器可读 policy 和本目录的 shared policy 为准，并回头修正文档漂移。
 
 ## 快速路由
@@ -51,7 +51,7 @@ failure handling 与 workflow 细节放在这里，避免主 skill 变成百科�
 
 - `references/harness-policy.md` 是 shared workflow policy source，供多个 repo 的 thin adapter docs 引用。
 - `../SKILL.md` 是 skill trigger 与 routing source，不承载长流程细节。
-- `docs/loop-agent-harness.md` / repo-local `specs/loop-agent-harness.md` 是本仓库或目标仓库的 adapter 文档：只描述 runtime 位置、governance root、验证入口和本地边界。
+- `ai_workspace/loop-agent/loop-agent-harness.md` / repo-local `specs/loop-agent-harness.md` 是本仓库或目标仓库的 adapter 文档：只描述 runtime 位置、governance root、验证入口和本地边界。
 - `harness.json` 是 workflowPolicy、script entrypoints、artifacts 目录与 model routing 的机器可读 source of truth。
 - `.harness/tasks/<task-id>/` 是 task 运行态状态；不要把运行态事实写进本目录。
 - `.harness/runs/completed/<run-id>/` 是 one-shot tool run evidence；reference 文档只能解释如何读取和 promotion，不应复制 run facts。
@@ -64,4 +64,4 @@ failure handling 与 workflow 细节放在这里，避免主 skill 变成百科�
 - 新 reference 应有清晰标题、触发场景、最小步骤、失败处理和维护边界。
 - 如果某个 reference 变成可独立触发、跨项目通用且不再依赖本仓库上下文，再考虑拆成独立 skill。
 - 更新 command、workflow policy 或 verification 规则时，同步核对 `harness.json`、`references/harness-policy.md`、repo-local harness adapter docs 和 verification matrix。
-- `~/.pi/agent/skills/loop-agent` 是指向本目录的 symlink，所以仓库内 edits 会直接更新 Pi skill。
+- `~/.pi/agent/.agents/skills/loop-agent` 是指向本目录的 symlink，所以仓库内 edits 会直接更新 Pi skill。

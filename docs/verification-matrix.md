@@ -6,7 +6,7 @@
 |---|---|---|
 | loop-agent 治理有效 | `bash scripts/check-repo.sh` | `bash scripts/ci-governance.sh` |
 | TypeScript 与生产构建有效 | `npm run build` | `bash scripts/ci-tests.sh` |
-| 首页包含需求文本 | `rg -ni "hello world" src index.html` | 启动 `npm run dev` 后进行浏览器检查 |
+| 首页与问候弹窗行为有效 | `npm test` | 启动 `npm run dev` 后进行浏览器点击检查 |
 | 完整本地交付有效 | `bash scripts/ci.sh` | 按需补充浏览器行为检查 |
 | 文档或治理变更有效 | `bash scripts/check-repo.sh` | `loop-agent docs audit` 加 `bash scripts/ci-governance.sh` |
 | 模型 writer 修改文件 | `git status --short` 加相关验证 | `bash scripts/ci.sh` |
@@ -30,4 +30,4 @@ bash scripts/ci.sh
 
 ## 项目专属验证
 
-`scripts/ci-tests.sh` 会识别 `package.json` 中的 `build` 脚本并运行 `npm run build`。当前项目没有独立测试框架；首页任务的行为验收使用文本检查，并可在需要时通过浏览器补充人工或自动化验证。
+`scripts/ci-tests.sh` 会识别 `package.json` 中的 `typecheck`、`test` 和 `build` 脚本并依次运行。当前行为测试使用 Node.js 内置 test runner 检查首页与弹窗契约，并通过浏览器点击验证补充真实运行时证据。

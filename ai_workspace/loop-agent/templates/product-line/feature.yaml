@@ -1,0 +1,11 @@
+schema_version: 1
+feature_id: F-YYYY-NNN
+# generic = legacy/simple packet (default when this file is absent)
+# fullstack-v1 = enable structural gates for explicit workflows + dual-coverage ACs
+profile: generic
+# Uncomment and set true flags when profile is fullstack-v1:
+# scope:
+#   backend: true
+#   frontend: true
+#   backendVerification: true
+#   frontendVerification: true

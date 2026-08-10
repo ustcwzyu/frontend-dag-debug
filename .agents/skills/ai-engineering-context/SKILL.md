@@ -15,7 +15,7 @@ Context 是工程 artifact，不是 chat 残留。须显式保留 requirements�
 
 ## Context Priority
 
-按以下顺序优先采信 facts：最新 user instruction；task source/contract；DAG/Loop artifacts；docs/plans/ADRs；code/tests；chat history 仅作 hint。
+按以下顺序优先采信 facts：最新 user instruction；task source/contract；DAG/Loop artifacts；ai_workspace/loop-agent/plans/ADRs；code/tests；chat history 仅作 hint。
 
 若 sources 冲突，停止并点明冲突。
 
@@ -37,7 +37,7 @@ read-only node 只能在 node output 返回 findings。不得在 repo 中创建 
 
 ## Persistence Rules
 
-Requirements 与 constraints 写入 task `source/`。Execution state 与 node artifacts 写入 `.harness/`。Durable plans、reports、decisions 写入 `docs/`。可复用 process guidance 写入 `skills/`。Chat 仅 transient。
+Requirements 与 constraints 写入 task `source/`。Execution state 与 node artifacts 写入 `.harness/`。Durable plans、reports、decisions 写入 `ai_workspace/loop-agent/`。可复用 process guidance 写入 `.agents/skills/`。Chat 仅 transient。
 
 ## Failure Handling
 

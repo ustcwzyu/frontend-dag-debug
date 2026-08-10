@@ -21,6 +21,19 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 若尚未完成 Phase 1，不得提出 fixes。
 
+## Feedback Loop Gate（Phase 1 之前）
+
+在列假设、读大段代码或改文件之前，先建立一条**快速、确定性、Agent 可运行**的 pass/fail 信号。完整优先级与手段见 governance 下的 `harness-methodology-debugging.md`。
+
+可执行清单：
+
+1. 选最小回路：失败测试 → HTTP/CLI/浏览器脚本 → fixture/snapshot → 一次性 harness → bisect/differential → 结构化 HITL。
+2. 跑一次，确认有可重复的 exit code / 断言结果。
+3. 间歇性问题：先提高复现率，再进入根因调查。
+4. **无回路 → STOP**：请求环境、artifact 或临时插桩许可；不要猜。
+
+Verifier 角色只提供诊断与证据，不得越过 writer `writeSet` / `allowedPaths` 直接修复。
+
 ## When to Use
 
 用于 ANY technical issue：
@@ -45,11 +58,11 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 ## The Four Phases
 
-进入下一阶段前 MUST 完成每一 phase。
+进入下一阶段前 MUST 完成每一 phase。反馈回路是地基，不是第五 phase。
 
 ### Phase 1: Root Cause Investigation
 
-**在尝试 ANY fix 之前：**
+**在尝试 ANY fix 之前（且已有反馈回路）：**
 
 1. **Read Error Messages Carefully**
    - 不要跳过 errors 或 warnings
@@ -215,6 +228,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ## Red Flags - STOP and Follow Process
 
 若发现自己想：
+- "No pass/fail loop yet — just read code and guess"
 - "Quick fix for now, investigate later"
 - "Just try changing X and see if it works"
 - "Add multiple changes, run tests"
@@ -227,7 +241,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - **"One more fix attempt" (when already tried 2+)**
 - **Each fix reveals new problem in different place**
 
-**ALL of these mean: STOP. Return to Phase 1.**
+**ALL of these mean: STOP. Return to feedback loop / Phase 1.**
 
 **If 3+ fixes failed:** Question the architecture (see Phase 4.5)
 
@@ -259,6 +273,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 | Phase | Key Activities | Success Criteria |
 |-------|---------------|------------------|
+| **0. Feedback Loop** | Build fast deterministic pass/fail signal | Repeatable command + exit code |
 | **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
@@ -284,8 +299,9 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - **`condition-based-waiting.md`** — 用 condition polling 替代 arbitrary timeouts
 
 **Related principles:**
-- **RED-GREEN-REFACTOR**（见 `docs/harness-methodology-tdd.md`）— 用于 creating failing test case（Phase 4, Step 1）
+- **RED-GREEN-REFACTOR**（见 `harness.json.governanceRoot` 下 `harness-methodology-tdd.md`）— 用于 creating failing test case（Phase 4, Step 1）
 - **Verification discipline** — 宣称 success 前 verify fix worked。Run verification command，读 output，THEN claim result。
+- **Feedback loop**（见同目录 `harness-methodology-debugging.md`）— Phase 1 前的 pass/fail 地基。
 
 ## Real-World Impact
 

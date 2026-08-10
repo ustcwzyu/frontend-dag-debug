@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loop-agent.local/schemas/harness.schema.json",
+  "title": "loop-agent Harness Manifest",
+  "description": "面向编辑器的 harness.json JSON Schema。运行时校验仍以 src/governance/manifest-types.ts 中的 Zod harnessManifestSchema 为准。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "project", "governanceRoot", "entrypoints", "artifacts", "scripts"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "IDE 使用的 JSON Schema 引用。该字段只是编辑器 metadata，loop-agent 运行时解析时会忽略。"
+    },
+    "version": {
+      "type": "number",
+      "description": "harness manifest 的 schema 版本。",
+      "default": 1
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1,
+      "description": "便于人类阅读的项目名，不需要与 adapter 名称一致。"
+    },
+    "adapter": {
+      "type": "string",
+      "description": "可选的仓库 adapter id。普通初始化项目使用 loop-agent。"
+    },
+    "governanceRoot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "仓库相对目录，用于存放治理文档、执行计划、报告和模板。",
+      "default": "docs"
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "可选 harness 能力的 feature flags。",
+      "properties": {
+        "goals": {
+          "type": "boolean",
+          "description": "启用面向目标的长程任务支持。",
+          "default": true
+        }
+      }
+    },
+    "workflowPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "面向 agent 实现任务的声明式工作流策略。",
+      "properties": {
+        "defaultImplementationWorkflow": {
+          "enum": ["agent-dag"],
+          "description": "首选实现工作流。新的可恢复工作应使用 agent-dag。",
+          "default": "agent-dag"
+        },
+        "dag": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "outputLanguage": {
+              "enum": ["zh-CN", "en"],
+              "description": "DAG agent 节点的默认输出语言。未配置时使用简体中文；代码、命令和机器契约不翻译。",
+              "default": "zh-CN"
+            },
+            "defaultEntry": {
+              "enum": ["dag run-task", "run-dag"],
+              "description": "默认 DAG 入口，用于任务 DAG 生成或直接 DAG 执行。",
+              "default": "dag run-task"
+            },
+            "profileRouting": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "将治理 profile 映射到 DAG 生成模板。",
+              "properties": {
+                "minimal": {
+                  "enum": ["standard-dag", "review-gated-dag", "supervised-implementation"],
+                  "description": "minimal 治理 profile 使用的 DAG 生成模板。"
+                },
+                "standard": {
+                  "enum": ["standard-dag", "review-gated-dag", "supervised-implementation"],
+                  "description": "standard 治理 profile 使用的 DAG 生成模板。"
+                },
+                "reviewed": {
+                  "enum": ["standard-dag", "review-gated-dag", "supervised-implementation"],
+                  "description": "reviewed 治理 profile 使用的 DAG 生成模板。"
+                },
+                "supervised": {
+                  "enum": ["standard-dag", "review-gated-dag", "supervised-implementation"],
+                  "description": "supervised 治理 profile 使用的 DAG 生成模板。"
+                }
+              }
+            }
+          }
+        },
+        "humanGatePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "defaultMode": {
+              "enum": ["record-only", "pause-on-human"],
+              "description": "human decision gate 的默认行为。",
+              "default": "record-only"
+            },
+            "pauseOn": {
+              "type": "array",
+              "description": "需要暂停并等待人类输入的决策风险类别。",
+              "items": { "type": "string", "minLength": 1 },
+              "default": []
+            }
+          }
+        }
+      }
+    },
+    "entrypoints": {
+      "type": "object",
+      "description": "具名的仓库相对文件路径，用作人类和 agent 的入口。",
+      "additionalProperties": { "type": ["string", "null"] },
+      "properties": {
+        "readme": { "type": ["string", "null"], "description": "根 README 入口。" },
+        "agents": { "type": ["string", "null"], "description": "Agent 操作指令入口。" },
+        "governanceIndex": { "type": ["string", "null"], "description": "治理文档索引。" },
+        "principles": { "type": ["string", "null"], "description": "开发原则文档。" },
+        "workflow": { "type": ["string", "null"], "description": "功能工作流文档。" },
+        "verificationMatrix": { "type": ["string", "null"], "description": "验证命令矩阵。" },
+        "loopAgentHarness": { "type": ["string", "null"], "description": "harness runtime 指南。" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "具名的仓库相对目录，用于保存长期治理产物和 runtime 邻近产物。",
+      "additionalProperties": { "type": ["string", "null"] },
+      "properties": {
+        "templatesDir": { "type": ["string", "null"], "description": "治理模板目录。" },
+        "execPlansDir": { "type": ["string", "null"], "description": "执行计划目录。" },
+        "progressDir": { "type": ["string", "null"], "description": "进度交接日志目录。" },
+        "reportsDir": { "type": ["string", "null"], "description": "验证、审计和演化报告目录。" },
+        "decisionsDir": { "type": ["string", "null"], "description": "架构决策记录目录。" },
+        "taskPoolDir": { "type": ["string", "null"], "description": "Worker Task Pool runtime state 目录。" }
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "description": "具名验证与治理脚本。根据具体 key，值可以是仓库相对路径或 shell 命令。",
+      "additionalProperties": { "type": ["string", "null"] },
+      "properties": {
+        "checkRepo": { "type": ["string", "null"], "description": "仓库治理综合检查脚本。" },
+        "checkStructure": { "type": ["string", "null"], "description": "历史结构检查入口；新配置优先使用 checkEngineeringStructure。" },
+        "checkEngineeringStructure": { "type": ["string", "null"], "description": "工程结构检查脚本。" },
+        "checkDocIndex": { "type": ["string", "null"], "description": "docs 索引同步检查脚本。" },
+        "checkDocLinks": { "type": ["string", "null"], "description": "docs 链接检查脚本。" },
+        "checkHarnessRuntimeClean": { "type": ["string", "null"], "description": "harness runtime 目录清洁度检查脚本。" },
+        "checkInitEvolutionNeeded": { "type": ["string", "null"], "description": "初始化能力演化影响分级检查脚本。" },
+        "checkInitSurface": { "type": ["string", "null"], "description": "npm package 和 init projection surface 检查脚本。" },
+        "checkArchitectureBoundaries": { "type": ["string", "null"], "description": "runtime import 边界检查脚本。" },
+        "checkSkillEntry": { "type": ["string", "null"], "description": "repo-local skill 入口完整性检查脚本。" },
+        "ciGovernance": { "type": ["string", "null"], "description": "治理类 CI 检查入口。" },
+        "ciTests": { "type": ["string", "null"], "description": "项目测试入口。" },
+        "ci": { "type": ["string", "null"], "description": "完整 CI 检查入口。" },
+        "quickVerify": { "type": ["string", "null"], "description": "快速验证命令。" },
+        "standardVerify": { "type": ["string", "null"], "description": "标准验证命令。" },
+        "fullVerify": { "type": ["string", "null"], "description": "完整验证命令。" }
+      }
+    },
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "loop-agent 管理 worktree 时使用的配置。",
+      "properties": {
+        "rootRelativePath": {
+          "type": "string",
+          "minLength": 1,
+          "default": ".worktrees"
+        }
+      }
+    },
+    "executors": {
+      "type": "object",
+      "description": "按 executor id 分组的执行器配置。受治理 runtime 仅支持 pi；Cursor 仅通过 cursor-prompt sidecar 使用，不得配置在 executors 中。",
+      "additionalProperties": { "$ref": "#/$defs/executor" },
+      "properties": {
+        "pi": { "$ref": "#/$defs/executor" }
+      }
+    }
+  },
+  "$defs": {
+    "workflowPolicyDagTemplate": {
+      "enum": ["standard-dag", "review-gated-dag", "supervised-implementation"],
+      "description": "某个治理 profile 选择的 DAG 生成模板。"
+    },
+    "executorTierModel": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model"],
+          "properties": {
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "description": "模型 id 或 provider/model 限定引用。"
+            },
+            "thinking": {
+              "type": "string",
+              "description": "可选 Pi thinking level（如 max/low）。省略时不强制覆盖 Pi 默认。"
+            }
+          }
+        }
+      ],
+      "description": "executor 复杂度档模型：字符串 model id，或 { model, thinking? }。字面值 default 表示不覆盖。"
+    },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "executor 设置。DAG 模型选择优先读取 LOW/MED/HIGH，其次读取 defaultModel，最后回退到 loop-agent runtime 默认矩阵。字面值 default 表示不覆盖。LOW/MED/HIGH 可为字符串或 { model, thinking? } 对象。",
+      "properties": {
+        "description": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "defaultModel": {
+          "type": "string",
+          "description": "executor 默认模型。设置为 default 或省略时，会继续回退到 loop-agent runtime 默认值。",
+          "default": "default"
+        },
+        "LOW": {
+          "$ref": "#/$defs/executorTierModel",
+          "description": "LOW 复杂度 DAG task 的模型覆盖值，优先级高于 defaultModel。可为模型字符串，或 { model, thinking? } 对象。"
+        },
+        "MED": {
+          "$ref": "#/$defs/executorTierModel",
+          "description": "MED 复杂度 DAG task 的模型覆盖值，优先级高于 defaultModel。可为模型字符串，或 { model, thinking? } 对象。"
+        },
+        "HIGH": {
+          "$ref": "#/$defs/executorTierModel",
+          "description": "HIGH 复杂度 DAG task 的模型覆盖值，优先级高于 defaultModel。可为模型字符串，或 { model, thinking? } 对象。"
+        },
+        "requiresApiKey": {
+          "type": "string",
+          "description": "该 executor 需要的环境变量名，通常用于 Cursor 等可选外部 executor。init update 会剥离过时的 pi.requiresApiKey。"
+        }
+      }
+    }
+  }
+}

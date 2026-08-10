@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-boundary_doc="docs/architecture/runtime-boundaries.md"
+boundary_doc="ai_workspace/loop-agent/architecture/runtime-boundaries.md"
 if [[ ! -f "${boundary_doc}" ]]; then
   echo "architecture boundary 检查失败：缺少 ${boundary_doc}" >&2
   exit 1

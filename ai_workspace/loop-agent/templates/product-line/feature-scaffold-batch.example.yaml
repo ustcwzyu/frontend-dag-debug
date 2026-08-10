@@ -1,0 +1,31 @@
+# Example batch for: agent-worker feature scaffold --batch <this-file> --repo <repo>
+# Every feature_id must be explicit (v1 does not auto-allocate IDs).
+# Any invalid row fails the whole batch with zero writes.
+
+features:
+  - feature_id: F-2026-010
+    title: Banner 拉取欢迎语
+    template: fe-with-api
+    description: 前端 Banner 调用薄 API 展示欢迎语
+    fe_paths:
+      - apps/web/src/welcome/**
+    be_paths:
+      - services/welcome/**
+    verify_commands:
+      - npm run typecheck
+      - npm test
+    acceptance:
+      - id: AC-001
+        title: 页面展示非空 message
+        given: 欢迎语接口可用
+        when: 用户打开页面
+        then: 页面展示非空 message
+
+  - feature_id: F-2026-011
+    title: 设置页主题切换
+    template: frontend-only
+    fe_paths:
+      - apps/web/src/settings/theme/**
+    verify_commands:
+      - npm run typecheck
+      - npm test

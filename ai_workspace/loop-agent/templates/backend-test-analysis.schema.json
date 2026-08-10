@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tea-agent.dev/schemas/backend-test-analysis-v2.json",
+  "title": "Backend Test Analysis v2",
+  "description": "The runtime accepts v1 input for compatibility and normalizes it to this v2 artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceBinding", "acceptanceCriteria", "endpoints", "dataModels", "businessRules", "stateTransitions", "boundaryConstraints", "externalDependencies", "risks", "evidenceGaps"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "sourceBinding": { "$ref": "#/$defs/sourceBinding" },
+    "acceptanceCriteria": { "type": "array", "items": { "$ref": "#/$defs/acceptanceCriterion" } },
+    "endpoints": { "type": "array", "items": { "$ref": "#/$defs/endpoint" } },
+    "dataModels": { "type": "array", "items": { "$ref": "#/$defs/evidencedDescription" } },
+    "businessRules": { "type": "array", "items": { "$ref": "#/$defs/businessRule" } },
+    "stateTransitions": { "type": "array", "items": { "$ref": "#/$defs/stateTransition" } },
+    "boundaryConstraints": { "type": "array", "items": { "$ref": "#/$defs/boundaryConstraint" } },
+    "externalDependencies": { "type": "array", "items": { "$ref": "#/$defs/optionalEvidenceDescription" } },
+    "risks": { "type": "array", "items": { "$ref": "#/$defs/optionalEvidenceDescription" } },
+    "evidenceGaps": { "type": "array", "items": { "$ref": "#/$defs/evidenceGap" } }
+  },
+  "$defs": {
+    "sourceRef": { "type": "string", "minLength": 1 },
+    "sourceBinding": { "type": "object", "additionalProperties": false, "required": ["taskId", "requirementPath", "requirementSha256", "referencePaths", "requirementIds"], "properties": { "taskId": { "type": "string", "minLength": 1 }, "requirementPath": { "type": "string", "minLength": 1 }, "requirementSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "referencePaths": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "requirementIds": { "type": "array", "items": { "type": "string", "pattern": "^(REQ|BR|AC)-[A-Z0-9]+(-[A-Z0-9]+)*$" } } } },
+    "field": { "type": "object", "additionalProperties": false, "required": ["name", "sourceRefs"], "properties": { "name": { "type": "string", "minLength": 1 }, "type": { "type": "string", "minLength": 1 }, "required": { "type": "boolean" }, "description": { "type": "string" }, "format": { "type": "string", "minLength": 1 }, "comparison": { "enum": ["exact", "parseable-only", "semantic"] }, "precision": { "type": "string", "minLength": 1 }, "sourceRefs": { "type": "array", "items": { "$ref": "#/$defs/sourceRef" } } } },
+    "responseBody": { "type": "object", "additionalProperties": false, "required": ["kind", "ordering"], "properties": { "kind": { "enum": ["array", "object", "scalar", "empty", "unknown"] }, "itemSchemaRef": { "type": "string", "minLength": 1 }, "ordering": { "enum": ["specified", "unspecified", "not-applicable"] }, "description": { "type": "string", "minLength": 1 } } },
+    "errorCase": { "type": "object", "additionalProperties": false, "required": ["description"], "properties": { "status": { "type": "integer", "minimum": 400, "maximum": 599 }, "code": { "type": "string", "minLength": 1 }, "messageField": { "type": "string", "minLength": 1 }, "description": { "type": "string", "minLength": 1 } } },
+    "acceptanceCriterion": { "type": "object", "additionalProperties": false, "required": ["id", "text", "sourceRef"], "properties": { "id": { "type": "string", "pattern": "^AC-[A-Z0-9]+(-[A-Z0-9]+)*$" }, "text": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "endpoint": { "type": "object", "additionalProperties": false, "required": ["id", "method", "path", "requestFields", "responseFields", "responseBody", "successStatuses", "errorCases", "sourceRefs"], "properties": { "id": { "type": "string", "minLength": 1 }, "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] }, "path": { "type": "string", "pattern": "^/" }, "requestFields": { "type": "array", "items": { "$ref": "#/$defs/field" } }, "responseFields": { "type": "array", "items": { "$ref": "#/$defs/field" } }, "responseBody": { "$ref": "#/$defs/responseBody" }, "successStatuses": { "type": "array", "items": { "type": "integer", "minimum": 100, "maximum": 399 } }, "errorCases": { "type": "array", "items": { "$ref": "#/$defs/errorCase" } }, "sourceRefs": { "type": "array", "items": { "$ref": "#/$defs/sourceRef" } } } },
+    "evidencedDescription": { "type": "object", "additionalProperties": false, "required": ["id", "description", "sourceRef"], "properties": { "id": { "type": "string", "minLength": 1 }, "description": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "businessRule": { "type": "object", "additionalProperties": false, "required": ["id", "text", "sourceRef"], "properties": { "id": { "type": "string", "minLength": 1 }, "text": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "stateTransition": { "type": "object", "additionalProperties": false, "required": ["from", "to", "trigger", "sourceRef"], "properties": { "from": { "type": "string", "minLength": 1 }, "to": { "type": "string", "minLength": 1 }, "trigger": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "boundaryConstraint": { "type": "object", "additionalProperties": false, "required": ["field", "constraint", "sourceRef"], "properties": { "field": { "type": "string", "minLength": 1 }, "constraint": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "optionalEvidenceDescription": { "type": "object", "additionalProperties": false, "required": ["description"], "properties": { "name": { "type": "string", "minLength": 1 }, "description": { "type": "string", "minLength": 1 }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } },
+    "evidenceGap": { "type": "object", "additionalProperties": false, "required": ["description"], "properties": { "description": { "type": "string", "minLength": 1 }, "requirementId": { "type": "string" }, "sourceRef": { "$ref": "#/$defs/sourceRef" } } }
+  }
+}

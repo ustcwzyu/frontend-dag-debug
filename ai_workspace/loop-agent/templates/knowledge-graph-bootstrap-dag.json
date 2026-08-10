@@ -1,0 +1,118 @@
+{
+  "$schema": "./agent-dag.schema.json",
+  "version": 2,
+  "title": "Knowledge-graph bootstrap DAG template",
+  "objective": "AI-assisted business knowledge graph initialization: inventory repo signals, propose entities/edges under staging only, validate, review-gate, promote without overwrite, materialize query indexes.",
+  "successCriteria": [
+    "preflight requires knowledge/bootstrap/scope.yaml and status.yaml",
+    "inventory writes knowledge/bootstrap/inventory.json",
+    "propose-pi writes only knowledge/bootstrap/staging/** with evidence and non-asserted confidence",
+    "validate-shell fails on empty staging, missing edges.proposed/coverage-notes, or self-asserted confidence",
+    "multi-perspective review (structure/evidence/safety) each emit VERDICT; aggregate gate requires all pass before promote",
+    "promote merges new formal files only (no overwrite)",
+    "materialize writes knowledge/graph/entities-index.yaml and edges.yaml"
+  ],
+  "globalConstraints": [
+    "AI must never set confidence: asserted.",
+    "Do not modify src/** or Feature testing verdict/cases via bootstrap.",
+    "Promote must not overwrite existing formal knowledge files.",
+    "Complete B0/B1 skeleton before running this DAG."
+  ],
+  "defaults": {
+    "executor": "shell",
+    "contextProfile": "slim",
+    "writePolicy": "read-only"
+  },
+  "tasks": [
+    {
+      "id": "kg-bootstrap-preflight-shell",
+      "depends_on": [],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "subtask_prompt": "Require bootstrap skeleton."
+    },
+    {
+      "id": "kg-bootstrap-inventory-shell",
+      "depends_on": ["kg-bootstrap-preflight-shell"],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": ["knowledge/bootstrap/inventory.json"],
+      "subtask_prompt": "B2 inventory."
+    },
+    {
+      "id": "kg-bootstrap-propose-pi",
+      "depends_on": ["kg-bootstrap-inventory-shell"],
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "knowledge/bootstrap/staging/**",
+        "knowledge/bootstrap/runs/**"
+      ],
+      "subtask_prompt": "B3 AI proposals in staging only; never asserted."
+    },
+    {
+      "id": "kg-bootstrap-validate-shell",
+      "depends_on": ["kg-bootstrap-propose-pi"],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "subtask_prompt": "B4 validate staging."
+    },
+    {
+      "id": "kg-bootstrap-review-pi",
+      "depends_on": ["kg-bootstrap-validate-shell"],
+      "role": "reviewer",
+      "executor": "pi",
+      "complexity": "HIGH",
+      "writePolicy": "read-only",
+      "outputContract": "First line VERDICT: pass or VERDICT: request-revision.",
+      "subtask_prompt": "Review staging quality."
+    },
+    {
+      "id": "kg-bootstrap-review-gate-shell",
+      "depends_on": ["kg-bootstrap-review-pi"],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "subtask_prompt": "Gate on VERDICT: pass."
+    },
+    {
+      "id": "kg-bootstrap-promote-shell",
+      "depends_on": ["kg-bootstrap-review-gate-shell"],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "knowledge/domains/**",
+        "knowledge/services/**",
+        "knowledge/modules/**",
+        "knowledge/graph/edges.manual.yaml",
+        "features/**/knowledge-links.yaml"
+      ],
+      "subtask_prompt": "B5 promote new files only."
+    },
+    {
+      "id": "kg-bootstrap-materialize-shell",
+      "depends_on": ["kg-bootstrap-promote-shell"],
+      "role": "closeout",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "knowledge/graph/entities-index.yaml",
+        "knowledge/graph/edges.yaml"
+      ],
+      "subtask_prompt": "B6 materialize indexes."
+    }
+  ]
+}

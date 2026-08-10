@@ -5,9 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
 required=(
-  "docs/exec-plans/README.md"
-  "docs/exec-plans/active/README.md"
-  "docs/exec-plans/completed/README.md"
+  "ai_workspace/loop-agent/exec-plans/README.md"
+  "ai_workspace/loop-agent/exec-plans/active/README.md"
+  "ai_workspace/loop-agent/exec-plans/completed/README.md"
 )
 
 for item in "${required[@]}"; do

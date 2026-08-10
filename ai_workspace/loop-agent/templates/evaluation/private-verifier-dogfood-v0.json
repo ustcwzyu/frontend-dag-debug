@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "privateVerifierId": "pv-dogfood-v0",
+  "createdAt": "2026-07-19T00:00:00.000Z",
+  "description": "M4 dogfood private verifier. Controller-only; never enter candidate contentRefs/prompts/skill snapshots.",
+  "checks": [
+    {
+      "checkId": "node-version-ok",
+      "kind": "shell",
+      "command": ["node", "-e", "process.exit(process.versions.node ? 0 : 1)"],
+      "cwd": ".",
+      "timeoutMs": 15000,
+      "expectedExitCode": 0
+    }
+  ]
+}

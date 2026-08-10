@@ -14,12 +14,12 @@ description: 用于 loop-agent 本仓库的初始化能力演化审查，判断�
 - 新能力是否应该进入目标项目。
 - 新增/修改的 skill 是否应随 npm 包和 `init --profile full` 投影。
 - 目标项目的 `AGENTS.md`、README managed block、治理 docs、scripts 或 templates 是否需要更新。
-- `package.json files` 与 `docs/init-surface.manifest.json` 是否仍覆盖真实发布范围。
+- `package.json files` 与 `ai_workspace/loop-agent/init-surface.manifest.json` 是否仍覆盖真实发布范围。
 - 是否需要目标项目 smoke、init doctor、docs audit 或 package dry-run 证据。
 
 ## Trigger Tiers
 
-按 `docs/init-surface.manifest.json` 的 `evolutionReview.tiers` 判断成本：
+按 `ai_workspace/loop-agent/init-surface.manifest.json` 的 `evolutionReview.tiers` 判断成本：
 
 - `advisory`：只记录提示，不阻塞。
 - `surface-check`：运行 `bash scripts/check-init-surface.sh`；通过即可。
@@ -32,11 +32,11 @@ description: 用于 loop-agent 本仓库的初始化能力演化审查，判断�
 审查时逐条回答：
 
 1. 本次变更会改变目标项目执行 `loop-agent init --profile full --merge` 后得到的文件、规则或能力吗？
-2. 是否新增、删除或重命名了 `skills/**`，并且目标项目需要 repo-local 可审计副本？
+2. 是否新增、删除或重命名了 `.agents/skills/**`，并且目标项目需要 repo-local 可审计副本？
 3. 是否改变了默认 DAG role skills、skill resolution、strict skill audit 或 task prompt 注入？
 4. 是否新增通用治理模板、script matrix、production readiness 或 operator recovery 文档，需要目标项目初始化后可见？
 5. `package.json files` 是否包含所有 npm 运行和初始化所需静态资料？
-6. `docs/init-surface.manifest.json` 是否更新了 package / init / exclude / trigger contract？
+6. `ai_workspace/loop-agent/init-surface.manifest.json` 是否更新了 package / init / exclude / trigger contract？
 7. 旧目标项目是否只需 advisory、需要手工复制新增文件，还是需要未来 `init audit/update` 迁移能力？
 
 ## Output
@@ -44,7 +44,7 @@ description: 用于 loop-agent 本仓库的初始化能力演化审查，判断�
 轻量审查可以只在 handoff 中说明。高影响审查应写入：
 
 ```text
-docs/reports/YYYY-MM-DD-init-evolution-review.md
+ai_workspace/loop-agent/reports/init-evolution/YYYY-MM-DD-init-evolution-review.md
 ```
 
 报告保持短小，包含：

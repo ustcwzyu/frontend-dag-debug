@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tea-agent.dev/schemas/backend-test-result-v1.json",
+  "title": "Backend Test Result v1",
+  "description": "Run-owned pytest result artifact. Task Pool may consume outcome, counts, failures[], executionStatus, collectionStatus, pytestExitCode, and junit refs. Auto follow-up is out of scope for M2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "executionStatus",
+    "pytestExitCode",
+    "collectionStatus",
+    "tests",
+    "passed",
+    "failed",
+    "error",
+    "skipped",
+    "junit",
+    "commandSummary",
+    "failures",
+    "outcome"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "executionStatus": {
+      "type": "string",
+      "enum": ["completed", "collection-error", "command-error", "report-error"],
+      "description": "Process-level status. Task Pool: do not treat collection-error/command-error as ProductBug."
+    },
+    "pytestExitCode": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255,
+      "description": "Raw pytest process exit code (0/1 are node-success when JUnit exists)."
+    },
+    "collectionStatus": {
+      "type": "string",
+      "enum": ["ok", "error", "unknown", "skipped"]
+    },
+    "tests": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Task Pool: total tests = passed+failed+error+skipped"
+    },
+    "passed": { "type": "integer", "minimum": 0 },
+    "failed": { "type": "integer", "minimum": 0 },
+    "error": { "type": "integer", "minimum": 0 },
+    "skipped": { "type": "integer", "minimum": 0 },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "junit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "sha256"],
+      "properties": {
+        "relativePath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?!.*\\\\)(?!.*//).+$",
+          "description": "Run-dir relative POSIX path without absolute form, backslashes, dot segments, or parent traversal (e.g. reports/backend-test-junit.xml)"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "commandSummary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Non-secret command summary only"
+    },
+    "failures": {
+      "type": "array",
+      "description": "Truncated failure/error summaries for triage (Task Pool consumable).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["classname", "name", "message"],
+        "properties": {
+          "classname": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "enum": ["failure", "error"], "default": "failure" }
+        }
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "completed-with-failures",
+        "collection-error",
+        "command-error",
+        "report-error"
+      ],
+      "description": "Authoritative shell-facing outcome for backend-test-outcome-gate-shell. Retrospective must not override."
+    }
+  }
+}

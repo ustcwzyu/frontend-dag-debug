@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "corpus-dogfood-v0",
+  "createdAt": "2026-07-19T00:00:00.000Z",
+  "description": "W1.5 initial dogfood corpus contract: 15 heterogeneous tasks with public/private/held_out splits. Contract-only; not live campaign evidence.",
+  "tasks": [
+    {
+      "taskRef": "features/F-2026-001/login-flow",
+      "class": "fullstack",
+      "split": "public",
+      "seeds": [1, 2, 3],
+      "featureId": "F-2026-001",
+      "description": "Dogfood login Feature packet (public feedback allowed)."
+    },
+    {
+      "taskRef": "features/F-2026-002/profile-filter",
+      "class": "implement",
+      "split": "public",
+      "seeds": [1, 2],
+      "featureId": "F-2026-002",
+      "description": "Profile filter implementation path."
+    },
+    {
+      "taskRef": "features/F-2026-005/welcome-banner",
+      "class": "fullstack",
+      "split": "public",
+      "seeds": [1, 2, 3],
+      "featureId": "F-2026-005",
+      "description": "fullstack-v1 welcome sample (public)."
+    },
+    {
+      "taskRef": "synthetic/docs-agents-converge",
+      "class": "docs",
+      "split": "public",
+      "seeds": [1, 2],
+      "description": "Docs/AGENTS converge style task (synthetic contract slot)."
+    },
+    {
+      "taskRef": "synthetic/docs-changelog-summary",
+      "class": "docs",
+      "split": "public",
+      "seeds": [1, 2, 3],
+      "description": "Changelog-style documentation task."
+    },
+    {
+      "taskRef": "synthetic/frontend-welcome-render",
+      "class": "frontend",
+      "split": "public",
+      "seeds": [1, 2],
+      "description": "Frontend render/accessibility contract slot."
+    },
+    {
+      "taskRef": "features/F-2026-003/empty-profile-regression",
+      "class": "bugfix",
+      "split": "private",
+      "seeds": [1, 2, 3],
+      "featureId": "F-2026-003",
+      "description": "Empty profile id/displayName regression (private selection)."
+    },
+    {
+      "taskRef": "features/F-2026-004/versioned-bootstrap",
+      "class": "bootstrap",
+      "split": "private",
+      "seeds": [1, 2],
+      "featureId": "F-2026-004",
+      "description": "Versioned self-host bootstrap canary (private)."
+    },
+    {
+      "taskRef": "synthetic/backend-test-welcome-api",
+      "class": "backend-test",
+      "split": "private",
+      "seeds": [1, 2, 3],
+      "description": "Backend API test workflow contract slot."
+    },
+    {
+      "taskRef": "synthetic/refactor-outcome-tokens",
+      "class": "refactor",
+      "split": "private",
+      "seeds": [1, 2],
+      "description": "Bounded refactor around evidence token naming."
+    },
+    {
+      "taskRef": "synthetic/implement-ready-planner-gate",
+      "class": "implement",
+      "split": "private",
+      "seeds": [1, 2, 3],
+      "description": "Ready Planner artifact-gate implementation slot."
+    },
+    {
+      "taskRef": "synthetic/heldout-docs-handoff",
+      "class": "docs",
+      "split": "held_out",
+      "seeds": [1, 2],
+      "description": "Held-out docs/handoff generalization slot; never used for candidate generation."
+    },
+    {
+      "taskRef": "synthetic/heldout-bugfix-gate",
+      "class": "bugfix",
+      "split": "held_out",
+      "seeds": [1, 2, 3],
+      "description": "Held-out bugfix gate; promotion-only signal."
+    },
+    {
+      "taskRef": "synthetic/heldout-fullstack-smoke",
+      "class": "fullstack",
+      "split": "held_out",
+      "seeds": [1, 2],
+      "description": "Held-out fullstack smoke; not for public feedback."
+    },
+    {
+      "taskRef": "synthetic/heldout-bootstrap-slot",
+      "class": "bootstrap",
+      "split": "held_out",
+      "seeds": [1, 2, 3],
+      "description": "Held-out bootstrap identity/slot discipline."
+    }
+  ]
+}

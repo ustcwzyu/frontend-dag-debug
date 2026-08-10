@@ -1,0 +1,40 @@
+schema_version: 1
+feature_id: F-2099-903
+nodes:
+  - id: CONTRACT-001
+    task: CONTRACT-001.yaml
+    type: architecture
+    depends_on: []
+    produces:
+      - kind: api-contract
+        schemaId: api-contract-v1
+        path: docs/contracts/F-2099-903/api.md
+  - id: BE-IMPL-001
+    task: BE-IMPL-001.yaml
+    type: backend-feature
+    depends_on:
+      - CONTRACT-001
+    consumes:
+      - kind: api-contract
+        schemaId: api-contract-v1
+        producerTaskId: CONTRACT-001
+    produces:
+      - kind: backend-impl
+        schemaId: backend-impl-v1
+        path: services/sample-api
+  - id: FE-IMPL-001
+    task: FE-IMPL-001.yaml
+    type: frontend-feature
+    depends_on:
+      - CONTRACT-001
+    consumes:
+      - kind: api-contract
+        schemaId: api-contract-v1
+        producerTaskId: CONTRACT-001
+    produces:
+      - kind: frontend-impl
+        schemaId: frontend-impl-v1
+        path: apps/web/src/sample-api
+parallel_policy:
+  max_parallel_tasks: 1
+  disallow_same_file_parallel_writes: true

@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tea-agent.dev/schemas/backend-test-case-manifest-v1.json",
+  "title": "Backend Test Case Manifest v1",
+  "description": "Run-owned AC → BE-* case → automation mapping. coverageSummary is controller-computed by the shell materializer from sourceBinding/cases/evidenceGaps and is non-authoritative when present in model output; models must not emit coverageSummary or invent percentages. Conditional required fields mirror Zod: generated requires file+symbol; skipped|unsupported requires gapReason; each evidence gap requires acId and/or caseId.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceBinding", "cases", "evidenceGaps"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskId",
+        "requirementPath",
+        "requirementSha256",
+        "referencePaths",
+        "requirementIds"
+      ],
+      "properties": {
+        "taskId": { "type": "string", "minLength": 1 },
+        "requirementPath": { "type": "string", "minLength": 1 },
+        "requirementSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "referencePaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requirementIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?:REQ|BR|AC)-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+          }
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caseId",
+          "acIds",
+          "title",
+          "category",
+          "automationStatus"
+        ],
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "pattern": "^BE-[A-Z0-9]+(?:-[A-Z0-9]+)*-\\d{3}$"
+          },
+          "acIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^AC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+            }
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "category": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "boundary",
+              "state-transition",
+              "auth",
+              "timeout",
+              "concurrency",
+              "other"
+            ]
+          },
+          "automationStatus": {
+            "type": "string",
+            "enum": ["planned", "generated", "skipped", "unsupported"]
+          },
+          "endpointRef": { "type": "string", "minLength": 1 },
+          "ruleRefs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repo-relative posix path required when automationStatus=generated"
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1,
+            "description": "pytest function name required when automationStatus=generated; must bind to caseId"
+          },
+          "gapReason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Required when automationStatus is skipped or unsupported"
+          },
+          "evidenceRef": { "type": "string", "minLength": 1 }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "automationStatus": { "const": "generated" }
+              },
+              "required": ["automationStatus"]
+            },
+            "then": {
+              "required": ["file", "symbol"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "automationStatus": {
+                  "enum": ["skipped", "unsupported"]
+                }
+              },
+              "required": ["automationStatus"]
+            },
+            "then": {
+              "required": ["gapReason"]
+            }
+          }
+        ]
+      }
+    },
+    "evidenceGaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description"],
+        "properties": {
+          "acId": {
+            "type": "string",
+            "pattern": "^AC-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+          },
+          "caseId": {
+            "type": "string",
+            "pattern": "^BE-[A-Z0-9]+(?:-[A-Z0-9]+)*-\\d{3}$"
+          },
+          "description": { "type": "string", "minLength": 1 },
+          "evidenceRef": { "type": "string", "minLength": 1 }
+        },
+        "anyOf": [
+          { "required": ["acId"] },
+          { "required": ["caseId"] }
+        ]
+      }
+    },
+    "coverageSummary": {
+      "description": "Canonical coverage counts written only by the shell materializer (computeCaseManifestCoverageSummary). Optional on the artifact/output schema; models must omit this field. Input materialization strips any model-provided top-level coverageSummary after secret scan and always recomputes. Canonical output always includes flat counters plus dual-scope buckets global/inScope and crossDomainGapCount.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "explicitAcCount",
+        "coveredAcCount",
+        "gappedAcCount",
+        "caseCount",
+        "generatedCount",
+        "plannedCount",
+        "skippedCount",
+        "unsupportedCount",
+        "acCoverageRatio",
+        "global",
+        "inScope",
+        "crossDomainGapCount"
+      ],
+      "properties": {
+        "explicitAcCount": { "type": "integer", "minimum": 0 },
+        "coveredAcCount": { "type": "integer", "minimum": 0 },
+        "gappedAcCount": { "type": "integer", "minimum": 0 },
+        "caseCount": { "type": "integer", "minimum": 0 },
+        "generatedCount": { "type": "integer", "minimum": 0 },
+        "plannedCount": { "type": "integer", "minimum": 0 },
+        "skippedCount": { "type": "integer", "minimum": 0 },
+        "unsupportedCount": { "type": "integer", "minimum": 0 },
+        "acCoverageRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Deterministic coveredAcCount/explicitAcCount (or 1 when no explicit AC)"
+        },
+        "global": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "All explicit AC coverage (total/covered/gapped/ratio)",
+          "required": ["total", "covered", "gapped", "ratio"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "covered": { "type": "integer", "minimum": 0 },
+            "gapped": { "type": "integer", "minimum": 0 },
+            "ratio": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "inScope": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Explicit AC coverage excluding cross-domain gaps",
+          "required": ["total", "covered", "gapped", "ratio"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "covered": { "type": "integer", "minimum": 0 },
+            "gapped": { "type": "integer", "minimum": 0 },
+            "ratio": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "crossDomainGapCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of evidence gaps classified as cross-domain (frontend/flyway/migration/browser/e2e/etc.)"
+        }
+      }
+    }
+  }
+}

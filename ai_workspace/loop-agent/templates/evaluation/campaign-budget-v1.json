@@ -1,0 +1,12 @@
+{
+	"schemaVersion": 1,
+	"mode": "hard",
+	"limits": {
+		"maxTokens": 2000000,
+		"maxWallTimeMs": 86400000,
+		"maxExecutorCalls": 500,
+		"maxRepairPasses": 50,
+		"maxConcurrency": 2,
+		"maxContextChars": 120000
+	}
+}

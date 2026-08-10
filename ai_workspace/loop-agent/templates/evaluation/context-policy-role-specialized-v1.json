@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "policyId": "role-specialized-v1",
+  "description": "Role-specialized upstream and skill-instruction budgets; skill names still resolve via baseline merge order.",
+  "knobs": {
+    "maxUpstreamCharsByRole": {
+      "default": 2000,
+      "scout": 1200,
+      "reviewer": 1200,
+      "implementer": 3000,
+      "verifier": 1600,
+      "closeout": 1600,
+      "planner": 2000,
+      "supervisor": 2000
+    },
+    "includeLearnedPatternsRoles": ["implementer", "closeout"],
+    "perSkillMaxCharsByRole": {
+      "default": 3000,
+      "scout": 2500,
+      "implementer": 3500
+    },
+    "totalMaxCharsByRole": {
+      "default": 12000,
+      "scout": 10000,
+      "implementer": 14000
+    }
+  }
+}

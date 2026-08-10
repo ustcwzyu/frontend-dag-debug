@@ -1,0 +1,85 @@
+schema_version: 1
+id: FE-IMPL-001
+feature_id: F-2099-902
+title: Scaffold sample — frontend-only — 前端实现
+description: Generated snapshot for
+  docs/templates/product-line/scaffold-samples. Not a live dogfood Feature.
+repo:
+  name: loop-agent
+  path_ref: .
+  default_branch: main
+type: frontend-feature
+priority: P2
+risk_level: medium
+capabilities:
+  - interactive-ui
+depends_on: []
+source_docs:
+  requirement: ../requirement.md
+  acceptance: ../acceptance.yaml
+  design: ../design.md
+acceptance_refs:
+  - AC-001
+scope:
+  goals:
+    - 实现前端变更并满足验收
+  non_goals:
+    - 不扩展到模板外的 Task 节点（无 BE-TEST/FE-TEST/FINAL-VERIFY）
+  assumptions:
+    - verify.commands 由 scaffold 调用方显式提供
+  open_questions: []
+constraints:
+  allowed_paths:
+    - apps/web/src/sample-frontend/**
+    - docs/progress/F-2099-902/fe/status.md
+    - docs/progress/F-2099-902/fe/**
+  forbidden_paths:
+    - config/prod/**
+    - .env
+    - .env.*
+    - secrets/**
+    - services/**
+  hard_constraints:
+    - 不读取生产密钥
+    - 不绕过 scaffold 冻结的 depends/produces/consumes
+execution:
+  workflow: frontend-implementation
+verify:
+  preset: standard
+  mode: serial
+  quota: full
+  commands:
+    - id: verify-1
+      label: npm run typecheck
+      command: npm run typecheck
+      required: true
+      timeout_ms: 300000
+    - id: verify-2
+      label: npm test
+      command: npm test
+      required: true
+      timeout_ms: 300000
+worker:
+  execution_mode: generate-validate-run
+  max_attempts: 1
+  timeout_ms: 7200000
+  require_clean_worktree: true
+  require_human_review: true
+  create_worktree: false
+loop_agent:
+  profile_policy: mapped
+  strict_models: true
+  strict_governance: true
+  max_concurrent: 1
+outputs:
+  required:
+    - dag_json
+    - dag_validate_json
+    - run_record
+    - dag_report_json
+    - shell_verification
+    - closeout_or_failure_handoff
+failure_policy:
+  failed_run_promote: false
+  generate_closeout_draft: true
+  create_followup_task: true

@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "title": "eval-matrix-cell-dry-run",
+  "runtimeContract": {
+    "schemaVersion": 1,
+    "agentRuntime": "pi-only",
+    "repairWriterProtocol": "explicit-node-v1"
+  },
+  "tasks": [
+    {
+      "id": "matrix-cell-static",
+      "depends_on": [],
+      "complexity": "LOW",
+      "executor": "static",
+      "subtask_prompt": "Matrix cell placeholder; evaluation binding is injected by campaign matrix.",
+      "static": {
+        "resultMarkdown": "matrix cell dry-run placeholder"
+      }
+    }
+  ]
+}

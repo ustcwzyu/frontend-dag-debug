@@ -4,38 +4,64 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-skill_md="skills/loop-agent/SKILL.md"
-if [[ ! -f "${skill_md}" ]]; then
-  echo "skill entry 检查失败：缺少 ${skill_md}" >&2
-  exit 1
-fi
+check_skill() {
+  local skill_name="$1"
+  shift
+  local skill_dir=".agents/skills/${skill_name}"
+  local skill_md="${skill_dir}/SKILL.md"
+  local missing=()
 
-required_refs=(
-  "references/harness-policy.md"
-  "references/hybrid-dag.md"
-  "references/verification-and-failure-handling.md"
-  "references/command-reference.md"
-)
+  if [[ ! -f "${skill_md}" ]]; then
+    echo "skill entry 检查失败：缺少 ${skill_md}" >&2
+    exit 1
+  fi
+  grep -Eq "^name:[[:space:]]*${skill_name}[[:space:]]*$" "${skill_md}" || missing+=("frontmatter name")
+  grep -Eq '^description:[[:space:]]*[^[:space:]]' "${skill_md}" || missing+=("frontmatter description")
 
-missing=()
-for ref in "${required_refs[@]}"; do
-  [[ -f "skills/loop-agent/${ref}" ]] || missing+=("${ref}")
+  local ref
+  for ref in "$@"; do
+    [[ -f "${skill_dir}/${ref}" ]] || missing+=("${ref}")
+    grep -Fq "${ref}" "${skill_md}" || missing+=("SKILL.md -> ${ref}")
+  done
+  if (( ${#missing[@]} > 0 )); then
+    echo "skill entry 检查失败（${skill_name}）：" >&2
+    printf '  - %s\n' "${missing[@]}" >&2
+    exit 1
+  fi
+
+  local line_count
+  line_count="$(wc -l < "${skill_md}" | tr -d ' ')"
+  if [[ "${line_count}" =~ ^[0-9]+$ && "${line_count}" -gt 180 ]]; then
+    echo "skill entry 检查失败：${skill_md} 行数为 ${line_count}，入口应保持精简" >&2
+    exit 1
+  fi
+  echo "skill entry 检查通过：${skill_name} references ok, lines=${line_count}"
+}
+
+check_skill "loop-agent" \
+  "references/harness-policy.md" \
+  "references/hybrid-dag.md" \
+  "references/verification-and-failure-handling.md" \
+  "references/command-reference.md" \
+  "references/source-and-plan-practice.md"
+check_skill "agent-worker" "references/agent-worker-operator.md"
+
+# loop-agent description is a YAML folded block (>-); grep ^description: only
+# captures the indicator line. Validate the general-demand trigger terms
+# against the whole skill file so host auto-discovery phrasing cannot drift.
+loop_agent_skill=".agents/skills/loop-agent/SKILL.md"
+loop_agent_text="$(tr '[:upper:]' '[:lower:]' < "${loop_agent_skill}")"
+for term in "loop-agent 帮我完成" "帮我实现" "帮我修复" "帮我开发" "agent dag" "new-task" "dag run-task" "dag validate" "run-dag"; do
+  if [[ "${loop_agent_text}" != *"${term}"* ]]; then
+    echo "skill entry 检查失败（loop-agent）：description 缺少触发/路由词 ${term}" >&2
+    exit 1
+  fi
 done
 
-while IFS= read -r ref; do
-  [[ -z "${ref}" ]] && continue
-  [[ -f "skills/loop-agent/${ref}" ]] || missing+=("${ref}")
-done < <(grep -Eo 'references/[A-Za-z0-9._/-]+\.md' "${skill_md}" | sort -u || true)
-
-if (( ${#missing[@]} > 0 )); then
-  echo "skill entry 检查失败：引用的 reference 文件不存在：" >&2
-  printf '  - %s\n' "${missing[@]}" >&2
-  exit 1
-fi
-
-line_count="$(wc -l < "${skill_md}" | tr -d ' ')"
-if [[ "${line_count}" =~ ^[0-9]+$ && "${line_count}" -gt 220 ]]; then
-  echo "skill entry 检查警告：${skill_md} 行数为 ${line_count}，建议保持入口精简并把细节放入 references/" >&2
-fi
-
-echo "skill entry 检查通过：references ok, lines=${line_count}"
+description_line="$(grep -E '^description:' .agents/skills/agent-worker/SKILL.md | head -n 1 | tr '[:upper:]' '[:lower:]')"
+for term in "agent-worker" "feature packet" "taskspec" "task pool" "self-host" "candidate" "loop-agent"; do
+  if [[ "${description_line}" != *"${term}"* ]]; then
+    echo "skill entry 检查失败（agent-worker）：description 缺少触发/路由词 ${term}" >&2
+    exit 1
+  fi
+done

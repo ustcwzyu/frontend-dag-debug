@@ -41,16 +41,32 @@ dist-ssr
 # one-shot executor runs
 .harness/runs/*
 !.harness/runs/.gitkeep
+!.harness/runs/active/
+!.harness/runs/active/.gitkeep
+!.harness/runs/completed/
+!.harness/runs/completed/.gitkeep
+!.harness/runs/failed/
+!.harness/runs/failed/.gitkeep
 
 # session / cache / logs / recomputable surface state
 .harness/live/
 .harness/cache/
+.harness/operator-input/
 .harness/*.log
 .harness/init-surface.json
+
+# Eval Lab runtime (candidates, campaigns, scorecards, dogfood scratch)
+.harness/evaluation/
+
+# fullstack / worker dogfood evidence (local campaign scratch)
+.harness/dogfood-evidence/
 
 # worker task pool
 .harness/task-pool/*
 .task-pool/
+
+# repo-local skill dependencies installed inside projected skills
+.agents/skills/*/node_modules/
 
 # multi-worktree parallel mode
 .worktrees/

@@ -1,0 +1,190 @@
+{
+  "$schema": "./agent-dag.schema.json",
+  "version": 2,
+  "title": "Agent DAG base template",
+  "objective": "Replace with the concrete objective for this DAG run.",
+  "successCriteria": [
+    "Each node returns output matching its outputContract.",
+    "Same-rank read-only scouts run in parallel when their outputs are independent.",
+    "Only Pi nodes with toolProfile=write or explicitly enabled Cursor implementer nodes may write files, and only inside declared writeSet.",
+    "Pi nodes remain read-only unless toolProfile=write is explicitly selected for a bounded writer node.",
+    "Read-only nodes must not write root artifacts/**; root artifacts/ is not a per-node scratchpad."
+  ],
+  "globalConstraints": [
+    "Replace every REPLACE/WITH/... placeholder with concrete repo paths before execution; do not leave template placeholders in production DAG JSON.",
+    "Do not commit runtime traces under .harness/dag-runs/.",
+    "Do not write generated DAG input specs into .harness/dag-runs/active/.",
+    "Use a platform-native temp path such as <temp-dir>/<topic>-dag.json for one-off DAG specs; commit reusable templates under examples/ or docs/templates/.",
+    "Actual file operation paths must be macOS/Windows compatible; use / only for stable repo refs, JSON/Markdown evidence refs, and glob conventions.",
+    "Every task must explicitly declare executor; defaults.executor is schema-only and not a runtime fallback.",
+    "Prefer same-rank parallel read-only scouts over serial chains when outputs are independent.",
+    "Add depends_on only when a child truly needs upstream output; challenge single-chain topologies during review.",
+    "Same-rank exclusive writeSet entries must be disjoint.",
+    "Do not add provider fields to DAG JSON; provider routing is executor-owned.",
+    "Use executorModels for model routing; do not add defaults.model or legacy top-level models.",
+    "Every task must declare outputContract describing the expected Markdown/output shape.",
+    "exclusive implementer nodes must use narrow, concrete writeSet and allowedPaths; never keep broad write permissions such as ** or repo root.",
+    "Cursor is optional; no-Cursor environments should use Pi read-only scouts and Pi writer nodes with toolProfile=write."
+  ],
+  "defaults": {
+    "executor": "pi",
+    "contextProfile": "slim",
+    "skills": [
+      "ai-engineering-context"
+    ],
+    "writePolicy": "read-only"
+  },
+  "skillsByRole": {
+    "planner": [
+      "loop-agent"
+    ],
+    "scout": [
+      "ai-engineering-context"
+    ],
+    "implementer": [
+      "verification-before-completion"
+    ],
+    "reviewer": [
+      "requesting-code-review"
+    ],
+    "verifier": [
+      "verification-before-completion",
+      "systematic-debugging"
+    ],
+    "closeout": [
+      "loop-agent",
+      "verification-before-completion"
+    ]
+  },
+  "executorModels": {
+    "pi": {
+      "LOW": "gpt-5.3-codex-spark",
+      "MED": "gpt-5.5",
+      "HIGH": "gpt-5.5"
+    }
+  },
+  "tasks": [
+    {
+      "id": "contract-pi",
+      "depends_on": [],
+      "complexity": "MED",
+      "executor": "pi",
+      "role": "planner",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown implementation contract; no file writes.",
+      "subtask_prompt": "Read the task inputs and return a concise implementation contract: scope, risks, narrow write boundaries, parallel scout opportunities, and verification expectations. Do not edit files."
+    },
+    {
+      "id": "scout-src",
+      "depends_on": [
+        "contract-pi"
+      ],
+      "complexity": "LOW",
+      "executor": "pi",
+      "role": "scout",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "REPLACE/WITH/SOURCE/PATH/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown source reconnaissance summary; no file writes.",
+      "subtask_prompt": "Perform read-only source reconnaissance. List relevant source files, existing patterns, and risks. Do not edit files."
+    },
+    {
+      "id": "scout-tests",
+      "depends_on": [
+        "contract-pi"
+      ],
+      "complexity": "LOW",
+      "executor": "pi",
+      "role": "scout",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "REPLACE/WITH/TEST/PATH/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown test coverage reconnaissance summary; no file writes.",
+      "subtask_prompt": "Perform read-only test reconnaissance. List relevant tests, coverage gaps, and verification commands. Do not edit files."
+    },
+    {
+      "id": "implement-pi",
+      "depends_on": [
+        "scout-src",
+        "scout-tests"
+      ],
+      "complexity": "HIGH",
+      "executor": "pi",
+      "role": "implementer",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "REPLACE/WITH/ALLOWED/PATH/**"
+      ],
+      "allowedPaths": [
+        "REPLACE/WITH/ALLOWED/PATH/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Implementation summary with changed files, tests run, and risks.",
+      "subtask_prompt": "Implement the approved change within writeSet only. Keep the change minimal and update relevant tests/docs inside allowedPaths.",
+      "toolProfile": "write"
+    },
+    {
+      "id": "review-pi",
+      "depends_on": [
+        "implement-pi"
+      ],
+      "complexity": "MED",
+      "executor": "pi",
+      "role": "reviewer",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Plain Markdown review summary; no file writes.",
+      "subtask_prompt": "Review upstream implementation output against the contract. Identify drift, missing tests, and residual risks. Do not edit files."
+    },
+    {
+      "id": "verify-shell",
+      "depends_on": [
+        "implement-pi"
+      ],
+      "complexity": "LOW",
+      "executor": "shell",
+      "role": "verifier",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "./**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Archived shell command stdout/stderr with exit codes; no worktree writes.",
+      "subtask_prompt": "Run deterministic loop-agent verification commands and archive outputs.",
+      "shell": {
+        "preset": "loop-agent-standard-verify",
+        "cwd": ".",
+        "timeoutMs": 300000
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+schema_version: 1
+feature_id: F-2099-901
+acceptance:
+  - id: AC-001
+    title: Scaffold sample — backend-only
+    priority: must
+    type: behavior
+    given: 需求与路径边界已冻结
+    when: Feature Packet 内实现任务完成
+    then: 验收目标达成且 verify.commands 通过
+    verification:
+      expected_task_refs:
+        - BE-IMPL-001

@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tea-agent.dev/schemas/backend-test-execution-v1.json",
+  "title": "Backend Test Execution v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "framework",
+    "runner",
+    "testRoot",
+    "workingDirectory",
+    "report",
+    "targetMode",
+    "existingFixtures",
+    "authenticationMode",
+    "requiredEnvNames",
+    "dataIsolation",
+    "evidenceGaps",
+    "evidenceRefs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "framework": { "const": "pytest" },
+    "runner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commandParts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "frozenCommandHints": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "testRoot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Repo-relative posix path; no absolute form or .. segments"
+    },
+    "workingDirectory": {
+      "type": "string",
+      "minLength": 1,
+      "default": "."
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "relativeHint"],
+      "properties": {
+        "format": { "const": "junit" },
+        "relativeHint": { "type": "string", "minLength": 1 }
+      }
+    },
+    "targetMode": {
+      "enum": ["in-process", "external-running-service", "managed-command"]
+    },
+    "baseUrlEnvName": {
+      "type": "string",
+      "pattern": "^[A-Z_][A-Z0-9_]*$"
+    },
+    "readiness": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "description"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^/(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)[^?#]*$",
+            "description": "HTTP URL path on the target service for readiness probes (e.g. /api/health). Not a repository file path; must start with one /, use POSIX separators, and must not include duplicate slashes, dot segments, query, fragment, or scheme. Runtime trims surrounding whitespace before validating and materializing the normalized path."
+          },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "existingFixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "sourcePath", "kind"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "sourcePath": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "authenticationMode": { "type": "string", "minLength": 1 },
+    "requiredEnvNames": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z_][A-Z0-9_]*$"
+      }
+    },
+    "dataIsolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 }
+      }
+    },
+    "managedCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "string", "minLength": 1 },
+        "stop": { "type": "string", "minLength": 1 },
+        "sourceRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidenceGaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string", "minLength": 1 },
+          "sourceRef": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

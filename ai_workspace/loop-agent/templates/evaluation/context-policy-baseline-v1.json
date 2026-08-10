@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "policyId": "baseline-v1",
+  "description": "Current DAG context assembly: shared upstream char budget, role skill defaults, learned patterns only for implementer.",
+  "knobs": {
+    "maxUpstreamCharsByRole": {
+      "default": 2000
+    },
+    "includeLearnedPatternsRoles": ["implementer"],
+    "perSkillMaxCharsByRole": {
+      "default": 3000
+    },
+    "totalMaxCharsByRole": {
+      "default": 12000
+    }
+  }
+}

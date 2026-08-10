@@ -1,0 +1,433 @@
+{
+  "version": 4,
+  "title": "Backend test DAG: Backend test template",
+  "runtimeContract": {
+    "schemaVersion": 1,
+    "agentRuntime": "pi-only",
+    "repairWriterProtocol": "explicit-node-v1"
+  },
+  "outputLanguage": "zh-CN",
+  "objective": "- AC-001 proof",
+  "successCriteria": [
+    "contract-pi produces an auditable read-only implementation contract for backend-test-template",
+    "scout-src and scout-tests complete parallel read-only reconnaissance without file writes",
+    "plan-pi returns a read-only implementation plan aligned with constraints",
+    "the implementation writer changes only paths declared in writeSet",
+    "verify-pi returns read-only verification strategy and residual risks",
+    "closeout-pi returns read-only handoff summary without writing artifacts/docs"
+  ],
+  "globalConstraints": [
+    "Do not commit runtime traces under .harness/dag-runs/",
+    "Do not enable cross-node Pi runtime reuse by default",
+    "Preserve CODE_AGENT_PI_BACKEND=cli-only rollback for Pi nodes",
+    "Same-rank exclusive writeSet entries must be disjoint",
+    "Every task must explicitly declare executor; defaults.executor is schema-only and not a runtime fallback",
+    "Prefer same-rank parallel read-only scouts over serial chains when outputs are independent",
+    "If the DAG is a single linear chain, challenge whether read-only work can run in parallel ranks",
+    "Read-only DAG nodes must not write repository files, including root artifacts/**; return findings in node output only",
+    "Root artifacts/ is reserved for explicit exclusive write nodes, not read-only scout/reviewer output",
+    "exclusive implementer nodes must use narrow, concrete writeSet paths; never keep ** or repo root",
+    "Replace REPLACE/WITH/NARROW/IMPLEMENT/PATHS/** with concrete paths before executing the implementation writer",
+    "backend-test-dag uses exactly 12 real top-level tasks. Pytest collection runs once on the green path and at most twice only when one bounded pre-execution repair is eligible; business pytest test bodies execute exactly once over safe scripts explicitly mapped by final Markdown cases.",
+    "Model nodes produce Markdown and pytest assets, never backend-test business JSON envelopes.",
+    "Environment, advisory Markdown validation/coverage, collection initial/effective facts, advisory traceability/correspondence, canonical manifest, pytest-html, HTML and execution facts are deterministic evidence. Node 4 quality findings stay advisory; nodes 6/8 form the fail-closed collection authorization; node 9 traceability findings stay advisory; node 10 partial/unavailable manifest does not block node 11 when effective collection remains fresh.",
+    "Only Markdown case generation/review may read source facts; pytest generation must not read source/**.",
+    "Functional case IDs use canonical BE-<MODULE>-<NNN> with exactly three digits and no alphabetic suffix. Every Test Point has exactly one variant/assertion/cross-cutting binding; only variant bindings create pytest parameter items. Production code/config, skip/xfail, execution-result repair and business pytest rerun are forbidden; the only repair is one pre-execution collection-proven generated-test asset repair."
+  ],
+  "defaults": {
+    "executor": "pi",
+    "piBackend": "sdk-first",
+    "contextProfile": "full",
+    "skills": [
+      "ai-engineering-context"
+    ],
+    "writePolicy": "read-only"
+  },
+  "skillsByRole": {
+    "planner": [
+      "loop-agent"
+    ],
+    "scout": [],
+    "implementer": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "reviewer": [
+      "requesting-code-review",
+      "code-review-core"
+    ],
+    "verifier": [
+      "verification-before-completion",
+      "systematic-debugging"
+    ],
+    "closeout": [
+      "loop-agent",
+      "verification-before-completion"
+    ]
+  },
+  "executorModels": {
+    "pi": {
+      "LOW": "gpt-5.3-codex-spark",
+      "MED": "gpt-5.5",
+      "HIGH": "gpt-5.5"
+    }
+  },
+  "tasks": [
+    {
+      "id": "validate-backend-test-environment-shell",
+      "depends_on": [],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned reports/backend-test-environment.md with PASS/FAIL runtime, bounded project discovery, fixture and HTML-renderer facts; no secret values.",
+      "subtask_prompt": "Fail fast before model work when Python/pytest cannot run in the clean shell. Inspect only bounded common config, conftest, test-root and server-entry candidates; never read .env values or credentials.",
+      "shell": {
+        "commands": [
+          "python --version",
+          "python -m pytest --version",
+          "python -m pytest --help"
+        ],
+        "backendTestPipeline": "markdown-environment",
+        "cwd": ".",
+        "timeoutMs": 60000,
+        "envAllowlist": []
+      }
+    },
+    {
+      "id": "generate-backend-md-cases-pi",
+      "depends_on": [
+        "validate-backend-test-environment-shell"
+      ],
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "MED",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/md/**"
+      ],
+      "allowedPaths": [
+        "testcase/md/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Write a Chinese, human-readable testcase/md/README.md plus module Markdown case cards using BE-<MODULE>-<NNN>; keep machine IDs/literals exact and do not execute pytest or modify production code/config.",
+      "subtask_prompt": "Read the upstream environment report. Generate a Markdown-first backend test strategy and cases under testcase/md/**.\n\nWrite human-readable content in Simplified Chinese by default. Keep English only for machine-readable IDs and technical literals such as Case/AC/REQ/BR IDs, HTTP methods, paths, field names, enum values, commands, filenames, code symbols and exact source citations.\n\nCreate testcase/md/README.md as the concise entry page: test objective, target/environment, isolation/cleanup, module summary and a linked case index table with Case ID, Chinese case name, scenario type, endpoint and expected status/result. Avoid repeating every case body in README.\n\nBefore the Coverage Matrix, write a mandatory machine-readable `## Coverage Scope` section in README using exactly `| Field | Value |`, immediately followed by the separator row `|---|---|`, and these six unique rows: `Change Classification`, `Coverage Policy`, `Affected Operations`, `Affected Rule Keys`, `Regression Floor`, `Scope Evidence`. Classify from authoritative task/reference evidence, not merely whether a route already exists. Use only these pairs: `new-operation` → `full-contract`; `contract-change` → `affected-contract-full`; `behavior-change` → `affected-behavior-full`; `bugfix` → `reproduction-plus-neighbors`; `implementation-optimization` → `change-focused-plus-regression-floor`. List affected operations exactly as `METHOD /path`, stable rule keys separated by semicolons, and precise source pointers as Scope Evidence.\n\nCoverage depth follows the declared change scope. For `new-operation`, fully cover every documented status, request/response field rule, requiredness, enum, boundary, format, auth and business state of each affected new operation, but do not re-test unrelated existing operations. For contract/behavior changes, fully cover the changed contract or behavior and its directly affected operations. For bugfix, cover exact reproduction, adjacent boundary/equivalence cases and a normal path. For `implementation-optimization`, cover explicit ACs, deterministic affected operations and a minimum regression floor; do not exhaustively regenerate unrelated POST/PUT/GET/DELETE rules. Every non-new classification must include `main-success-path` and `unchanged-response-shape`; contract changes also include `changed-contract-boundaries`, behavior changes `affected-state-transition`, and bugfixes `defect-reproduction` plus `adjacent-boundary`. Inspect shared validator/helper/DTO/query builder evidence and expand Affected Operations when the same changed path can affect them; unresolved impact stays visible as GAP/CONFLICT.\n\nBefore writing cases, build the mandatory machine-readable Coverage Matrix inside `testcase/md/README.md` itself. Its section heading line must be exactly `## Coverage Matrix` with no numeric prefix/suffix; never place the canonical Matrix only in a module file. Use this exact header: `| Rule Key | Priority | Source | Endpoint/Field | Dimension | Rule | Required Test Points | Case IDs | Status |`. Every data row must contain exactly 9 pipe-delimited cells and must never omit `Dimension`; use concise dimensions such as requirement, operation, response-status, requiredness, enum, boundary, format, business-state or error. Use only P0/P1/P2 and COVERED/PARTIAL/GAP/CONFLICT. Use stable `TP-<UPPERCASE-HYPHENATED-ID>` test points separated by semicolons.\n\nEach Rule Key must appear in exactly one Matrix row. Preserve each AC/REQ/BR Rule Key as one row; if one product rule spans multiple dimensions, use a concise composite Dimension in that single row instead of duplicating the key. Derive OpenAPI Rule Keys exactly as the deterministic analyzer does: operation token is `<HTTP-METHOD>-<PATH>` with braces removed and every non-alphanumeric run replaced by a hyphen, uppercase (for example POST `/api/resource-notes` → `POST-API-RESOURCE-NOTES`); response statuses use `API-<OPERATION>-RESPONSE-STATUS`; body/parameter fields use `API-<OPERATION>-<FIELD>-REQUIRED|ENUM|MIN-LENGTH|MAX-LENGTH|MINIMUM|MAXIMUM|PATTERN|FORMAT`. Do not invent aliases such as API-CREATE-FIELDS when a deterministic key applies.\n\nCoverage priority is strict inside the declared scope: P0 product requirements/task hard constraints always remain in scope; P1 exhaustively supplements documented operations, fields, business rules, statuses and errors only for Affected Operations; P2 adds bounded protocol robustness only when it is relevant to the change and does not invent product behavior. Coverage percentages describe the declared affected scope, never whole-API completeness unless every operation is explicitly listed. Conflicts or undefined expectations must stay visible as GAP/CONFLICT with precise source pointers, never guessed.\n\nFor uniqueness/lifecycle rules cover absent, active-existing, deleted-existing, create-delete-recreate, restore-then-recreate and documented scope/case-normalization states. For every enum cover every valid value plus bounded invalid equivalence classes (unknown, case variant, whitespace, empty, null/missing and wrong types as applicable). For every length/number rule cover min-1, min, nominal, max and max+1. For format rules cover each allowed class separately plus a valid mixed value, and representative forbidden classes including uppercase, internal/leading/trailing whitespace, tab/newline, unsupported punctuation, slash, emoji or control characters when the source contract supports that expectation.\n\nWrite each module as readable case cards. Every case starts with `## BE-<MODULE>-<NNN>｜<中文用例名称>`. `<NNN>` is exactly three zero-padded digits (`001`, `002`, ...), never two digits (`01`), a bare number, or an alphabetic suffix such as `011A`. Every case must include `### 覆盖规则`, `### 测试点`, `### 场景类型`, `### 前置条件`, `### 操作步骤`, `### 预期结果`, and `### 自动化映射`; `覆盖规则` and `测试点` must reference exact Matrix Rule Keys/Test Points. Add `测试目的`, `验收标准`, `需求依据`, and `测试数据` for readable evidence. The `验收标准` section must list the exact applicable `AC-...` IDs, and every explicit task AC must appear in at least one Case. Every automatable case explicitly names its target pytest script and exactly one primary symbol so traceability scans only that script/symbol.\n\nName each module file with a stable lowercase business stem such as `testcase/md/health.md` or `testcase/md/resource_notes.md`. Do not use Case-ID-like module filenames such as `BE-HEALTH.md` or `BE-NOTES.md`. For every automatable case, `自动化映射` must name exactly `testcase/test_<module>.py`, where <module> is that Markdown filename without `.md`, lowercased, with non-alphanumeric characters replaced by underscores. Example: `testcase/md/health.md` → `testcase/test_health.py`; `testcase/md/resource_notes.md` → `testcase/test_resource_notes.py`. Never invent a different pytest path in Markdown than the module stem implies.\n\nEvery Case must keep at least one numbered executable line under `### 操作步骤`; a compact variant/result table may follow but must not replace the numbered action anchor. Keep numbered/bulleted independently assertable results under `### 预期结果`. The exact `### 操作步骤` and `### 预期结果` headings must remain present for every Case, including compact/table-based Cases; never compress later Cases by dropping required headings. Every result must name the observable HTTP status, response field/value, state transition or membership condition, never vague wording such as ‘符合预期’.\n\nIn every `自动化映射`, use exactly these machine-readable list labels: `脚本`, `primary symbol`, `变体测试点`, `场景断言测试点`, `横切证据测试点`. Each Test Point from `### 测试点` must appear in exactly one binding list, and every Test Point named in any binding list must also be declared in that Case's `### 测试点`; write `无` for an empty list. A variant Test Point is atomic: one exact endpoint/input/precondition/outcome row equals one exact pytest item and one exact TP ID. If a parameter table has five rows, declare five distinct variant TP IDs in Markdown; never declare one family TP and append row suffixes only in pytest. Classify as `variant` only when endpoint, request input, precondition business state, or expected outcome genuinely changes and therefore needs an independent pytest parameter item. Classify CRUD checkpoints, status/body/header/schema assertions and multiple checks over the same response/journey as `assertion`; classify shared HTTP logging/redaction/truncation evidence as `cross-cutting`. Never create a Test Point merely to parameterize a checkpoint. Every non-cross-cutting TP ID is owned by exactly one Case; when the same response/schema/error assertion is needed in different Cases, use distinct Case-specific TP IDs instead of reusing one assertion TP across Cases. Keep the script path identical to the module one-to-one path and declare exactly one primary symbol named with the canonical Case prefix, for example `BE-RN-003` → `test_BE_RN_003_<description>`; non-Case-prefixed primary symbols are forbidden because parameterized item association must remain deterministic. For redaction scenarios, list sensitive header/field key names only. Never write any header-name-and-value pair, credential placeholder, fake token, anti-example, or other secret-shaped literal in Markdown; state only that a test-only value is supplied at runtime and omitted. Put implementation-only restrictions in a concise `<details>` block rather than dominating the main case flow. Before finalizing Markdown, calculate the predicted collected-item count as `sum(max(1, number of variant Test Points in each Case))`. If the task declares an item budget, the prediction must not exceed it. Reduce excess only by removing duplicate execution and converting same-request checkpoints to assertions; never drop required rules, boundaries, enums, operation-specific inputs, or business states. Record the prediction in README. Use only environment-supported fixtures/targets/isolation, record evidence gaps in Chinese, and do not emit JSON, pytest, or execute commands.\n\n## Derived task contract: 需求.md\n\n# Backend test\n- AC-001 proof\n\n## Authoritative reference index\n\n[]\n\nFor each index entry, use `readPath` for Pi read-tool calls and copy `path` exactly into Markdown Source References. Bound files under .harness/tasks/<taskId>/source/** are read-only inputs: reading them is allowed even though writing .harness/** is forbidden. Never resolve `path` relative to the repository root, search for substitutes, or fall back to docs/** when a bound read fails.\n\nRead only precise indexed references needed for AC/API/field/rule evidence; references remain authoritative over derived text."
+    },
+    {
+      "id": "review-and-revise-backend-md-cases-pi",
+      "depends_on": [
+        "generate-backend-md-cases-pi"
+      ],
+      "role": "reviewer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "MED",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/md/**"
+      ],
+      "allowedPaths": [
+        "testcase/md/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Review source fidelity and directly revise only testcase/md/**; return concise Markdown, never JSON.",
+      "subtask_prompt": "Independently review generated Markdown cases against the task requirements and environment evidence. Treat the files as human-facing test documentation: require clear preconditions, executable steps and assertable expected results; improve names, purpose, metadata and automation mapping where useful while preserving exact machine IDs and technical literals.\n\nIndependently reconstruct the change classification, affected operations/rules, P0 product scenarios and applicable P1 documented API rules from authoritative sources before trusting the generated Coverage Scope or Coverage Matrix. Perform an explicit coverage-scope review: reject `new-operation` when the task only optimizes an existing implementation without contract change; reject narrow optimization scope when shared validator/helper/DTO/query builder evidence directly affects more operations; reject full-contract expansion across unrelated operations. For every in-scope operation, check applicable lifecycle/uniqueness states (including deleted-existing when in scope), valid enum values, bounded invalid classes, min-1/min/nominal/max/max+1, allowed/forbidden format classes, required/null/missing/wrong-type semantics, status/error codes, auth and state transitions. Directly add in-scope omissions; undefined impact remains GAP/CONFLICT rather than invented behavior.\n\nCheck AC completeness/meaning, endpoint, fields/shape, status/error codes, rules, states, documented boundaries/auth, positive/negative coverage, executable steps and assertable results. Require the exact `## Coverage Scope` Field/Value table with the `|---|---|` separator row, a valid classification-policy pair, non-empty Affected Operations/Rule Keys/Scope Evidence, and the classification-specific Regression Floor. Require the exact unnumbered `## Coverage Matrix` heading in `testcase/md/README.md`, exact headers, exactly 9 cells in every data row (including a non-empty Dimension), deterministic OpenAPI Rule Keys for every in-scope affected operation, exactly one Matrix row per Rule Key (merge multi-dimension product rows), and bidirectional Matrix Rule/Test Point ↔ Case bindings. Never describe affected-scope coverage as whole-API completeness. Every explicit AC ID must appear in at least one Case `验收标准`; every explicit in-scope AC/REQ/BR Rule Key cited by a Case must have exactly one Coverage Matrix row, and no Case may cite a source Rule Key omitted from the Matrix. Every Matrix Case ID must share at least one of that row's Required Test Points and the Case must cite that Rule Key. Perform an explicit execution-redundancy review: merge checkpoint-only parameter rows, repeated default/read-back assertions, DELETE status/body/follow-up-read checks, response schema/Content-Type checks, PUT full-update/timestamp checks, repeated list setup and identical null/empty inputs when endpoint, input partition, precondition state and expected outcome are the same. Preserve separate POST/PUT, boundary, enum, wrong-type, role/tenant and distinct business-state variants. Directly repair malformed headings/rows/keys and binding modes rather than merely commenting on them. Reject avoidable English prose, duplicated bilingual wording, repeated boilerplate, oversized unstructured sections, a `### 操作步骤` section that contains only a table without any numbered executable line, vague results such as ‘符合预期’, Case-ID-like module filenames (for example `BE-HEALTH.md`), dropped exact `### 操作步骤`/`### 预期结果` headings, and missing or drifted script/function mapping where it can be derived.\n\nCorrect testcase/md/** directly: add documented omissions, remove unsupported cases, rename module files to stable lowercase stems when needed, normalize every Case ID to hyphen-separated module segments plus exactly three zero-padded digits (`BE-RESOURCE_NOTES-01` → `BE-RESOURCE-NOTES-001`; `BE-RN-011A` must be renumbered or merged) consistently across headings/index/mappings, fix automation mappings so each case points at `testcase/test_<module>.py` derived from that module filename and declares exactly one primary symbol, assign every Test Point exactly one of `变体测试点`/`场景断言测试点`/`横切证据测试点`, ensure every binding-list Test Point is also present in that Case's `### 测试点`, expand every variant parameter row into its own atomic TP ID, make every non-cross-cutting TP Case-specific and owned by exactly one Case, require every primary symbol to start with the canonical Case prefix, ensure every explicit AC ID appears in an applicable Case `验收标准`, merge execution duplicates, improve navigation/tables/Chinese wording, or record gaps in Chinese. Remove every credential/header value, placeholder, fake token and anti-example from Markdown. Sensitive key names may remain only as a plain list; values must be described as runtime-only and omitted, with no colon/value pair or literal example anywhere, including details blocks and explanatory text. Keep Case IDs, AC/REQ/BR IDs, HTTP methods, paths, fields, enum values, filenames, code symbols and source citations as exact machine-readable identifiers; only normalize Case ID separator/sequence formatting as specified above. Recalculate predicted collected items as `sum(max(1, variant count per Case))`; when the task declares a budget, directly merge redundant journeys/reclassify same-request checkpoints until the prediction is within budget, while preserving all required coverage. The validator accepts Chinese and legacy English section aliases; retain or converge to the Chinese human-readable headings without losing structure.\n\nRead only precise referenced source paths plus requirement sections needed for uncovered ACs. Do not scan the repository, modify source/**, generate pytest, execute tests, or emit JSON.\n\n## Derived task contract: 需求.md\n\n# Backend test\n- AC-001 proof\n\n## Authoritative reference index\n\n[]\n\nFor each index entry, use `readPath` for Pi read-tool calls and keep `path` as the exact Markdown Source References citation. Bound files under .harness/tasks/<taskId>/source/** are read-only inputs: reading them is allowed even though writing .harness/** is forbidden. Never resolve `path` relative to the repository root, search for substitutes, or fall back to docs/** when a bound read fails."
+    },
+    {
+      "id": "validate-backend-md-cases-shell",
+      "depends_on": [
+        "review-and-revise-backend-md-cases-pi"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned reports/backend-md-case-validation.md, reports/backend-test-case-coverage-analysis.md and contracts/backend-test-case-coverage-facts.json v3 with Coverage Scope plus PASS/FAIL/UNAVAILABLE advisory facts; downstream execution continues.",
+      "subtask_prompt": "Record advisory findings for Markdown structure and deterministically analyze the final README Coverage Scope and Coverage Matrix against final Case rule/test-point bindings. Validate the classification-policy pair, affected operations/rules, scope evidence and regression floor; require documented OpenAPI completeness only for declared affected operations, while all explicit AC/REQ/BR remain in scope. Detect missing in-scope product/API rules, enum values, invalid equivalence classes, boundaries, format classes, business lifecycle states, GAP/CONFLICT, bidirectional Matrix/Case drift, non-canonical Case IDs, unclassified Test Points, duplicate binding modes and non-cross-cutting Test Points bound by multiple Cases. Do not validate source-reference existence. Write human and machine evidence from the same facts. Keep quality findings advisory, but fail closed after writing the report when secret-shaped values are detected. Coverage FAIL stays advisory.",
+      "shell": {
+        "commands": [],
+        "backendTestPipeline": "markdown-cases",
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "generate-backend-pytest-pi",
+      "depends_on": [
+        "validate-backend-md-cases-shell"
+      ],
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/**/test_*.py",
+        "testcase/**/helpers/**",
+        "testcase/**/factories/**"
+      ],
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Convert every final automatable Markdown case into pytest assets whose actual test function region contains the exact Case ID, preferably in the function name or docstring. Each testcase/md/<module>.md (excluding README.md) maps one-to-one to testcase/test_<module>.py; never merge or split modules. No JSON and no pytest execution.",
+      "subtask_prompt": "Convert testcase/md/** to pytest using upstream environment and advisory validation evidence plus only bounded pytest config/conftest. A FAIL advisory report does not authorize inventing missing behavior; use the final Markdown facts that are present.\n\nEnsure every final Markdown Case ID appears in exactly one primary pytest test function or pytest test class method region, using the exact `primary symbol` declared by Markdown. The symbol must start with `test_BE_<MODULE>_<NNN>_` so every parameterized collected item remains associated with its Case. Module-level functions and class-based pytest methods are both supported. Only `变体测试点` may use stable `pytest.param(..., id=\"TP-...\")` IDs, and every atomic variant ID must appear exactly once with a genuine input/state/outcome change. Use `pytest.param(..., id=...)` for every row; do not use decorator-level `ids=[...]`, generated suffixes, or IDs that extend/shorten the exact Markdown TP. Do not parameterize `场景断言测试点` or `横切证据测试点`; execute all assertion checkpoints within the same business journey/item and use shared helpers for cross-cutting evidence. The primary symbol docstring must contain exact metadata lines `Case-ID: BE-...`, `Assertion-Test-Points: TP-...;TP-...` and `Cross-Cutting-Test-Points: TP-...;TP-...` (use `none` when empty). No Test Point may be invented, renamed, omitted or bound in two modes. The generated pytest collection shape must equal the Markdown prediction `sum(max(1, variant count per Case))`; keep it at or below the task's explicit budget by removing duplicate execution, never by collapsing multiple parameter rows under a coarse family TP. Assertions come only from 预期结果 and setup comes only from 前置条件/测试数据/自动化映射.\n\nName each generated pytest file so it corresponds one-to-one with its source Markdown module file: for each `testcase/md/<module>.md` (excluding README.md), emit exactly one `testcase/test_<module>.py`. The <module> stem is the Markdown filename without the `.md` extension, lowercased and with non-alphanumeric characters replaced by underscores. For example, `testcase/md/resource_notes.md` maps to `testcase/test_resource_notes.py`, `testcase/md/health.md` maps to `testcase/test_health.py`, `testcase/md/BE-HEALTH.md` maps to `testcase/test_be_health.py`, and `testcase/md/order-api.md` maps to `testcase/test_order_api.py`. If Markdown automation mapping names a different path than this module stem path, still write the module stem path and do not invent prefixes such as `test_be_*` unless the module filename itself normalizes to that stem. Never merge multiple Markdown modules into one pytest file, never split one module across several files, and never invent pytest filenames unrelated to the Markdown modules.\n\nGenerate a reusable HTTP logging helper (or equivalent client wrapper) and call it for every interface request. The request log must include method, URL/path, and request parameters (query plus JSON/body/payload summary). The response log must include status code and response result (JSON/text/body summary), and both records must be visible in pytest stdout/stderr without changing assertions.\n\nHTTP response header names are case-insensitive. If the helper stores a lower-case normalized header map, every Content-Type or other header assertion must query the lower-case key (for example `content-type`) or use an explicitly case-insensitive accessor; never call a case-sensitive plain dict with `Content-Type` when the stored key is lower-case. Preserve the actual media-type assertion rather than dropping it.\n\nCompare timestamps and other semantically equivalent protocol values by parsed meaning, not byte-for-byte serialization. In particular, normalize valid ISO-8601 instants before equality/order assertions so differences such as omitted trailing fractional seconds do not create TestBug failures; preserve exact-string assertions only when the Markdown explicitly requires representation equality.\n\nBefore logging, recursively redact sensitive keys and header values including authorization, proxy-authorization, cookie, set-cookie, token, password, secret, api key and credentials. Never print full Authorization/Cookie values. Apply bounded truncation to serialized request and response bodies (with an explicit truncation marker) so large payloads cannot flood pytest or report artifacts.\n\nDo not read source/**, add cases, reassign ACs, modify conftest/config/production code, use skip/xfail, swallow assertions, execute pytest, or emit JSON. For best-effort cleanup, catch only the narrow transport exception actually raised by the selected HTTP client (for example `requests.RequestException` or `urllib.error.URLError`); never use bare `except`, `Exception`, or `BaseException` with `pass`."
+    },
+    {
+      "id": "assess-backend-pytest-collection-shell",
+      "depends_on": [
+        "generate-backend-pytest-pi"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned reports/backend-test-pytest-collection-initial.md and contracts/backend-test-pytest-collection-initial.json with bounded diagnostics, asset hashes, collected item IDs and deterministic repair eligibility.",
+      "subtask_prompt": "Run pytest collection only over final Markdown-mapped scripts before any business test body execution. Materialize hash-bound PASS/REPAIRABLE/BLOCKED facts. Only generated testcase-local syntax/import inconsistencies are repairable; dependency, plugin, production-module, environment, safety and unknown failures remain blocked.",
+      "shell": {
+        "commands": [],
+        "backendTestPipeline": "markdown-collection-assess",
+        "cwd": ".",
+        "timeoutMs": 120000
+      }
+    },
+    {
+      "id": "repair-backend-pytest-collection-pi",
+      "depends_on": [
+        "assess-backend-pytest-collection-shell"
+      ],
+      "runIf": "$.nodes['assess-backend-pytest-collection-shell'].json.repairEligible == true",
+      "role": "implementer",
+      "executor": "pi",
+      "toolProfile": "write",
+      "complexity": "HIGH",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "testcase/**/test_*.py",
+        "testcase/**/helpers/**",
+        "testcase/**/factories/**"
+      ],
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**",
+        "testcase/md/**",
+        "conftest.py",
+        "pytest.ini",
+        "pyproject.toml",
+        "setup.cfg"
+      ],
+      "writerOutcomePolicy": {
+        "type": "implementation-outcome-v1"
+      },
+      "outputContract": "First non-empty line is IMPLEMENTATION_OUTCOME: changed|already-satisfied|blocked, followed by a concise repair summary. Modify only generated pytest scripts/helpers/factories and preserve every Markdown Case, Test Point, primary symbol and assertion meaning.",
+      "subtask_prompt": "Repair the generated backend pytest asset as one bounded program using the direct upstream collection assessment. This is the only repair attempt and happens before any business test body execution.\n\nFix only collection-proven generated testcase-local syntax, module path, missing symbol, circular import, fixture-name, decorator or parameterization inconsistencies. Inspect all affected importers and providers so the repair is cross-file consistent.\n\nPreserve final testcase/md/** semantics, every Case ID, Rule/Test Point binding, primary symbol, parameter ID, expected status/body/schema assertion, HTTP logging, redaction and truncation behavior.\n\nDo not read task source/** or reinterpret requirements. Do not modify Markdown, conftest, pytest config, production code or dependencies.\n\nDo not add skip/skipif/xfail, remove tests, reduce collected items, loosen assertions, swallow exceptions, use try/except ImportError fallback, mutate sys.path/PYTHONPATH, or replace the real API with mocks.\n\nDo not execute pytest; the deterministic effective collection gate owns the final collection attempt."
+    },
+    {
+      "id": "effective-backend-pytest-collection-gate-shell",
+      "depends_on": [
+        "assess-backend-pytest-collection-shell",
+        "repair-backend-pytest-collection-pi"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned reports/backend-test-pytest-collection-effective.md and contracts/backend-test-pytest-collection-effective.json proving the exact final assets are collectable; initial PASS is reused, repair path records attempt=1.",
+      "subtask_prompt": "If initial collection passed, verify unchanged asset hashes and reuse it without another collection. If the single repair ran, collect the final mapped scripts once and fail closed unless it passes. BLOCKED initial facts, repair failure, final collection failure or hash drift must prevent business pytest execution.",
+      "shell": {
+        "commands": [],
+        "backendTestPipeline": "markdown-collection-effective",
+        "cwd": ".",
+        "timeoutMs": 120000
+      },
+      "dependsPolicy": "all-or-condition-skip"
+    },
+    {
+      "id": "backend-test-traceability-gate-shell",
+      "depends_on": [
+        "effective-backend-pytest-collection-gate-shell"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned reports/backend-test-traceability.md, reports/backend-test-markdown-pytest-correspondence.md and contracts/backend-test-markdown-pytest-correspondence-facts.json with PASS/FAIL/UNAVAILABLE correspondence facts bound after effective collection.",
+      "subtask_prompt": "Deterministically scan only Markdown-mapped pytest scripts after the effective hash-bound collection gate. Keep the existing traceability/logging checks and produce a bidirectional Markdown module/Case/Test Point ↔ pytest file/primary symbol correspondence analysis. Map variant Test Points from stable parameter IDs, assertion Test Points from the primary symbol docstring, and cross-cutting Test Points from the primary symbol evidence binding. Report 1:1, 1:0, 1:N, 0:1, script/primary-symbol mismatch, missing Case ID, missing variant parameter IDs, missing assertion/cross-cutting bindings, duplicate modes and extra bindings. Human and machine evidence must come from the same facts. Findings are advisory and never block pytest.",
+      "shell": {
+        "commands": [],
+        "backendTestPipeline": "markdown-traceability",
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "backend-test-case-manifest-shell",
+      "depends_on": [
+        "backend-test-traceability-gate-shell"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Run-owned contracts/backend-test-case-manifest.json with materializationStatus, sourceFactsIssues, validated coverageScope, coverageSummary, ruleCoverageSummary and correspondenceSummary; this is the single machine input for L-5 and closeout.",
+      "subtask_prompt": "Materialize the canonical Backend Test Case Manifest only from contracts/backend-test-case-coverage-facts.json and contracts/backend-test-markdown-pytest-correspondence-facts.json. Validate schema, task binding, input hashes and freshness; never re-read source semantics, re-analyze Coverage Matrix, rescan pytest symbols or recompute a second set of metrics. Missing/stale/conflicting facts produce partial/unavailable diagnostics rather than fabricated zeros.",
+      "shell": {
+        "commands": [],
+        "backendTestPipeline": "markdown-manifest",
+        "cwd": ".",
+        "timeoutMs": 60000
+      }
+    },
+    {
+      "id": "execute-backend-pytest-and-html-report-shell",
+      "depends_on": [
+        "backend-test-case-manifest-shell"
+      ],
+      "role": "verifier",
+      "executor": "shell",
+      "complexity": "LOW",
+      "writePolicy": "read-only",
+      "allowedPaths": [
+        "testcase/**",
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "One scoped pytest execution over Markdown-mapped scripts producing a valid pytest-html report with per-case captured output, self-contained reports/backend-test.html, reports/backend-test.md, reports/backend-test-facts.md, a deterministic self-contained reports/backend-test-l5-dashboard.html (machine-computed L-5 metrics, no JSON), and an optional contracts/code-coverage-v1.json when jacocoCoverage is configured (JaCoCo TCP dump → jacoco.xml → parsed; failure-safe); exit 0/1 with valid evidence continues.",
+      "subtask_prompt": "Resolve the final Markdown Automation Notes/自动化映射 to a unique, safe set of testcase/**/test_*.py targets and execute only those scripts exactly once. Prefer the deterministic module one-to-one path when a mapped script is missing but the module stem file exists. Generate a native pytest-html self-contained report, then render the primary self-contained Chinese HTML report from the same pytest-html plus final Markdown case metadata without rerun. Keep 测试结论 and quality status; make node 4 Markdown validation + case coverage and node 9 traceability + Markdown-to-pytest correspondence expandable to their full escaped details; show each failure overview item with its original pytest message plus deterministic evidence-based reason analysis; list failure/error case cards before the remaining cases while preserving stable order. Each polished per-case result card includes concise scenario, automation test name, result, duration, and redacted bounded HTTP request parameters/response results for both passed and failed cases. Do not render a technical/execution evidence section in HTML; retain auditable paths and hashes in facts.",
+      "shell": {
+        "commands": [
+          "mkdir -p \"${HARNESS_DAG_RUN_DIR}/reports\"; echo \"pytest targets are resolved at runtime from final Markdown 自动化映射\""
+        ],
+        "backendTestPipeline": "markdown-execute-html",
+        "cwd": ".",
+        "timeoutMs": 300000,
+        "envAllowlist": []
+      }
+    },
+    {
+      "id": "backend-test-report-and-l5-pi",
+      "depends_on": [
+        "execute-backend-pytest-and-html-report-shell"
+      ],
+      "role": "closeout",
+      "executor": "pi",
+      "complexity": "MED",
+      "toolProfile": "write",
+      "writePolicy": "exclusive",
+      "writeSet": [
+        "docs/test-reports/**"
+      ],
+      "allowedPaths": [
+        "docs/test-reports/**"
+      ],
+      "forbiddenPaths": [
+        ".harness/**",
+        ".harness/dag-runs/**",
+        "artifacts/**"
+      ],
+      "outputContract": "Final Markdown report and L-5 conclusion under docs/test-reports/**; the deterministic L-5 dashboard at reports/backend-test-l5-dashboard.html is the authoritative visualization and must be linked, not re-rendered; no JSON.",
+      "subtask_prompt": "Generate the final Markdown report only from authoritative run-owned artifacts. Read node 1 reports/backend-test-environment.md; node 4 backend-md-case-validation.md and backend-test-case-coverage-analysis.md; nodes 6/8 backend-test-pytest-collection initial/effective reports and facts; node 9 backend-test-traceability.md and backend-test-markdown-pytest-correspondence.md; node 10 contracts/backend-test-case-manifest.json; and node 11 backend-test-result.json, backend-test-facts.md, pytest-html/HTML and L-5 dashboard. Do not use node 2/3/5 assistant prose as facts. Do not emit JSON.\n\nUse this exact human-facing section order: 测试结论 → 执行概览 → 质量校验 → 失败分析 → 风险与建议 → 证据与 L-5. Put the decision and key numbers first, use compact tables/bullets, and keep headings concise. Do not paste entire upstream reports, duplicate per-case tables already present in facts, or repeat the same evidence in multiple sections; link to paths/hashes and quote only the findings needed for the conclusion.\n\nThe L-5 metrics and visualization are produced deterministically by node 11 at reports/backend-test-l5-dashboard.html. Link to that dashboard as the authoritative L-5 view. Pytest execution facts come from node 11; coverage/correspondence numbers and materializationStatus come from node 10; collection authorization comes from nodes 6/8; detailed coverage findings come from node 4; detailed mapping findings come from node 9. Never recompute these values. If machine manifest and human reports disagree, report evidence inconsistency rather than silently choosing.\n\nAlways state the exact Coverage Scope classification, policy, affected operations, regression floor, completeness claim, PASS/FAIL/UNAVAILABLE status and findings from node 4 case validation + coverage, plus node 9 traceability + correspondence. Affected-scope or affected-operations-full coverage must never be described as whole-API completeness unless every operation is explicitly listed. Their FAIL status does not block pytest, but it must remain visible and must never be rewritten as PASS.\n\nInclude environment, case quality/review, automation mapping, exact pytest facts, failure classification/analysis, risks, regression recommendations, evidence paths/hashes, coverage availability, and L-5 READY/NOT READY. Distinguish Markdown Case count, primary pytest symbol count, collected pytest item count, variant/assertion/cross-cutting Test Point counts and execution amplification; never describe pytest item count as the number of business scenarios.\n\nNever override Shell/pytest-html facts. L-5 requires pass=100%, AC=100%, automation>=90%, line>=80%, branch>=70%, skipped=0 and no blocking Critical risk.\n\nWrite only under docs/test-reports/**."
+    }
+  ],
+  "sourceBinding": {
+    "schemaVersion": 1,
+    "taskId": "backend-test-template",
+    "sources": [
+      {
+        "kind": "requirement",
+        "path": "source/需求.md",
+        "sha256": "e33ab9d1d3d6a785b8f429d8581d015a299adc093b0c9a7c0f9057f968a71837"
+      }
+    ],
+    "requirementIds": [
+      "AC-001"
+    ]
+  },
+  "taskContractBinding": {
+    "schemaVersion": 1,
+    "taskId": "backend-test-template",
+    "revision": 1,
+    "projectionVersion": 1,
+    "canonicalizerVersion": 1,
+    "taskConfigSchemaVersion": 1,
+    "canonicalHash": "752c95f16925ee7711b41e465b8eb3530b99eaa40d17a88d753b3b4fcc7aeb6e",
+    "taskConfigSha256": "926c8986ce0b291d26af9ba1be8cf1630e647a06c362dac1d6bbac72e6df7bb0"
+  }
+}

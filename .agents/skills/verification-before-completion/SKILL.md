@@ -118,7 +118,7 @@ Skip any step = lying, not verifying
 - **Contract changes** → 验证 contract docs 已更新 + tests 对齐
 - **Handoff** → 宣称 complete 前运行 `handoff check`
 
-完整 command 选择见项目 `docs/verification-matrix.md`。
+完整 command 选择见项目 `ai_workspace/loop-agent/verification-matrix.md`。
 
 ## Why This Matters
 
