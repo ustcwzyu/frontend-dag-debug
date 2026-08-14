@@ -1,17 +1,8 @@
-import './style.css'
-import {
-  loadCourseContent,
-  register,
-  login,
-  getProgress,
-  putProgress,
-} from './api.ts'
-import { loadSession, saveSession, clearSession } from './auth.ts'
+// 内容种子：与 src/main.ts 内联兜底数据逐字一致（R3 裁决：服务端 seed 从 main.ts 复制）。
+// 修改课程内容时必须同步修改 src/main.ts 与本文件，避免两侧漂移。
 
-type RouteId = 'beginner' | 'builder' | 'advanced'
-
-interface Route {
-  id: RouteId
+export interface RouteSeed {
+  id: string
   name: string
   audience: string
   duration: string
@@ -19,14 +10,24 @@ interface Route {
   summary: string
   stages: string[]
   firstLesson: string
-  traceStates: readonly [string, string, string, string]
+  traceStates: string[]
 }
 
-// ── 静态课程数据：全部内联于前端源码，无网络请求（BR-AGENT-001） ──
+export interface CapabilitySeed {
+  title: string
+  desc: string
+}
 
-const traceLabels = ['输入', '计划', '工具', '评估'] as const
+export interface LabSeed {
+  title: string
+  goal: string
+  input: string
+  tools: string
+  criteria: string
+  duration: string
+}
 
-const routes: Route[] = [
+export const contentRoutes: RouteSeed[] = [
   {
     id: 'beginner',
     name: '入门',
@@ -95,9 +96,7 @@ const routes: Route[] = [
   },
 ]
 
-// ── 能力地图：六类能力，从学习者可控制/可验证角度书写（REQ-AGENT-003） ──
-
-const capabilities = [
+export const contentCapabilities: CapabilitySeed[] = [
   {
     title: '模型与提示',
     desc: '选择模型、写提示并度量输出质量，先让单次调用可控。',
@@ -124,9 +123,7 @@ const capabilities = [
   },
 ]
 
-// ── 本周实验（REQ-AGENT-005） ──
-
-const weeklyLab = {
+export const contentLab: LabSeed = {
   title: '研究助手',
   goal: '构建一个会查资料、带引用回答并接受评估的研究助手。',
   input: '一篇主题与一组候选资料（你提供的文本或本地文件）。',
@@ -135,132 +132,8 @@ const weeklyLab = {
   duration: '约 45 分钟',
 }
 
-// ── 首屏执行轨迹：编码真实 Agent 四阶段（输入→计划→工具→评估） ──
-
-const traceMarkup = traceLabels
-  .map(
-    (label, index) => `
-      <li class="trace__node is-done">
-        <span class="trace__node-dot" aria-hidden="true"></span>
-        <strong class="trace__node-label">${label}</strong>
-        <span class="trace__node-status">${routes[0].traceStates[index]}</span>
-      </li>`,
-  )
-  .join('')
-
-// 初始路线 tab：静态字面量，默认「入门」为唯一 aria-pressed=true（AC-AGENT-002）
-// 运行时切换由 selectRoute 同步更新，保证任一时刻恰好一个选中（BR-AGENT-002）。
-const routeTabsMarkup = `
-  <button
-    type="button"
-    class="route-tab is-active"
-    data-route="beginner"
-    aria-pressed="true"
-  >入门</button>
-  <button
-    type="button"
-    class="route-tab"
-    data-route="builder"
-    aria-pressed="false"
-  >构建</button>
-  <button
-    type="button"
-    class="route-tab"
-    data-route="advanced"
-    aria-pressed="false"
-  >进阶</button>`
-
-const capabilityMarkup = capabilities
-  .map(
-    (capability) => `
-      <li class="capability-card">
-        <h3 class="capability-card__title">${capability.title}</h3>
-        <p class="capability-card__desc">${capability.desc}</p>
-      </li>`,
-  )
-  .join('')
-
-const weeklyLabFacts = [
-  `目标：${weeklyLab.goal}`,
-  `输入：${weeklyLab.input}`,
-  `工具：${weeklyLab.tools}`,
-  `成功标准：${weeklyLab.criteria}`,
-  `时长：${weeklyLab.duration}`,
-]
-
-const app = document.querySelector<HTMLDivElement>('#app')
-if (!app) throw new Error('缺少 #app 挂载点')
-
-app.innerHTML = `
-  <header class="site-header">
-    <div class="container site-header__inner">
-      <p class="site-header__brand">
-        <span class="site-header__dot" aria-hidden="true"></span>Agent 学习实验室
-      </p>
-      <p class="site-header__note">零后端 · 零网络请求 · 课程数据内联</p>
-    </div>
-  </header>
-
-  <main id="main">
-    <section class="hero">
-      <div class="container hero__inner">
-        <div class="hero__content">
-          <p class="hero__overline">Agent 学习版图</p>
-          <h1 class="hero__title">让 Agent 不再靠运气工作</h1>
-          <p class="hero__lead">
-            用可验证的小项目理解 Agent 的运行骨架。入门、构建、进阶三条路线，
-            覆盖模型与提示、Tool（工具调用）、Memory（记忆与上下文）、规划与编排、
-            Eval 与可观测性、安全与边界六类能力。
-          </p>
-          <div class="hero__actions">
-            <a class="btn btn--primary" id="hero-first-lesson-link" href="#first-lesson-beginner">开始入门路线 · 第一课</a>
-            <a class="btn btn--secondary" href="#capability-map">查看能力地图</a>
-          </div>
-        </div>
-
-        <aside class="trace" aria-label="Agent 执行轨迹：输入、计划、工具、评估">
-          <div class="trace__header">
-            <p class="trace__title">执行轨迹</p>
-            <p class="trace__caption">一个 Agent run 的四个真实阶段</p>
-          </div>
-          <div class="trace__stage">
-            <span class="trace__connector" aria-hidden="true"></span>
-            <span class="trace__token" aria-hidden="true"></span>
-            <ul class="trace__nodes">${traceMarkup}</ul>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="route-picker container" id="route-picker">
-      <p class="section-kicker">学习路线</p>
-      <h2 class="section-title">选择你的起点</h2>
-      <div class="route-tabs" role="group" aria-label="学习路线选择">${routeTabsMarkup}</div>
-
-      <section class="route-detail" id="route-detail" aria-live="polite" aria-label="当前路线的课程详情">
-        <p class="route-detail__eyebrow">当前路线</p>
-        <h3 class="route-detail__name" id="route-name">入门</h3>
-        <p class="route-detail__meta">
-          <span id="route-audience">首次构建 Agent 的开发者</span><span aria-hidden="true"> · </span>
-          <span id="route-duration">约 2 周</span><span aria-hidden="true"> · </span>
-          <span id="route-lesson-count">12 节课</span>
-        </p>
-        <p class="route-detail__summary" id="route-summary">从提示与模型调用开始，用可验证的小项目跑通一个 Agent 的完整生命周期：输入、计划、工具、评估。</p>
-        <ol class="route-detail__stages" id="route-stages">
-          <li>提示与模型调用</li>
-          <li>接入第一个 Tool</li>
-          <li>加入 Memory 与上下文</li>
-          <li>用 Eval 验证收尾</li>
-        </ol>
-        <a class="btn btn--primary route-detail__cta" id="first-lesson-link" href="#first-lesson-beginner">开始入门路线 · 第一课：让一个模型调用跑起来</a>
-        <span class="first-lesson-anchor" id="first-lesson-builder"></span>
-        <span class="first-lesson-anchor" id="first-lesson-advanced"></span>
-      </section>
-    </section>
-
-    <!-- 第一课：完整中文静态课程（AC-002 / AC-DEEP-001~007）。课程区为纯静态内容：
-         无交互控件、无 aria-live、无动画、无网络/存储写入；builder/advanced 保持空锚点。 -->
-    <section class="lesson container" id="first-lesson-beginner" aria-labelledby="first-lesson-title">
+// 第一课完整课程（与 src/main.ts 中 first-lesson-beginner section 内层 HTML 逐字一致）
+export const lessonBeginnerHtml = `
       <div class="lesson__header">
         <p class="lesson__kicker">入门路线 · 第 01 课</p>
         <h2 class="lesson__title" id="first-lesson-title">从一次模型调用到可验证的 Agent Run</h2>
@@ -602,352 +475,4 @@ app.innerHTML = `
           </p>
         </section>
       </div>
-    </section>
-
-    <section class="capability-map container" id="capability-map">
-      <p class="section-kicker">能力地图</p>
-      <h2 class="section-title">六类能力，从可控到可验证</h2>
-      <ul class="capability-grid">${capabilityMarkup}</ul>
-    </section>
-
-    <section class="weekly-lab container" id="weekly-lab">
-      <p class="section-kicker">本周实验</p>
-      <h2 class="section-title">本周实验：研究助手</h2>
-      <ul class="weekly-lab__facts">
-        ${weeklyLabFacts.map((fact) => `<li class="weekly-lab__fact">${fact}</li>`).join('')}
-      </ul>
-      <p class="weekly-lab__hint">做完第一课即可开始；每一步都用可验证的结果说话。</p>
-    </section>
-
-    <section class="progress-panel container" id="progress-panel" aria-labelledby="progress-title">
-      <p class="section-kicker">学习进度</p>
-      <h2 class="section-title" id="progress-title">保存你的学习进度</h2>
-      <p class="service-banner" id="service-unavailable" hidden>服务不可用：课程内容以本地缓存展示，进度保存暂不可用</p>
-      <div id="progress-panel-body">
-        <form class="auth-form" id="auth-form">
-          <p class="auth-form__hint">登录后可在不同设备恢复你的进度（演示环境，无邮箱验证）。</p>
-          <label class="auth-form__field">
-            <span>用户名</span>
-            <input type="text" id="auth-username" name="username" autocomplete="username" required />
-          </label>
-          <label class="auth-form__field">
-            <span>密码</span>
-            <input type="password" id="auth-password" name="password" autocomplete="current-password" required />
-          </label>
-          <div class="auth-form__actions">
-            <button type="submit" class="btn btn--primary" id="auth-submit-login">登录</button>
-            <button type="button" class="btn btn--secondary" id="auth-toggle">注册</button>
-          </div>
-          <p class="auth-form__error" id="auth-error" hidden></p>
-        </form>
-
-        <form class="progress-form" id="progress-form" hidden>
-          <p class="progress-form__who">登录用户：<strong id="progress-username"></strong></p>
-          <label class="progress-form__field">
-            <input type="checkbox" id="progress-first-lesson" />
-            <span>第一课完成</span>
-          </label>
-          <label class="progress-form__field">
-            <span>第一课评估分（0–10，可空）</span>
-            <input type="number" id="progress-score" min="0" max="10" step="1" />
-          </label>
-          <label class="progress-form__field">
-            <input type="checkbox" id="progress-lab" />
-            <span>本周实验完成</span>
-          </label>
-          <div class="progress-form__actions">
-            <button type="submit" class="btn btn--primary" id="progress-save">保存进度</button>
-            <button type="button" class="btn btn--secondary" id="progress-logout">退出登录</button>
-          </div>
-          <p class="progress-form__status" id="progress-status" aria-live="polite"></p>
-        </form>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <p>Agent 学习实验室 · 无网络请求、无第三方运行时依赖，全部课程数据静态内联于前端源码</p>
-    </div>
-  </footer>
 `
-
-// ── 交互：任一时刻恰好一条路线选中（aria-pressed 与内容/轨迹/CTA 同步） ──
-
-let currentRoutes: Route[] = routes
-const routeTabsContainer = document.querySelector<HTMLDivElement>('.route-tabs')!
-const routeButtons = document.querySelectorAll<HTMLButtonElement>('.route-tab')
-const routeNameEl = document.querySelector<HTMLElement>('#route-name')!
-const routeAudienceEl = document.querySelector<HTMLElement>('#route-audience')!
-const routeDurationEl = document.querySelector<HTMLElement>('#route-duration')!
-const routeLessonCountEl = document.querySelector<HTMLElement>('#route-lesson-count')!
-const routeSummaryEl = document.querySelector<HTMLElement>('#route-summary')!
-const routeStagesEl = document.querySelector<HTMLOListElement>('#route-stages')!
-const traceStatusEls = Array.from(
-  document.querySelectorAll<HTMLElement>('.trace__node-status'),
-)
-const firstLessonLink = document.querySelector<HTMLAnchorElement>('#first-lesson-link')!
-const heroFirstLessonLink = document.querySelector<HTMLAnchorElement>('#hero-first-lesson-link')!
-
-function selectRoute(routeId: RouteId): void {
-  const route = currentRoutes.find((item) => item.id === routeId)
-  if (!route) return
-
-  routeButtons.forEach((btn) => {
-    const isActive = btn.dataset.route === routeId
-    btn.setAttribute('aria-pressed', String(isActive))
-    btn.classList.toggle('is-active', isActive)
-  })
-
-  routeNameEl.textContent = route.name
-  routeAudienceEl.textContent = route.audience
-  routeDurationEl.textContent = route.duration
-  routeLessonCountEl.textContent = route.lessonCount
-  routeSummaryEl.textContent = route.summary
-  routeStagesEl.innerHTML = route.stages.map((stage) => `<li>${stage}</li>`).join('')
-  traceStatusEls.forEach((el, index) => {
-    el.textContent = route.traceStates[index]
-  })
-  firstLessonLink.href = `#first-lesson-${route.id}`
-  firstLessonLink.textContent = `开始${route.name}路线 · 第一课：${route.firstLesson}`
-  heroFirstLessonLink.href = `#first-lesson-${route.id}`
-  heroFirstLessonLink.textContent = `开始${route.name}路线 · 第一课`
-}
-
-routeButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    selectRoute(btn.dataset.route as RouteId)
-  })
-})
-
-// 初始状态：默认选中「入门」
-selectRoute('beginner')
-
-// ── 降级与进度面板（服务化课程内容，AC-FE-001/002；登录与进度，AC-FE-003~006） ──
-// 网络与存储字面量集中在 src/api.ts 与 src/auth.ts；本文件仅编排，保证既有断言仍绿（R1/R2）。
-
-const serviceBanner = document.getElementById('service-unavailable')
-const capabilityListEl = document.querySelector<HTMLUListElement>('.capability-grid')!
-const weeklyLabFactsEl = document.querySelector<HTMLUListElement>('.weekly-lab__facts')!
-const lessonSection = document.getElementById('first-lesson-beginner')
-
-function renderCapabilities(items: { title: string; desc: string }[]): void {
-  capabilityListEl.innerHTML = items
-    .map(
-      (item) => `
-      <li class="capability-card">
-        <h3 class="capability-card__title">${item.title}</h3>
-        <p class="capability-card__desc">${item.desc}</p>
-      </li>`,
-    )
-    .join('')
-}
-
-function renderWeeklyLab(lab: {
-  goal: string
-  input: string
-  tools: string
-  criteria: string
-  duration: string
-}): void {
-  weeklyLabFactsEl.innerHTML = [
-    `目标：${lab.goal}`,
-    `输入：${lab.input}`,
-    `工具：${lab.tools}`,
-    `成功标准：${lab.criteria}`,
-    `时长：${lab.duration}`,
-  ]
-    .map((fact) => `<li class="weekly-lab__fact">${fact}</li>`)
-    .join('')
-}
-
-async function loadServerContent(): Promise<boolean> {
-  try {
-    const content = await loadCourseContent()
-    const serverRoutes = content.routes.map((route) => ({
-      id: route.id as RouteId,
-      name: route.name,
-      audience: route.audience,
-      duration: route.duration,
-      lessonCount: route.lessonCount,
-      summary: route.summary,
-      stages: route.stages,
-      firstLesson: route.firstLesson,
-      traceStates: route.traceStates as [string, string, string, string],
-    }))
-    currentRoutes = serverRoutes
-
-    routeTabsContainer.innerHTML = serverRoutes
-      .map(
-        (route, index) => `
-      <button
-        type="button"
-        class="route-tab${index === 0 ? ' is-active' : ''}"
-        data-route="${route.id}"
-        aria-pressed="${index === 0 ? 'true' : 'false'}"
-      >${route.name}</button>`,
-      )
-      .join('')
-    const freshButtons = document.querySelectorAll<HTMLButtonElement>('.route-tab')
-    freshButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        selectRoute(btn.dataset.route as RouteId)
-      })
-    })
-
-    renderCapabilities(content.capabilities)
-    renderWeeklyLab(content.lab)
-    if (lessonSection && content.lesson.html) {
-      lessonSection.innerHTML = content.lesson.html
-    }
-    selectRoute('beginner')
-    if (serviceBanner) serviceBanner.hidden = true
-    return true
-  } catch {
-    if (serviceBanner) serviceBanner.hidden = false
-    return false
-  }
-}
-
-// 进度面板状态
-const authForm = document.getElementById('auth-form') as HTMLFormElement | null
-const progressForm = document.getElementById('progress-form') as HTMLFormElement | null
-const usernameInput = document.getElementById('auth-username') as HTMLInputElement | null
-const passwordInput = document.getElementById('auth-password') as HTMLInputElement | null
-const authSubmitBtn = document.getElementById('auth-submit-login') as HTMLButtonElement | null
-const authToggleBtn = document.getElementById('auth-toggle') as HTMLButtonElement | null
-const authErrorEl = document.getElementById('auth-error')
-const progressUsernameEl = document.getElementById('progress-username')
-const firstLessonChk = document.getElementById('progress-first-lesson') as HTMLInputElement | null
-const scoreInput = document.getElementById('progress-score') as HTMLInputElement | null
-const labChk = document.getElementById('progress-lab') as HTMLInputElement | null
-const progressLogoutBtn = document.getElementById('progress-logout') as HTMLButtonElement | null
-const progressStatusEl = document.getElementById('progress-status')
-
-let authMode: 'login' | 'register' = 'login'
-let currentSession = loadSession()
-
-function setAuthMode(mode: 'login' | 'register'): void {
-  authMode = mode
-  if (authSubmitBtn) {
-    authSubmitBtn.textContent = mode === 'login' ? '登录' : '注册'
-  }
-}
-
-function showAuthError(message: string): void {
-  if (!authErrorEl) return
-  authErrorEl.textContent = message
-  authErrorEl.hidden = false
-}
-
-function clearAuthError(): void {
-  if (!authErrorEl) return
-  authErrorEl.hidden = true
-  authErrorEl.textContent = ''
-}
-
-function enterLoggedIn(username: string, token: string): void {
-  currentSession = { token, username }
-  saveSession(currentSession)
-  if (authForm) authForm.hidden = true
-  if (progressForm) progressForm.hidden = false
-  if (progressUsernameEl) progressUsernameEl.textContent = username
-  void refreshProgress()
-}
-
-function enterLoggedOut(): void {
-  currentSession = null
-  clearSession()
-  if (authForm) authForm.hidden = false
-  if (progressForm) progressForm.hidden = true
-  clearAuthError()
-  if (progressStatusEl) progressStatusEl.textContent = ''
-}
-
-function setProgressStatus(message: string): void {
-  if (progressStatusEl) progressStatusEl.textContent = message
-}
-
-async function refreshProgress(): Promise<void> {
-  if (!currentSession || !firstLessonChk || !scoreInput || !labChk) return
-  try {
-    const progress = await getProgress(currentSession.token)
-    firstLessonChk.checked = progress.firstLessonCompleted
-    scoreInput.value = progress.evaluationScore === null ? '' : String(progress.evaluationScore)
-    labChk.checked = progress.weeklyLabCompleted
-    if (progress.updatedAt) {
-      setProgressStatus(`最近保存：${new Date(progress.updatedAt).toLocaleString()}`)
-    }
-  } catch {
-    setProgressStatus('无法读取服务端进度')
-  }
-}
-
-async function saveProgress(): Promise<void> {
-  if (!currentSession || !firstLessonChk || !scoreInput || !labChk) return
-  const raw = scoreInput.value
-  const score = raw === '' ? null : Number(raw)
-  setProgressStatus('保存中…')
-  try {
-    const progress = await putProgress(currentSession.token, {
-      firstLessonCompleted: firstLessonChk.checked,
-      evaluationScore: score,
-      weeklyLabCompleted: labChk.checked,
-    })
-    if (scoreInput) scoreInput.value = progress.evaluationScore === null ? '' : String(progress.evaluationScore)
-    if (progress.updatedAt) {
-      setProgressStatus(`已保存：${new Date(progress.updatedAt).toLocaleString()}`)
-    } else {
-      setProgressStatus('已保存')
-    }
-  } catch {
-    setProgressStatus('保存失败，已保留当前填写内容')
-  }
-}
-
-if (authForm) {
-  authForm.addEventListener('submit', (event) => {
-    event.preventDefault()
-    if (!usernameInput || !passwordInput) return
-    const username = usernameInput.value.trim()
-    const password = passwordInput.value
-    clearAuthError()
-    const attempt = authMode === 'login' ? login(username, password) : register(username, password)
-    void attempt.then(
-      (session) => {
-        enterLoggedIn(session.username, session.token)
-        if (usernameInput) usernameInput.value = ''
-        if (passwordInput) passwordInput.value = ''
-      },
-      (err: Error) => {
-        showAuthError(err.message)
-      },
-    )
-  })
-}
-
-if (authToggleBtn) {
-  authToggleBtn.addEventListener('click', () => {
-    setAuthMode(authMode === 'login' ? 'register' : 'login')
-    clearAuthError()
-  })
-}
-
-if (progressForm) {
-  progressForm.addEventListener('submit', (event) => {
-    event.preventDefault()
-    void saveProgress()
-  })
-}
-
-if (progressLogoutBtn) {
-  progressLogoutBtn.addEventListener('click', () => {
-    enterLoggedOut()
-  })
-}
-
-// 启动：先渲染内联（现状），后台拉取服务数据；随后恢复会话
-void loadServerContent()
-if (currentSession) {
-  enterLoggedIn(currentSession.username, currentSession.token)
-}

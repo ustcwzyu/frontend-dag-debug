@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# SQLite runtime database (server/data)
+server/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -51,9 +54,9 @@ dist-ssr
 # session / cache / logs / recomputable surface state
 .harness/live/
 .harness/cache/
-.harness/operator-input/
 .harness/*.log
 .harness/init-surface.json
+.harness/init-upgrades/
 
 # Eval Lab runtime (candidates, campaigns, scorecards, dogfood scratch)
 .harness/evaluation/

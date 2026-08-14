@@ -440,6 +440,343 @@ a {
   scroll-margin-top: 5.5rem;
 }
 
+/* ── 第一课：从一次模型调用到可验证的 Agent Run（AC-LESSON-001~005） ── */
+
+.lesson {
+  padding-block: 1rem 4rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.lesson__header {
+  margin-bottom: 1.5rem;
+  padding: 1.75rem;
+  background: var(--color-navy);
+  color: var(--color-mist);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.lesson__kicker {
+  margin-bottom: 0.5rem;
+  color: var(--color-spring);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.lesson__title {
+  margin-bottom: 0.6rem;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  line-height: 1.25;
+  font-family: var(--font-display);
+}
+
+.lesson__meta {
+  font-size: 0.85rem;
+  color: rgba(231, 238, 242, 0.75);
+  font-family: var(--font-mono);
+}
+
+.lesson__body {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.lesson-block {
+  padding: 1.5rem 1.5rem 1.6rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+.lesson-block h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+  font-family: var(--font-display);
+}
+
+.lesson-block h4 {
+  margin: 1.1rem 0 0.5rem;
+  color: var(--color-coral);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+
+.lesson-block p {
+  max-width: 60ch;
+  color: rgba(16, 38, 58, 0.8);
+}
+
+.lesson__core-statement {
+  display: block;
+  margin-bottom: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--color-mist);
+  border-left: 4px solid var(--color-coral);
+  font-weight: 800;
+  font-family: var(--font-display);
+}
+
+.lesson__lab-note {
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--color-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.lesson-loop {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.9rem 0 0.4rem;
+}
+
+.lesson-loop li {
+  position: relative;
+  min-width: 0;
+  padding: 0.6rem 0.4rem;
+  text-align: center;
+  background: var(--color-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  overflow-wrap: break-word;
+  font-family: var(--font-mono);
+}
+
+.lesson__loop-note {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(16, 38, 58, 0.7);
+  font-family: var(--font-mono);
+}
+
+.lesson-block ul,
+.lesson-block ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0.9rem;
+}
+
+.lesson-block ol {
+  list-style: decimal;
+  padding-left: 1.3rem;
+}
+
+.lesson-block ol li::marker {
+  color: var(--color-coral);
+  font-weight: 700;
+}
+
+.lesson-block ul li {
+  position: relative;
+  padding-left: 1.25rem;
+  color: rgba(16, 38, 58, 0.8);
+}
+
+.lesson-block ul li::before {
+  content: '';
+  position: absolute;
+  left: 0.05rem;
+  top: 0.55rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--color-lilac);
+}
+
+.lesson-block code {
+  font-family: var(--font-mono);
+  background: var(--color-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.9em;
+}
+
+.lesson-block pre {
+  margin: 0.6rem 0 0.9rem;
+  padding: 1rem;
+  background: var(--color-navy);
+  color: var(--color-mist);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lesson-block pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.lesson-block .lesson__next {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--color-line);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* ── 第一课深化：定位卡片、表格局部滚动、样例块与标签（AC-DEEP-001~007） ── */
+
+.lesson-facts {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.7rem 0 1rem;
+}
+
+.lesson-fact {
+  padding: 0.7rem 0.9rem;
+  background: var(--color-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+}
+
+.lesson-fact dt {
+  color: var(--color-coral);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+}
+
+.lesson-fact dd {
+  margin: 0.2rem 0 0;
+  color: rgba(16, 38, 58, 0.8);
+}
+
+.lesson-table-wrap {
+  margin: 0.7rem 0 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+}
+
+.lesson-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  font-size: 0.88rem;
+}
+
+.lesson-table caption {
+  padding: 0.55rem 0.9rem;
+  background: var(--color-navy);
+  color: var(--color-mist);
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  font-family: var(--font-display);
+}
+
+.lesson-table th,
+.lesson-table td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lesson-table thead th {
+  background: var(--color-mist);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.lesson-table tbody th[scope='row'] {
+  background: rgba(231, 238, 242, 0.55);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.lesson-table tbody tr:nth-child(even) {
+  background: rgba(231, 238, 242, 0.3);
+}
+
+.lesson-table code {
+  font-family: var(--font-mono);
+  background: var(--color-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 0.08rem 0.3rem;
+  font-size: 0.9em;
+}
+
+.lesson-table ol {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: decimal;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.lesson-sample {
+  margin: 0.7rem 0 0.5rem;
+  padding: 0.8rem 0.95rem;
+  background: var(--color-mist);
+  border: 1px dashed var(--color-coral);
+  border-radius: 10px;
+}
+
+.lesson-sample__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--color-coral);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.lesson-sample__why {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  color: rgba(16, 38, 58, 0.72);
+}
+
+.lesson-sample--fixed {
+  background: rgba(159, 227, 194, 0.12);
+  border-color: var(--color-spring);
+}
+
+.lesson-sample--fixed .lesson-sample__label {
+  color: #11794d;
+}
+
+.lesson-badge {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-lilac);
+  color: var(--color-ink);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+
 /* ── 能力地图 ── */
 
 .capability-map {
@@ -585,6 +922,118 @@ a {
   .route-detail__cta {
     width: 100%;
   }
+
+  .lesson {
+    padding-block: 0.5rem 3rem;
+  }
+
+  .lesson__header {
+    padding: 1.25rem;
+  }
+
+  .lesson-block {
+    padding: 1.25rem;
+  }
+
+  .lesson-loop {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .lesson-loop li {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* ── 服务不可用横幅与学习进度面板（服务化课程内容 / 登录与进度） ── */
+
+.service-banner {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-card);
+  background: #fff1ec;
+  color: var(--color-coral);
+  border: 1px solid rgba(255, 90, 54, 0.4);
+  font-weight: 600;
+}
+
+.progress-panel {
+  padding-block: 0.5rem 4rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.progress-panel .section-title {
+  margin-bottom: 1.25rem;
+}
+
+.auth-form,
+.progress-form {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 30rem;
+  padding: 1.5rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-form__hint {
+  font-size: 0.88rem;
+  color: rgba(16, 38, 58, 0.72);
+}
+
+.auth-form__field,
+.progress-form__field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.auth-form__field input,
+.progress-form__field input[type='number'] {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font: inherit;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+.auth-form__field input:focus-visible,
+.progress-form__field input:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 1px;
+}
+
+.progress-form__field {
+  grid-auto-flow: column;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.auth-form__actions,
+.progress-form__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.auth-form__error {
+  font-size: 0.85rem;
+  color: var(--color-coral);
+}
+
+.progress-form__who {
+  font-size: 0.9rem;
+}
+
+.progress-form__status {
+  font-size: 0.85rem;
+  color: rgba(16, 38, 58, 0.72);
+  min-height: 1.2em;
 }
 
 /* ── 无障碍：prefers-reduced-motion 下禁用轨迹动画与平滑滚动（静态完成态） ── */

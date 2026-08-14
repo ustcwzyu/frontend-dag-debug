@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "frontend-test-standard-scenarios-v1",
+  "scenarios": [
+    {
+      "id": "STD-FE-SMOKE-ENTRY",
+      "title": "入口可打开与壳层可见",
+      "category": "smoke",
+      "priority": "must",
+      "dimensionHint": "core",
+      "testPoints": ["冻结 baseUrl 可 open", "关键导航或页面壳可见"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-EMPTY-STATE",
+      "title": "列表空态",
+      "category": "empty",
+      "priority": "must",
+      "dimensionHint": "boundary",
+      "testPoints": ["无数据时空态文案或引导", "不白屏"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-LIST-PAGE",
+      "title": "列表渲染",
+      "category": "list",
+      "priority": "must",
+      "dimensionHint": "core",
+      "testPoints": ["表头/列或卡片列表可见", "有数据时行可渲染"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-PAGINATION",
+      "title": "分页或加载更多",
+      "category": "pagination",
+      "priority": "should",
+      "dimensionHint": "boundary",
+      "testPoints": ["翻页或加载更多可观察", "数据不足可 blocked 并写原因"],
+      "minCases": 0
+    },
+    {
+      "id": "STD-FE-CREATE-FORM-VALIDATION",
+      "title": "创建表单校验",
+      "category": "form",
+      "priority": "must",
+      "dimensionHint": "boundary",
+      "testPoints": ["必填/格式校验", "不提交明显脏数据"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-CREATE-SUCCESS",
+      "title": "创建成功反馈",
+      "category": "create",
+      "priority": "must",
+      "dimensionHint": "flow",
+      "testPoints": ["成功提示", "列表或详情可见新数据或等价反馈"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-VIEW-DETAIL",
+      "title": "详情查看",
+      "category": "detail",
+      "priority": "must",
+      "dimensionHint": "core",
+      "testPoints": ["从列表进入详情", "关键字段可读"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-UPDATE-OWNED",
+      "title": "更新归属数据",
+      "category": "update",
+      "priority": "should",
+      "dimensionHint": "flow",
+      "testPoints": ["仅可证明归属数据", "否则 blocked"],
+      "minCases": 0
+    },
+    {
+      "id": "STD-FE-DELETE-CONFIRM",
+      "title": "删除确认",
+      "category": "delete",
+      "priority": "should",
+      "dimensionHint": "flow",
+      "testPoints": ["确认框或等价保护", "归属规则"],
+      "minCases": 0
+    },
+    {
+      "id": "STD-FE-SEARCH-FILTER",
+      "title": "搜索筛选",
+      "category": "filter",
+      "priority": "must",
+      "dimensionHint": "core",
+      "testPoints": ["关键字或状态筛选结果变化"],
+      "minCases": 1
+    },
+    {
+      "id": "STD-FE-API-ERROR-TOAST",
+      "title": "后端错误可见反馈",
+      "category": "error",
+      "priority": "should",
+      "dimensionHint": "backend",
+      "testPoints": ["错误提示可观察", "可用 Mock"],
+      "minCases": 0
+    },
+    {
+      "id": "STD-FE-LOADING-DISABLED",
+      "title": "提交中防重复",
+      "category": "interaction",
+      "priority": "should",
+      "dimensionHint": "boundary",
+      "testPoints": ["loading 或按钮禁用"],
+      "minCases": 0
+    }
+  ]
+}

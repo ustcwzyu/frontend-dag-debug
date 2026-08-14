@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test",
     "build": "tsc && vite build",
@@ -14,6 +15,9 @@
     "dag:run": "node ../loop-agent/bin/loop-agent.js run-dag --dag .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json --cwd ."
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "express": "^5.2.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

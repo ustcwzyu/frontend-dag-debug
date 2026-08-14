@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "taskId": "20260810-agents-learning-site",
+  "title": "将项目改造为 Agents 学习网站",
+  "taskKind": "frontend-implementation",
+  "requirement": {
+    "objective": "交付一个中文优先、响应式、无后端依赖的 Agent 学习实验室单页网站，让有基础开发经验的学习者在 5 分钟内理解 Agent 学习版图、选择入门/构建/进阶路线并开始第一课。",
+    "scope": [
+      "更新站点元数据、首页语义结构、本地路线切换交互、响应式视觉系统与 favicon",
+      "用真实课程内容覆盖模型与提示、工具、记忆、规划、评估与可观测性、安全与边界",
+      "更新聚焦行为测试与 README 人类维护区，并保留 loop-agent managed block",
+      "保留 src/task-board.ts 及其独立纯函数测试，但不再把旧任务看板挂载到首页"
+    ],
+    "nonGoals": [
+      "后端、登录、支付、课程播放、云同步、多页路由、部署或发布",
+      "第三方 API、Mock 契约、外部字体、远程图片或新增运行时依赖",
+      "删除或编辑 src/task-board.ts、修改 package.json 或治理/运行事实",
+      "创建 Git commit、push 或 pull request"
+    ],
+    "acceptanceCriteria": [
+      {
+        "id": "AC-AGENT-001",
+        "text": "首页可见 Agent 学习实验室身份、清晰主张、主/次 CTA 与课程路线、能力地图、实践项目导航，且旧 hello world 调试 UI 不再挂载。"
+      },
+      {
+        "id": "AC-AGENT-002",
+        "text": "首次加载时入门路线为唯一 aria-pressed=true 的选项，并显示明确受众、周期、课程数、阶段列表与第一课动作。"
+      },
+      {
+        "id": "AC-AGENT-003",
+        "text": "点击构建或进阶路线后，唯一选中状态、路线名称、周期、课程数、简介、阶段列表、执行轨迹状态与第一课 CTA 同步更新，不刷新页面且不发网络请求。"
+      },
+      {
+        "id": "AC-AGENT-004",
+        "text": "能力地图明确覆盖模型与提示、Tool、Memory、规划与编排、Eval 与可观测性、安全与边界六类主题，中文文案具体且不伪造数据。"
+      },
+      {
+        "id": "AC-AGENT-005",
+        "text": "首屏执行轨迹含输入、计划、工具、评估四个真实阶段及状态；本周实验明确研究助手目标、输入、工具、成功标准和约 45 分钟时长。"
+      },
+      {
+        "id": "AC-AGENT-006",
+        "text": "在约 1440x900 桌面视口中 hero 为不对称双栏，结构线和内容对齐，无 overlap、clipping 或不可读文字，浏览器 console 无 error。"
+      },
+      {
+        "id": "AC-AGENT-007",
+        "text": "在 390x844 移动视口中页面为清晰单列或可控布局，无横向 overflow、按钮不可达或文字裁切。"
+      },
+      {
+        "id": "AC-AGENT-008",
+        "text": "路线按钮与链接支持键盘操作且 focus 可见；prefers-reduced-motion 下禁用轨迹动画和平滑滚动。"
+      },
+      {
+        "id": "AC-AGENT-009",
+        "text": "index.html 使用 zh-CN、准确标题/描述/主题色和新 favicon；README 人类维护区描述新站点且 managed block 保持原样。"
+      },
+      {
+        "id": "AC-AGENT-010",
+        "text": "writer 按行为切片执行 TDD 的 RED 到 GREEN，最终 npm test、npm run typecheck、npm run build 均退出 0。"
+      }
+    ]
+  },
+  "constraints": {
+    "invariants": [
+      "业务实现只能由 taskKind=frontend-implementation 的受治理 DAG writer 写入",
+      "保持 Vite + TypeScript 零运行时依赖，所有课程数据静态保存在前端源码且无网络请求",
+      "使用 PRD 指定的 Mist/Ink/Deep Navy/Signal Coral/Spring/Circuit Lilac token，不使用渐变或外部字体",
+      "页面唯一视觉签名是编码真实 Agent 阶段的可交互执行轨迹，并尊重 prefers-reduced-motion",
+      "任一时刻恰好一条学习路线被选中，aria-pressed 与视觉/内容状态一致",
+      "README 只能更新 LOOP_AGENT_INIT_START 之前的人类维护区，managed block 原样保留",
+      "不得删除或编辑 src/task-board.ts，不得回退无关用户改动，不得提交或推送 Git",
+      "行为改动按一个聚焦测试到最小实现的垂直 TDD 切片推进并记录 RED/GREEN 命令",
+      "frontend implementation contract 的每个 verificationTargets.symbol 必须是 target file 内实际存在、可由字面匹配定位的简短标识符或文本，例如 routeTabsMarkup、@media (prefers-reduced-motion: reduce)、lang=zh-CN 或具体测试名；npm 命令、括号说明、整段自然语言和不存在于文件中的描述绝不能作为 symbol"
+    ],
+    "allowedPaths": [
+      "README.md",
+      "index.html",
+      "public/favicon.svg",
+      "src/main.ts",
+      "src/style.css",
+      "test/homepage.test.mjs",
+      "test/task-board.test.mjs"
+    ],
+    "forbiddenPaths": [
+      ".harness/**",
+      ".agents/**",
+      "ai_workspace/**",
+      "artifacts/**",
+      "package-lock.json",
+      "package.json",
+      "scripts/**",
+      "src/task-board.ts"
+    ],
+    "protectedUserChanges": [
+      "当前工作区全部初始化迁移、skills、governance docs、scripts 与旧 DAG facts",
+      "src/task-board.ts 及其独立纯函数行为",
+      "README.md 已有 human section 迁移内容以及完整 managed block",
+      "任何不在 allowedPaths 精确列表中的 tracked/untracked 文件"
+    ],
+    "expectedVerification": [
+      "npm test",
+      "npm run typecheck",
+      "npm run build",
+      "浏览器桌面 1440x900 与移动 390x844 的布局、交互、overflow、console error、键盘 focus 检查"
+    ],
+    "failureConditions": [
+      "writer writeSet 超出 allowedPaths 或触碰任一 forbidden/protected path",
+      "旧 hello world、问候弹窗或任务看板仍挂载在新首页",
+      "路线切换未同步 aria-pressed、详情、轨迹或 CTA，或出现网络请求",
+      "桌面/移动布局有遮挡、裁切、横向溢出或键盘不可达",
+      "任一 tests/typecheck/build 命令非零退出",
+      "verificationTargets.symbol 在声明的 target file 中无法找到，或把 shell command / 描述句误写成 symbol",
+      "README managed block 被修改，或任务创建 commit/push"
+    ],
+    "knownRisks": [
+      "工作区已有大量未提交初始化/治理迁移，必须依赖窄 writeSet 防止污染",
+      "2026-07-23 的 active pending 快照仍存在且 controller 无法证明 runner 停止，本次不修改该历史事实",
+      "旧首页集成测试需要移除已废弃挂载断言，但 task-board 独立能力仍需保持通过"
+    ]
+  },
+  "verification": {
+    "commands": [
+      {
+        "label": "tests",
+        "command": "npm test",
+        "timeoutMs": 120000
+      },
+      {
+        "label": "typecheck",
+        "command": "npm run typecheck",
+        "timeoutMs": 120000
+      },
+      {
+        "label": "build",
+        "command": "npm run build",
+        "timeoutMs": 120000
+      }
+    ]
+  },
+  "references": [
+    {
+      "role": "requirement",
+      "ref": "references/requirement.md"
+    }
+  ],
+  "openQuestions": [],
+  "assumptions": [
+    "用户未指定品牌、多页结构或课程深度，因此采用面向有基础开发经验者的中文单页学习路径选择器作为可逆默认",
+    "Console 仅用于监控，任务创建和执行仍通过 CLI happy path"
+  ]
+}
