@@ -26,6 +26,7 @@ This directory is the loop-agent governance root for `frontend-dag-debug`. It re
 - `progress/README.md` - 进度交接日志 / progress handoff logs
 - `reports/README.md` - 验证与审计报告 / verification and audit reports
 - `decisions/README.md` - 架构决策 / architecture decisions
+- `templates/README.md` - 模板入口与类别说明 / template entrypoint and category guide
 - `templates/` - 可复用的计划、报告与 DAG 模板 / reusable planning, reporting, and DAG templates
 - `templates/production-readiness-checklist.md` - 低/中风险单仓库 DAG 任务的 production readiness 检查清单 / production readiness checklist for low/medium-risk single-repo DAG work
 - `templates/worker-dogfood-setup.md` - 发布控制器下的真实 Worker sample setup / real Worker sample setup with a published controller

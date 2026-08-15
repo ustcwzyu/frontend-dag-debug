@@ -22,10 +22,10 @@ test('站点身份：Agent 学习实验室与主张', async () => {
   assert.match(source, /让 Agent 不再靠运气工作/)
 })
 
-test('首屏包含主 CTA（指向第一课锚点）与次 CTA（能力地图）', async () => {
+test('首屏包含主 CTA（指向第一课路由）与次 CTA（能力地图）', async () => {
   const source = await read('../src/main.ts')
-  assert.match(source, /href="#first-lesson-beginner"/)
-  assert.match(source, /href="#capability-map"/)
+  assert.match(source, /href="#\/lesson\/beginner"/)
+  assert.match(source, /href="#\/"/)
   assert.match(source, /查看能力地图/)
   assert.match(source, /开始入门路线/)
 })
@@ -49,19 +49,12 @@ test('默认课程详情展示入门受众/周期/课程数/第一课动作', as
 
 // ── 路线切换同步（AC-AGENT-003 / BR-AGENT-002 / uiStates build/advanced） ──
 
-test('路线切换同步 aria-pressed、活动样式与详情字段', async () => {
+test('路线 tab 点击经 navigate 导航到对应课程页（hash 路由）', async () => {
   const source = await read('../src/main.ts')
-  assert.match(source, /setAttribute\(['"]aria-pressed['"]/)
-  assert.match(source, /classList\.toggle/)
-  assert.match(source, /routeNameEl/)
-  assert.match(source, /routeAudienceEl/)
-  assert.match(source, /routeDurationEl/)
-  assert.match(source, /routeLessonCountEl/)
-  assert.match(source, /routeSummaryEl/)
-  assert.match(source, /routeStagesEl/)
-  assert.match(source, /traceStatusEls/)
-  assert.match(source, /firstLessonLink/)
-  assert.match(source, /#first-lesson-\$\{route\.id\}/)
+  assert.match(source, /navigate\(`#\/lesson\/\$\{routeId\}`\)/)
+  assert.match(source, /data-route=/)
+  assert.match(source, /\.route-tab/)
+  assert.match(source, /#\/lesson\/beginner/)
 })
 
 test('切换不刷新页面、无网络请求、无 localStorage 写入', async () => {
@@ -210,10 +203,10 @@ test('第一课：空锚点替换为可见课程 section（id + 5.5rem 滚动补
   assert.match(css, /\.lesson\s*\{[\s\S]*?scroll-margin-top:\s*5\.5rem/)
 })
 
-test('第一课：hero 与路线详情双 CTA 初始 href 均为 #first-lesson-beginner', async () => {
+test('第一课：hero 与路线详情双 CTA 初始 href 均为 #/lesson/beginner', async () => {
   const source = await read('../src/main.ts')
-  const hrefs = source.match(/href="#first-lesson-beginner"/g) || []
-  assert.ok(hrefs.length >= 2, `期望至少 2 个 #first-lesson-beginner href，实际 ${hrefs.length}`)
+  const hrefs = source.match(/href="#\/lesson\/beginner"/g) || []
+  assert.ok(hrefs.length >= 2, `期望至少 2 个 #/lesson/beginner href，实际 ${hrefs.length}`)
 })
 
 test('第一课：单次模型调用 ≠ 完整 Agent、八步闭环与三项学习目标（AC-002 / AC-DEEP-002）', async () => {

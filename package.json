@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "node server/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test",
+    "test": "node --test test/homepage.test.mjs test/task-board.test.mjs test/server-api.test.mjs test/frontend-api.test.mjs test/frontend-journal.test.mjs test/frontend-router.test.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "dag:generate": "node ../loop-agent/bin/loop-agent.js dag run-task add-homepage-hello-world --profile auto --strict-models --output .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json",
