@@ -40,6 +40,8 @@ server/data/
 !.harness/dag-runs/completed/.gitkeep
 .harness/dag-runs/paused/*
 !.harness/dag-runs/paused/.gitkeep
+.harness/dag-runs/.operator-requests/
+.harness/dag-runs/archived-inactive/
 
 # one-shot executor runs
 .harness/runs/*
