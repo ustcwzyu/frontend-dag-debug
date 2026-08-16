@@ -111,3 +111,87 @@ test('R4 裁决：style.css 仍只有一处 @keyframes', () => {
   assert.match(css, /\.auth-form/)
   assert.match(css, /\.progress-form/)
 })
+
+// ── 第二课：接入第一个 Tool（AC-L2-005 / AC-L2-006 / AC-L2-008 / AC-FE-004） ──
+
+test('AC-L2-008 api.ts 并行拉取第二课端点并做形状校验', () => {
+  assert.match(apiSource, /fetch\(`\$\{BASE\}\/lessons\/beginner-2`\)/)
+  assert.match(apiSource, /lesson2 payload is malformed/)
+  assert.match(apiSource, /return \{ routes, capabilities, lab, lesson, lesson2 \}/)
+  const contentFetches = (apiSource.match(/fetch\(`\$\{BASE\}\//g) || []).length
+  assert.ok(contentFetches >= 5, `期望至少 5 个内容 fetch 端点，实际 ${contentFetches}`)
+})
+
+test('AC-L2-008 main.ts 双课替换路径与缓存类型扩展', () => {
+  assert.match(mainSource, /getElementById\('first-lesson-beginner'\)/)
+  assert.match(mainSource, /getElementById\('second-lesson-beginner'\)/)
+  // 第二课替换带存在性与内容非空条件
+  assert.match(
+    mainSource,
+    /getElementById\('second-lesson-beginner'\)[\s\S]{0,400}cachedContent\.lesson2\.html/,
+  )
+  assert.match(mainSource, /cachedContent: \{ lesson: LessonData; lesson2: LessonData \}/)
+  assert.match(mainSource, /cachedContent = \{ lesson: content\.lesson, lesson2: content\.lesson2 \}/)
+  assert.doesNotMatch(mainSource, /querySelector(?:All)?\([^)]*second-lesson-beginner/)
+  assert.match(mainSource, /lessonPageMarkup[\s\S]*lessonSectionMarkup[\s\S]*secondLessonSectionMarkup/)
+})
+
+test('AC-L2-005/006 第二课落入课程区纯净断言范围且 main.ts 无网络/存储字面量', () => {
+  const start = mainSource.indexOf('<section class="lesson container" id="second-lesson-beginner"')
+  const end = mainSource.indexOf('const lessonPlaceholderMarkup', start)
+  assert.ok(start >= 0, 'second-lesson-beginner section 存在')
+  assert.ok(end > start, '第二课区域可定位')
+  const secondLesson = mainSource.slice(start, end)
+  for (const pattern of [
+    /<button/i,
+    /<details/i,
+    /<input/i,
+    /<select/i,
+    /<textarea/i,
+    /checkbox/i,
+    /aria-live/i,
+  ]) {
+    assert.doesNotMatch(secondLesson, pattern)
+  }
+  // 第二课内容不引入网络/存储字面量（fetch 仅收敛于 src/api.ts）
+  assert.doesNotMatch(secondLesson, /fetch\(/)
+  assert.doesNotMatch(secondLesson, /localStorage/)
+  assert.doesNotMatch(secondLesson, /XMLHttpRequest/)
+  assert.doesNotMatch(secondLesson, /location\.reload/)
+})
+
+test('R3 裁决：第二课 main.ts 内层与 server/content.ts 逐字一致（AC-L2-005）', () => {
+  const serverSource = readFileSync(new URL('../server/content.ts', import.meta.url), 'utf8')
+  const open = '<section class="lesson container" id="second-lesson-beginner"'
+  const start = mainSource.indexOf(open)
+  assert.ok(start >= 0, 'main.ts 第二课 section 存在')
+  const literalStart = mainSource.indexOf('const secondLessonSectionMarkup = `')
+  const contentStart = mainSource.indexOf('`', literalStart) + 1
+  const contentEnd = mainSource.indexOf('`', contentStart)
+  const mainSection = mainSource.slice(contentStart, contentEnd)
+  const mainInner = mainSection
+    .replace(/^\s*<section class="lesson container" id="second-lesson-beginner"[^>]*>\n/, '')
+    .replace(/\n\s*<\/section>\s*$/, '')
+  const serverLiteralStart = serverSource.indexOf('lessonBeginnerSecondHtml = `')
+  assert.ok(serverLiteralStart >= 0, 'server 第二课字面量存在')
+  const serverContentStart = serverSource.indexOf('`', serverLiteralStart) + 1
+  const serverContentEnd = serverSource.indexOf('`', serverContentStart)
+  const serverInner = serverSource.slice(serverContentStart, serverContentEnd)
+  // 规范化：逐行去尾部空白并去掉首尾空行，其余（含行内缩进）逐字比较
+  const canonical = (text) =>
+    text
+      .split('\n')
+      .map((line) => line.replace(/\s+$/, ''))
+      .join('\n')
+      .replace(/^\n+|\n+$/g, '')
+  assert.equal(canonical(mainInner), canonical(serverInner))
+  // 关键锚点：六个 lesson2-0X-title、tool-contract.md、tool-call-log.md、10 分评估量表
+  for (let i = 1; i <= 6; i++) {
+    assert.ok(mainInner.includes(`lesson2-0${i}-title`), `main.ts 缺少 lesson2-0${i}-title`)
+    assert.ok(serverInner.includes(`lesson2-0${i}-title`), `server 缺少 lesson2-0${i}-title`)
+  }
+  for (const anchor of ['tool-contract.md', 'tool-call-log.md', '10 分评估量表', '8 分及以上才算完成']) {
+    assert.ok(mainInner.includes(anchor), `main.ts 第二课缺少锚点 ${anchor}`)
+    assert.ok(serverInner.includes(anchor), `server 第二课缺少锚点 ${anchor}`)
+  }
+})

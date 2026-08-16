@@ -343,3 +343,53 @@ test('请求体非 JSON 或字段缺失返回 400', async () => {
   const body = await res.json()
   assert.equal(body.code, 'INVALID_INPUT')
 })
+
+// ── 第二课端点（AC-L2-007） ──
+
+test('AC-L2-007 /lessons/beginner-2 返回完整课程 DTO', async () => {
+  const res = await api('/api/v1/lessons/beginner-2')
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.data.routeId, 'beginner-2')
+  assert.equal(body.data.kicker, '入门路线 · 第 02 课')
+  assert.equal(body.data.title, '接入第一个 Tool：声明可验证的工具调用')
+  assert.equal(body.data.meta, '预计用时：60–90 分钟 · 完整交付：七份本地文件')
+  assert.equal(typeof body.data.html, 'string')
+  assert.ok(body.data.html.length > 0)
+  const html = body.data.html
+  // 六个章节锚点
+  for (let i = 1; i <= 6; i++) {
+    assert.match(html, new RegExp(`lesson2-0${i}-title`))
+  }
+  // 关键内容锚点
+  assert.match(html, /tool-contract\.md/)
+  assert.match(html, /tool-call-log\.md/)
+  assert.match(html, /10 分评估量表/)
+  assert.match(html, /8 分及以上才算完成/)
+  assert.match(html, /无参数 Schema/)
+  assert.match(html, /工具名幻觉/)
+  assert.match(html, /失败不重试/)
+  assert.match(html, /调用无记录/)
+  // 头部与 main.ts 一致（kicker/title/meta 为服务器 DTO 提供，html 内层头部同源）
+  assert.match(html, /入门路线 · 第 02 课/)
+  assert.match(html, /接入第一个 Tool：声明可验证的工具调用/)
+})
+
+test('AC-L2-007 /lessons/beginner DTO 逐字不变且未知 routeId 仍 404', async () => {
+  const res = await api('/api/v1/lessons/beginner')
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.data.routeId, 'beginner')
+  assert.equal(body.data.kicker, '入门路线 · 第 01 课')
+  assert.equal(body.data.title, '从一次模型调用到可验证的 Agent Run')
+  assert.equal(body.data.meta, '预计用时：60–90 分钟 · 完整交付：五份本地文件')
+  assert.equal(typeof body.data.html, 'string')
+  assert.ok(body.data.html.length > 0)
+
+  for (const routeId of ['builder', 'advanced', 'nonsense']) {
+    const missingRes = await api(`/api/v1/lessons/${routeId}`)
+    assert.equal(missingRes.status, 404)
+    const missingErr = await missingRes.json()
+    assert.equal(missingErr.code, 'LESSON_NOT_FOUND')
+  }
+})

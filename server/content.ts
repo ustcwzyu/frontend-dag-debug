@@ -476,3 +476,273 @@ export const lessonBeginnerHtml = `
         </section>
       </div>
 `
+
+// 第二课完整课程（与 src/main.ts 中 second-lesson-beginner section 内层 HTML 逐字一致）
+export const lessonBeginnerSecondHtml = `
+      <div class="lesson__header">
+        <p class="lesson__kicker">入门路线 · 第 02 课</p>
+        <h2 class="lesson__title" id="second-lesson-title">接入第一个 Tool：声明可验证的工具调用</h2>
+        <p class="lesson__meta">预计用时：60–90 分钟 · 完整交付：七份本地文件</p>
+      </div>
+
+      <div class="lesson__body">
+        <section class="lesson-block" aria-labelledby="lesson2-01-title">
+          <h3 id="lesson2-01-title">01 · 课程定位：这门课交付什么</h3>
+
+          <dl class="lesson-facts">
+            <div class="lesson-fact">
+              <dt>适合人群</dt>
+              <dd>已完成第一课「从一次模型调用到可验证的 Agent Run」的学习者；不需要任何 Agent 框架经验。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>预计用时</dt>
+              <dd>60–90 分钟，其中实验与评估约占一半。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>前置知识</dt>
+              <dd>第一课五份交付物（run-contract.md、input-freeze.md、run-log.md、evaluation.md、retrospective.md）；知道「调用一个接口返回数据」是什么。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>完成后能力</dt>
+              <dd>能为研究助手声明第一个工具（名称、描述、参数 Schema 三要素）；能识别并修复工具调用的四类典型失败；能用 10 分评估量表判定工具接入是否合格。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>课程产物</dt>
+              <dd>新增两份本地文本文件：tool-contract.md（工具合约）、tool-call-log.md（调用记录），与第一课五份文件合计七份。</dd>
+            </div>
+          </dl>
+
+          <h4>六段学习路径</h4>
+          <p>概念 → 拆解 → 设计 → 实验 → 评估 → 复盘。每段都有明确目的、学习动作与产出：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>六段学习路径：目的、学习动作与产出</caption>
+              <thead>
+                <tr><th>阶段</th><th>目的</th><th>学习动作</th><th>产出</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>概念</td><td>建立「工具调用 = run 的行动能力」心智模型</td><td>读工具三要素、可验证调用四字段、四类失败对照</td><td>能说出工具声明缺一不可的三要素</td></tr>
+                <tr><td>拆解</td><td>读懂一次工具调用的每个字段</td><td>逐字段对照风险说明</td><td>能解释每个字段防止什么问题</td></tr>
+                <tr><td>设计</td><td>把检索工具写成可判定成败的工具合约</td><td>按八项模板逐项填写</td><td>tool-contract.md</td></tr>
+                <tr><td>实验</td><td>声明工具并发起一次带记录的调用</td><td>写工具声明 → 执行调用 → 记录四字段</td><td>tool-call-log.md</td></tr>
+                <tr><td>评估</td><td>用量表逐项核对并给分</td><td>逐项检查，写下通过/不通过依据</td><td>evaluation.md（追加第二课）</td></tr>
+                <tr><td>复盘</td><td>写下结论与下一步改进</td><td>填复盘五字段模板</td><td>retrospective.md（追加第二课）</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>「读完」与「完成」不是一回事</h4>
+          <p>读完 = 看完本页全部内容，大约 20 分钟；完成 = 在完成第一课五份文件的基础上，新增以下文件并通过评估（8 分及以上）：</p>
+          <ul class="lesson-contract">
+            <li>工具合约（tool-contract.md，八项完整）</li>
+            <li>调用记录（tool-call-log.md，每次调用四字段）</li>
+            <li>评估追加（evaluation.md，第二课 10 分量表逐项判定与总分）</li>
+            <li>复盘追加（retrospective.md，最不确定处与改进）</li>
+          </ul>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="lesson2-02-title">
+          <h3 id="lesson2-02-title">02 · 概念：工具调用是 run 的「行动能力」</h3>
+          <p class="lesson__core-statement">
+            工具调用把「说」变成「做」：模型只产出结构化的调用意图，执行与验证由 run 完成。
+          </p>
+          <p>
+            第一课的 run 只有「只读思考」。本课为研究助手接入第一个工具：检索工具，
+            让 run 能真正取回资料片段。工具不是写进提示的一段话，而是需要被声明的能力边界。
+          </p>
+
+          <h4>工具声明三要素</h4>
+          <ul class="lesson-contract">
+            <li><strong>名称：</strong>机器可读、在工具清单中唯一；模型用它发起调用，写错一个字符调用即失败。</li>
+            <li><strong>描述：</strong>说明工具什么时候用、怎么用；描述不清时模型选错工具或不敢用。</li>
+            <li><strong>参数 Schema：</strong>声明每个参数的类型、是否必填与取值约束；没有 Schema，调用不可校验、不可复现。</li>
+          </ul>
+
+          <h4>一次可验证的调用 = 四个字段</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>可验证工具调用的四个字段：内容与缺失后果</caption>
+              <thead>
+                <tr><th>字段</th><th>内容</th><th>缺失时会发生什么</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">请求</th><td>调用 ID + 参数请求快照</td><td>无法复现本次调用，评估失去对象（调用不可复现）。</td></tr>
+                <tr><th scope="row">结果</th><td>返回片段与来源标注</td><td>不知道工具实际给了什么，结论无法核对来源。</td></tr>
+                <tr><th scope="row">错误</th><td>失败类型：参数错误 / 超时 / 服务错误</td><td>不分类就无法决定是否重试（失败不重试风险）。</td></tr>
+                <tr><th scope="row">重试</th><td>第几次重试、重试结果</td><td>盲目重试无法收敛，调用次数失控。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>四类失败，风险驱动拆解</h4>
+          <p>工具接入的失败大多可以提前声明来消除。对照表把「缺失什么」与「会发生什么」绑定：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>工具调用四类典型失败：缺失项与风险</caption>
+              <thead>
+                <tr><th>失败</th><th>缺失了什么</th><th>会发生什么</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">无参数 Schema</th><td>参数类型、必填与约束</td><td>参数随意传，调用不可校验、不可复现，失败无法归类。</td></tr>
+                <tr><th scope="row">工具名幻觉</th><td>名称唯一性与清单核对</td><td>模型调用不存在的工具，run 直接失败或空转。</td></tr>
+                <tr><th scope="row">失败不重试</th><td>失败分类与重试策略</td><td>一次失败即放弃，或盲目无限重试，两者都不可控。</td></tr>
+                <tr><th scope="row">调用无记录</th><td>tool-call-log.md 四字段</td><td>调用无法复核、无法重跑，评估与复盘失去证据。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="lesson2-03-title">
+          <h3 id="lesson2-03-title">03 · 拆解：一条可验证的工具调用轨迹</h3>
+          <p>下面是研究助手第一次检索调用 search_research 的静态样例。每个字段右侧都写着「解决什么问题、缺失时会发生什么」：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>search_research 静态调用样例：字段、取值与风险说明</caption>
+              <thead>
+                <tr><th>字段</th><th>本调用的值</th><th>解决什么问题 · 缺失时会发生什么</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">调用 ID</th><td><code>call-2026-08-14-tool-01</code></td><td>让每次调用可唯一指认；缺失时多次调用对不上，重试无法追溯。</td></tr>
+                <tr><th scope="row">工具名</th><td><code>search_research</code>（与工具清单逐字一致）</td><td>防止工具名幻觉；缺失时模型可能调用不存在的工具。</td></tr>
+                <tr><th scope="row">参数请求</th><td><code>{"query": "Agent Run 定义", "max_results": 2}</code></td><td>按 Schema 声明的必填与约束取值；缺失 Schema 时参数不可校验。</td></tr>
+                <tr><th scope="row">执行结果</th><td>返回 2 条片段，各带 title / snippet / source（[S1] 或 [S2]）</td><td>结果可核对来源；无结果快照时结论无法复核。</td></tr>
+                <tr><th scope="row">错误</th><td>第 1 次超时（分类：超时）</td><td>先分类再处理；不分类时参数错误也被盲目重试。</td></tr>
+                <tr><th scope="row">重试</th><td>第 2 次成功（参数未变化）</td><td>按合约限次重试；缺失时无限重试、调用失控。</td></tr>
+                <tr><th scope="row">记录</th><td>写入 tool-call-log.md，四字段齐全</td><td>调用可复核、可重跑；无记录时评估与复盘失去证据。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>「看起来调用了但不可验证」</h4>
+          <div class="lesson-sample">
+            <span class="lesson-sample__label">失败样例</span>
+            <p>「模型说：调用 search 查一下，参数随便传，失败了就重试三次。」</p>
+            <p class="lesson-sample__why">工具名不在清单（幻觉）、参数无 Schema、重试无分类、调用无记录——四个字段全部缺失，无法验证。</p>
+          </div>
+          <div class="lesson-sample lesson-sample--fixed">
+            <span class="lesson-sample__label">改写样例（声明、校验、记录齐全）</span>
+            <p>工具名 search_research 取自工具清单；参数按 Schema 填写（query 必填、max_results 取 2）；第一次调用超时（分类：超时）后按合约重试一次，参数未变化，第二次成功；调用 ID、参数请求、结果、错误与重试全部写入 tool-call-log.md，可复核、可重跑。</p>
+          </div>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="lesson2-04-title">
+          <h3 id="lesson2-04-title">04 · 设计：写出检索工具的工具合约</h3>
+          <p class="lesson__lab-note">
+            本实验零网络、零账号、零 API key：检索工具只作用于第一课的 [S1]/[S2] 冻结资料，
+            用本地文本文件完成声明与一次调用记录，不发起任何远程请求。
+          </p>
+
+          <h4>工具合约八项模板</h4>
+          <p>复制下面的 tool-contract.md 模板，逐项填写后再开始实验。八项缺一不可：</p>
+          <pre><code># tool-contract.md — 研究助手检索工具合约
+- 工具名：search_research（机器可读、唯一、与工具清单逐字一致）。
+- 用途描述：在冻结资料 [S1]/[S2] 中检索关键词并返回片段；仅用于本课资料检索。
+- 参数 Schema：query（string，必填，检索关键词）；max_results（integer，可选，默认 2，范围 1–3）。
+- 返回格式：JSON，含 results 数组（title、snippet、source：[S1] 或 [S2]）。
+- 失败分类：参数错误（不重试，修正后重发）；超时/服务错误（可重试）。
+- 重试策略：最多重试 2 次，间隔 1 秒；每次重试前核对参数未变化。
+- 记录要求：每次调用写入 tool-call-log.md（调用 ID、参数请求、结果、错误、重试）。
+- 验收标准：调用可复现、可复核；10 分量表 8 分及以上判定完成。</code></pre>
+
+          <h4>工具声明示例</h4>
+          <pre><code>工具声明示例（写入 run 配置的工具清单）：
+- name: search_research
+- description: 在冻结资料 [S1]/[S2] 中检索关键词，返回带来源的片段。
+- parameters:
+  - query: { type: string, required: true, description: 检索关键词 }
+  - max_results: { type: integer, required: false, default: 2, min: 1, max: 3 }</code></pre>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="lesson2-05-title">
+          <h3 id="lesson2-05-title">05 · 实验：五阶段本地工具调用实验</h3>
+          <p>三步速览：<strong>声明工具：</strong>按八项模板把 search_research 写进 tool-contract.md。<strong>发起一次调用：</strong>在 run 配置中声明工具，按 Schema 发起一次检索并记录四字段。<strong>评估并记录：</strong>用下方 10 分量表逐项核对，把结果追加进 evaluation.md 与 retrospective.md。</p>
+          <p>展开成五阶段，每阶段都有动作、检查点、产物与常见错误：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>五阶段实验：动作、检查点、产物与常见错误</caption>
+              <thead>
+                <tr><th>阶段</th><th>动作</th><th>检查点</th><th>产物</th><th>常见错误</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">准备</th><td>按八项模板填写工具合约</td><td>八项全部填写；工具名唯一；Schema 完整</td><td>tool-contract.md</td><td>照抄模板不填具体值；工具名与描述不一致</td></tr>
+                <tr><th scope="row">声明</th><td>把工具声明写进 run 配置的工具清单</td><td>名称逐字一致；描述可帮助选择；参数约束完整</td><td>run 配置 + tool-contract.md</td><td>工具名拼写漂移；Schema 漏必填参数</td></tr>
+                <tr><th scope="row">执行</th><td>发起一次检索调用并记录四字段</td><td>调用 ID 唯一；参数与合约一致；失败按分类处理</td><td>tool-call-log.md</td><td>不记录直接说「调用了」；失败后盲目重试</td></tr>
+                <tr><th scope="row">评估</th><td>用 10 分量表逐项核对并给分</td><td>每项有通过/不通过理由；总分与各项一致</td><td>evaluation.md（追加）</td><td>全打勾不给依据；「整体不错」式评估</td></tr>
+                <tr><th scope="row">复盘</th><td>填五字段模板</td><td>结论具体、指向证据；改进可执行</td><td>retrospective.md（追加）</td><td>口号式复盘；不指向证据</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>本地模板（可直接复制；tool-contract.md 见「04 · 设计」）</h4>
+          <pre><code># tool-call-log.md — 工具调用记录
+- 调用 ID：call-____（与工具合约对应 run 一致）
+- 工具名：____（与工具清单逐字一致）
+- 参数请求：（粘贴 JSON 参数）
+- 执行结果：（粘贴返回片段）
+- 错误：____（无 / 参数错误 / 超时 / 服务错误）
+- 重试：第 1 次 ____（结果：____）
+- 记录时间：____年__月__日 __:__</code></pre>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="lesson2-06-title">
+          <h3 id="lesson2-06-title">06 · 评估：量表、失败样例与自测</h3>
+
+          <h4>四类故意失败样例</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>四类故意失败样例与修复提示</caption>
+              <thead>
+                <tr><th>样例</th><th>问题</th><th>修复提示</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>「模型直接调用 search_research，参数随便传。」</td><td>无参数 Schema——参数不可校验、调用不可复现</td><td>在 tool-contract.md 声明 JSON Schema，逐参核对必填与约束</td></tr>
+                <tr><td>「模型要求调用 search_web，清单里没有这个工具。」</td><td>工具名幻觉——调用不存在的工具</td><td>只调用工具清单内名称，逐字核对，禁止编造新工具</td></tr>
+                <tr><td>「第一次调用超时后，模型又重试了十次。」</td><td>失败不重试——盲目无限重试</td><td>失败先分类：参数错误不重试；超时/服务错误按合约最多重试 2 次</td></tr>
+                <tr><td>「调用完成了，但没有写 tool-call-log.md。」</td><td>调用无记录——无法复核、无法重跑</td><td>每次调用写入调用 ID、参数请求、结果、错误与重试</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>10 分评估量表</h4>
+          <p>逐项检查并写下判定依据；各项合计 10 分，8 分及以上才算完成，低于 8 分必须重跑或修订。</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>10 分评估量表：逐项检查问题与通过/不通过判定依据</caption>
+              <thead>
+                <tr><th>项</th><th>分值</th><th>检查问题</th><th>通过/不通过判定依据</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">目标清晰</th><td>1 分</td><td>工具合约是否写明了「为研究助手提供冻结资料检索」这一可判定的目标？</td><td>目标含对象、范围与可观察结果 → 通过；只写「加个工具」→ 不通过</td></tr>
+                <tr><th scope="row">工具名唯一</th><td>1 分</td><td>工具名是否机器可读、在清单中唯一且逐字一致？</td><td>名称唯一且与清单一致 → 通过；出现拼写漂移 → 不通过</td></tr>
+                <tr><th scope="row">参数 Schema 完整</th><td>2 分</td><td>每个参数是否声明了类型、必填与取值约束？</td><td>全部声明 → 2 分；部分声明 → 1 分；无 Schema → 0 分</td></tr>
+                <tr><th scope="row">调用可复现</th><td>1 分</td><td>用同样的参数请求能否复现同一条调用记录？</td><td>参数请求有快照 → 通过；无请求快照 → 不通过</td></tr>
+                <tr><th scope="row">失败分类</th><td>1 分</td><td>失败是否先分类再处理（参数错误不重试）？</td><td>分类明确 → 通过；不分类一律重试 → 不通过</td></tr>
+                <tr><th scope="row">重试有限度</th><td>1 分</td><td>重试是否按合约限次（最多 2 次）且参数未变化？</td><td>限次且记录 → 通过；无限重试 → 不通过</td></tr>
+                <tr><th scope="row">记录完整</th><td>1 分</td><td>tool-call-log.md 是否记录了请求、结果、错误与重试？</td><td>四字段齐全可复核 → 通过；无记录或仅一句总结 → 不通过</td></tr>
+                <tr><th scope="row">评估判定一致</th><td>1 分</td><td>总分是否与各项一致、8 分及以上才判定完成？</td><td>一致且门槛明确 → 通过；全打勾不给依据 → 不通过</td></tr>
+                <tr><th scope="row">复盘具体</th><td>1 分</td><td>复盘是否写了最不确定处与下一步改进，而非「整体不错」？</td><td>具体、指向证据、可执行 → 通过；口号式 → 不通过</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>四道自测题（参考答案区，直接可读）</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>自测题与参考答案</caption>
+              <thead>
+                <tr><th>问题</th><th>参考答案</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">为什么工具声明必须有参数 Schema？</th><td>没有 Schema，参数不可校验、调用不可复现，任何值都能传，失败无法归类、无法重跑。</td></tr>
+                <tr><th scope="row">模型要求调用清单里不存在的工具怎么办？</th><td>这是工具名幻觉：只允许调用工具清单内的名称并逐字核对，禁止编造新工具；确需新能力时先更新工具清单。</td></tr>
+                <tr><th scope="row">工具调用失败后应该怎么做？</th><td>先分类：参数错误不重试、修正后重发；超时或服务错误按合约最多重试 2 次，每次重试都记录。</td></tr>
+                <tr><th scope="row">什么样的工具调用算「可验证」？</th><td>每次调用写入 tool-call-log.md：调用 ID、参数请求、执行结果、错误与重试，可复核、可重跑、可评估。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>复盘模板</h4>
+          <p>评估通过后再花五分钟复盘，五字段见 retrospective.md 模板（第一课实验区）：本次目标、最不确定处、一次失败或边界、证据、下一步改进。</p>
+        </section>
+      </div>
+`

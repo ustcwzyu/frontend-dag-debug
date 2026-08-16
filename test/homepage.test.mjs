@@ -14,6 +14,16 @@ function lessonRegion(source) {
   return source.slice(start, end)
 }
 
+// 截取第二课课程 section 的源码区域（第二课模板字面量位于 lessonPlaceholderMarkup 定义之前）
+function secondLessonRegion(source) {
+  const start = source.indexOf(
+    '<section class="lesson container" id="second-lesson-beginner"',
+  )
+  const end = source.indexOf('const lessonPlaceholderMarkup', start)
+  assert.ok(start !== -1 && end !== -1 && end > start, '无法定位第二课 section 区域')
+  return source.slice(start, end)
+}
+
 // ── 站点身份与 Hero（AC-AGENT-001 / REQ-AGENT-001） ──
 
 test('站点身份：Agent 学习实验室与主张', async () => {
@@ -538,4 +548,86 @@ test('README 记录 check-repo.sh 运行态阻断与 HARNESS_ALLOW_ACTIVE_DAG_RU
   assert.match(readme, /运行态阻断/)
   assert.match(readme, /HARNESS_ALLOW_ACTIVE_DAG_RUNS=1/)
   assert.match(readme, /\.harness\/dag-runs\/active/)
+})
+
+// ── 第二课：接入第一个 Tool（AC-L2-001 / AC-L2-005 / AC-L2-006 / AC-FE-004） ──
+
+test('第二课：section 源码位于第一课之后且开标签含 second-lesson-title（AC-L2-001）', async () => {
+  const source = await read('../src/main.ts')
+  const first = source.indexOf('<section class="lesson container" id="first-lesson-beginner"')
+  const second = source.indexOf('<section class="lesson container" id="second-lesson-beginner"')
+  assert.ok(first !== -1 && second !== -1 && second > first, '第二课 section 应位于第一课之后')
+  assert.match(
+    source,
+    /id="second-lesson-beginner"[^>]*aria-labelledby="second-lesson-title"/,
+  )
+  // 拼接顺序：第一课 → 第二课 → 服务横幅
+  const lessonPage = source.slice(source.indexOf('function lessonPageMarkup'))
+  assert.match(lessonPage, /lessonSectionMarkup[\s\S]*secondLessonSectionMarkup[\s\S]*serviceBannerMarkup/)
+  // 渲染路径无 querySelector 触碰第二课
+  assert.doesNotMatch(source, /querySelector(?:All)?\([^)]*second-lesson-beginner/)
+})
+
+test('第二课：课程定位五要素、六段学习路径与课程产物（AC-L2-005）', async () => {
+  const source = await read('../src/main.ts')
+  const lesson = secondLessonRegion(source)
+  for (const key of ['适合人群', '预计用时', '前置知识', '完成后能力', '课程产物']) {
+    assert.ok(lesson.includes(`<dt>${key}</dt>`), `缺少定位项 ${key}`)
+  }
+  assert.ok(lesson.includes('六段学习路径'))
+  for (const phase of ['概念', '拆解', '设计', '实验', '评估', '复盘']) {
+    assert.ok(lesson.includes(`<td>${phase}</td>`), `缺少路径阶段 ${phase}`)
+  }
+  assert.ok(lesson.includes('tool-contract.md'))
+  assert.ok(lesson.includes('tool-call-log.md'))
+  assert.ok(lesson.includes('search_research'))
+})
+
+test('第二课：06 评估段含 10 分量表、四类失败样例、自测题与复盘模板（AC-L2-005）', async () => {
+  const source = await read('../src/main.ts')
+  const lesson = secondLessonRegion(source)
+  assert.ok(lesson.includes('lesson2-06-title'))
+  // 10 分量表：各项合计 10 分、8 分及以上完成判定
+  assert.ok(lesson.includes('10 分评估量表'))
+  assert.ok(lesson.includes('8 分及以上才算完成'))
+  assert.ok(lesson.includes('检查问题'))
+  assert.ok(lesson.includes('通过/不通过判定依据'))
+  const scores = [...lesson.matchAll(/<td>(\d+) 分<\/td>/g)].map((m) => Number(m[1]))
+  assert.ok(scores.length >= 6, `期望至少 6 个分项，实际 ${scores.length}`)
+  assert.equal(scores.reduce((a, b) => a + b, 0), 10)
+  // 四类故意失败样例与修复提示
+  assert.ok(lesson.includes('四类故意失败样例与修复提示'))
+  for (const problem of ['无参数 Schema', '工具名幻觉', '失败不重试', '调用无记录']) {
+    assert.ok(lesson.includes(problem), `缺少失败样例 ${problem}`)
+  }
+  assert.ok(lesson.includes('修复提示'))
+  // 自测题与直接可读参考答案区（3–4 道）
+  assert.ok(lesson.includes('自测题与参考答案'))
+  const questions = (lesson.match(/<th scope="row">[^<]*？<\/th>/g) || []).length
+  assert.ok(questions >= 3 && questions <= 4, `期望 3–4 道自测题，实际 ${questions}`)
+  // 复盘模板
+  assert.ok(lesson.includes('复盘'))
+  assert.ok(lesson.includes('retrospective.md'))
+})
+
+test('第二课：区域纯净（无交互控件/aria-live）且第一课 next 指向本页第二课（AC-L2-006 / AC-FE-004）', async () => {
+  const source = await read('../src/main.ts')
+  const lesson = secondLessonRegion(source)
+  for (const pattern of [
+    /<button/i,
+    /<details/i,
+    /<input/i,
+    /<select/i,
+    /<textarea/i,
+    /checkbox/i,
+    /aria-live/i,
+    /@keyframes/,
+  ]) {
+    assert.doesNotMatch(lesson, pattern)
+  }
+  // 第一课 next 保留既有断言子串并新增指向本页第二课的文案
+  assert.match(source, /下一课：接入第一个 Tool/)
+  assert.match(source, /预告不指向任何虚构页面/)
+  assert.match(source, /第二课「接入第一个 Tool：声明可验证的工具调用」/)
+  assert.match(source, /second-lesson-beginner 区块/)
 })

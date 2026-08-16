@@ -131,7 +131,7 @@ export function createApp(options: AppOptions): Express {
 
   app.get('/api/v1/lessons/:routeId', (req, res) => {
     const routeId = req.params.routeId
-    if (routeId !== 'beginner') {
+    if (routeId !== 'beginner' && routeId !== 'beginner-2') {
       res.status(404).json({ code: 'LESSON_NOT_FOUND', message: `lesson not found for route: ${routeId}` })
       return
     }
@@ -142,12 +142,22 @@ export function createApp(options: AppOptions): Express {
       res.status(404).json({ code: 'LESSON_NOT_FOUND', message: `lesson not found for route: ${routeId}` })
       return
     }
+    const header =
+      routeId === 'beginner-2'
+        ? {
+            kicker: '入门路线 · 第 02 课',
+            title: '接入第一个 Tool：声明可验证的工具调用',
+            meta: '预计用时：60–90 分钟 · 完整交付：七份本地文件',
+          }
+        : {
+            kicker: '入门路线 · 第 01 课',
+            title: '从一次模型调用到可验证的 Agent Run',
+            meta: '预计用时：60–90 分钟 · 完整交付：五份本地文件',
+          }
     res.json({
       data: {
         routeId: row.id,
-        kicker: '入门路线 · 第 01 课',
-        title: '从一次模型调用到可验证的 Agent Run',
-        meta: '预计用时：60–90 分钟 · 完整交付：五份本地文件',
+        ...header,
         html: row.html,
       },
     })
