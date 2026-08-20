@@ -27,7 +27,7 @@
 - 用 loop-agent 迭代本仓库时，控制器必须来自已发布的 npm 安装包；首次安装或有意升级可用 `@tea-agent/loop-agent@latest`，但一次自举任务启动后不要中途升级控制器，并记录 `npm list -g @tea-agent/loop-agent --depth=0` 显示的实际版本。不要用当前工作区的 `npm link` 或 `npm run dev` 控制可能改动 CLI、DAG runtime、executor、package metadata 或 build output 的任务。
 - 反复出现的约束要固化为文档、脚本、检查项、测试或模板。
 - 除非用户明确要求，不要自行引入外部 SDD、spec-first、brainstorming 等方法论的强制设计文档、审批门或专用目录；本仓库的工作流程以本文件和 `docs/` 中的治理规则为准。
-- 对非微小的实现或修复，`exec-plan` 只负责记录 Contract、进度和验证证据，不能替代 Agent DAG。除非用户明确要求 one-shot，或在计划中记录了适用的 escape hatch 与理由，否则在改动实现文件前必须完成 `new-task`、结构化 `allowedPaths` / `forbiddenPaths`、`dag run-task` 和 `dag validate`；随后按已校验的 DAG 执行并审查 writer `writeSet`。
+- 对非微小的实现或修复，`exec-plan` 只负责记录 Contract、进度和验证证据，不能替代 Agent DAG。除非用户明确要求 one-shot，或在计划中记录了适用的 escape hatch 与理由，否则在改动实现文件前必须完成 `task advance`（含结构化 `allowedPaths` / `forbiddenPaths` 与 writeSet 审查）；随后 `--approve-gate` 长跑，不得主会话直接改实现。
 - 禁止占位实现；除非 contract 明确约定为脚手架且标出后续闭环。
 
 ## 开始顺序
@@ -53,8 +53,8 @@
 9. 查看最近提交、相关执行计划、progress/report，确认当前上下文。
 10. 检查 `git status --short --branch`。
 11. 运行本次任务相关的最小基线验证。
-12. 如果用户提到"后端测试"、"接口测试"、"pytest"、"自动化测试"，在任务 `task.json` 中设置 `taskKind: "backend-test"` 再 `dag run-task`；不要用 `--profile backend-test`（CLI 不接受该值，专用模板只走 taskKind）。知识回写用 `taskKind: "knowledge-sync"`（须 `featureId`），图谱开荒用 `taskKind: "knowledge-graph-bootstrap"`。`--profile` 仅表示治理强度：`auto|minimal|standard|reviewed|supervised`。
-13. 如果用户提到"看板"、"observe"、"监控面板"、"启动看板"，使用 `agent-worker console` 启动统一 Operator Console（默认 repo=当前目录、port=8790；兼容入口 `agent-worker console serve --repo . --port 8790`）；`/inspect/` 提供只读检视。`agent-worker observe serve --repo . --port 8787` 仅为兼容入口。
+12. 如果用户提到"后端测试"、"接口测试"、"pytest"、"自动化测试"，在任务 `task.json` 中设置 `taskKind: "backend-test"` 再 `task advance`；不要用 `--profile backend-test`（CLI 不接受该值，专用模板只走 taskKind）。知识回写用 `taskKind: "knowledge-sync"`（须 `featureId`），图谱开荒用 `taskKind: "knowledge-graph-bootstrap"`。`--profile` 仅表示治理强度：`auto|minimal|standard|reviewed|supervised`。
+13. 如果用户提到"看板"、"observe"、"监控面板"、"启动看板"，使用 `agent-worker console` 启动统一 Operator Console（默认 repo=当前目录、port=8790；本地图形环境默认打开浏览器，`--no-open` 禁止）；`/inspect/` 提供只读检视。`agent-worker observe serve` 已下线（REMOVED / exit 2）。
 14. 如果用户要求“合并 `<source>` 到 `<target>`”或“合并 origin/main 到当前分支”，先阅读 `docs/operations/branch-merge-guideline.md`，按影响自动选择快速、标准或深度模式；始终冻结 source SHA、审查双方功能、运行 merge-tree、生成 source-SHA 合并报告，并在提交前再次 fetch 防止主干前进。
 
 ## 会话协议
@@ -88,8 +88,8 @@
 - 优先沿用现有 helper、目录边界和局部模式，再考虑新增抽象。
 - 长期决策写入 `docs/`，不要只留在聊天里。
 - 分支合并遵循 `docs/operations/branch-merge-guideline.md`；快速模式只用于可证明的低风险/no-op 合并，涉及冲突、init/package/runtime/release/public API 时必须升级为标准或深度模式。
-- 后端测试、接口/API 测试、pytest 或明确的后端自动化测试，必须把 `.harness/tasks/<task-id>/task.json` 的 `taskKind` 设置为 `"backend-test"`，不得保留默认 `standard`。`backend-test` 是 `taskKind`，不是 `--profile` 的可选值；`dag run-task` 继续使用 `--profile auto` 选择治理等级。仅说“自动化测试”且前后端不明时，先根据任务源和项目技术栈判断，禁止无条件路由。
-- 本地 Operator Console：`agent-worker console`（默认 repo=当前目录、port=8790；兼容 `agent-worker console serve --repo . --port 8790`），访问 `http://127.0.0.1:8790/`；其中 `/inspect/` 为只读运行检视。默认绑定本机 `127.0.0.1`；可用 `--host 0.0.0.0` / `--debug`，不要直接暴露到公开网络。端口被占用时不会自动更换，请用 `--port <port>` 显式指定。
+- 后端测试、接口/API 测试、pytest 或明确的后端自动化测试，必须把 `.harness/tasks/<task-id>/task.json` 的 `taskKind` 设置为 `"backend-test"`，不得保留默认 `standard`。`backend-test` 是 `taskKind`，不是 `--profile` 的可选值；`task advance` 继续使用 `--profile auto` 选择治理等级。仅说“自动化测试”且前后端不明时，先根据任务源和项目技术栈判断，禁止无条件路由。
+- 本地 Operator Console：`agent-worker console`（默认 repo=当前目录、port=8790；`--no-open` 可禁止自动打开浏览器），访问 `http://127.0.0.1:8790/`；其中 `/inspect/` 为只读运行检视。默认绑定本机 `127.0.0.1`；可用 `--host 0.0.0.0` / `--debug`，不要直接暴露到公开网络。端口被占用时不会自动更换，请用 `--port <port>` 显式指定。
 - 面向使用者的新增、修改、删除或修复，应同步更新根目录 `CHANGELOG.md`；保持版本级摘要即可，不写过细技术细节。
 - 面向用户的中文更新日志、README 和说明文档应使用自然、结果导向的表达：先说明用户能获得什么或问题如何改善，保留必要的命令和产品术语，避免逐字翻译、内部实现细节和无意义的中英混杂。
 - 涉及 `loop-agent init` 或目标项目投影的改动，必须同步考虑目标项目生成物：`AGENTS.md`、`README.md`、`harness.json`、`ai_workspace/loop-agent/`、`scripts/`、`.agents/skills/`、`.harness/prompts`、`.gitignore`（loop-agent runtime managed block）和 npm 包内置 assets；目标项目根 `docs/` 和根 `skills/` 的旧投影需要由 `init update --apply-safe` 安全迁移或退役。

@@ -13,7 +13,22 @@ This target project, `frontend-dag-debug`, is initialized to use loop-agent for 
 
 ## Default Workflow
 
-Use `loop-agent new-task`, `loop-agent dag run-task`, `loop-agent dag validate`, and `loop-agent run-dag` for non-trivial implementation work.
+Use `loop-agent task advance` / `loop-agent task status` for non-trivial implementation work; advanced arbitrary DagSpec uses `loop-agent dag execute`.
+
+## Pi Model Matrix
+
+New DAG work reads only `harness.json.executors.pi.LOW`, `MED`, and `HIGH`. Each tier must be a model string or `{ model, thinking? }`; use explicit `provider/model` references when choosing a provider. Fresh init does not write `defaultModel`, `models`, `modelProfiles`, or `modelRouting`. `defaultModel` remains a runtime fallback only for compatible older projects.
+
+```json
+{ "executors": { "pi": { "LOW": "provider/low", "MED": "provider/medium", "HIGH": "provider/high" } } }
+```
+
+## Adaptive Liveness
+
+- Healthy Pi nodes are no longer stopped by a fixed 30-minute deadline. The default 4h absolute max is a final safety bound and cannot be extended by synthetic heartbeats.
+- Runner heartbeat proves only the runner lease. Provider, tool, or output activity records meaningful progress; prolonged inactivity can surface as `quiet`, `suspected-stall`, `probing`, or `needs-attention` in `dag status`, `dag doctor`, and Observe.
+- A silent transport is aborted in a controlled way. `termination-unconfirmed` means the old attempt may still exist, so loop-agent fails closed and does not start an automatic retry; inspect the run before any operator recovery.
+- `agent-worker` does not set an outer `task advance` / `dag execute` wall-clock by default. An explicit `worker.timeout_ms` remains a hard timeout.
 
 ## Operator Recovery
 

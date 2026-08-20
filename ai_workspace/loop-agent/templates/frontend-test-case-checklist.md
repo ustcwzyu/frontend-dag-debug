@@ -7,7 +7,7 @@ LLM review (when `frontendTest.reviewMode=blocking`) must not invent blocking ru
 
 | ruleId | Rule |
 |---|---|
-| `open-prefix` | Each case body includes `playwright-cli open --browser=chrome --headed <absolute-http(s)-url>` |
+| `open-prefix` | Each case body includes `playwright-cli open --browser=chrome <absolute-http(s)-url>` |
 | `production-url` | Open URL must not look like a production host |
 | `ac-mapping` | Manifest entry has non-empty `acIds` (**acceptance** ids, not case ids) |
 | `ac-id-shape` | Each `acIds[]` entry matches `AC-*` / `AC-FE-*` |

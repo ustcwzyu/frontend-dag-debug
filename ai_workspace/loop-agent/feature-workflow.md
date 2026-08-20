@@ -14,12 +14,14 @@ This document describes how work should move through this target repository usin
 ## Agent DAG Path
 
 ```bash
-loop-agent new-task <task-id> "Task title"
-# write .harness/tasks/<task-id>/source/需求.md
-# write .harness/tasks/<task-id>/source/执行约束.md
-loop-agent dag run-task <task-id> --profile auto --strict-models --output <temp-dir>/<task-id>-dag.json
-loop-agent dag validate --dag <temp-dir>/<task-id>-dag.json --strict-models --strict-governance
-loop-agent run-dag --dag <temp-dir>/<task-id>-dag.json --cwd .
+loop-agent task advance <task-id> "Task title" \
+  --prd <prd.md> \
+  --allowed-path "<glob>" \
+  --verify "<label>:<command>" \
+  --json
+# Review writeSet gate digest, then:
+loop-agent task advance <task-id> --approve-gate "write-set-review:<digest>" --json
+loop-agent task status <task-id> --json
 ```
 
 For changes that affect the project's public contract, execution surface, delivery pipeline, automation/governance, data model, security or permission model, cross-module behavior, or user-visible workflows, this is a hard pre-edit gate: create the task, write both source files, generate the DAG, and review the DAG/writeSet before editing implementation files.
@@ -30,11 +32,11 @@ After an interrupted run, repair the task source and regenerate the complete DAG
 
 ## Specialized Task Kinds
 
-- standard tasks are classified conservatively from the task title, `source/需求.md`, and structured `allowedPaths`.
-- Only high-confidence frontend implementation demands select the frontend DAG automatically; backend, mixed, negated, and unknown demands keep the template selected by the normal governance profile.
+- standard tasks first use the structured task type in `source/需求.md`, then combine `allowedPaths` with strong React/Next/Vue project evidence for deterministic routing.
+- A frontend project defaults eligible implementation work to the frontend DAG without requirement keyword matching. Explicit backend, mixed, frontend-negated, and documentation/test-only scopes keep the template selected by the normal governance profile.
 - `frontend-mock-assess-pi` reads Mock/API/schema evidence and selects `native|browser-intercept|request-adapter|not-needed|blocked` before frontend planning; its deterministic gate rejects blocked or malformed output, while the existing frontend implementer remains the only writer.
 - Mock-backed verification never proves real API integration. When the backend was not exercised, closeout must retain the gap and name `<task-id>-real-api-integration-verify`; that follow-up is explicitly created/run after backend readiness, never automatic.
-- Automatic frontend classification never replaces a supervised template selected by an explicit profile, workflowPolicy, or the supervised quality gate.
+- Automatic frontend classification selects the frontend implementation workflow and persists taskKind; explicit profiles, workflowPolicy, and supervised quality gates record governance strength without switching the business workflow back to a generic DAG.
 - A backend implementation does not select the backend test DAG. `backend-test` remains an explicit test-engineering workflow.
 - Explicit specialized `taskKind` values remain compatible and take precedence over task-source classification.
 
@@ -44,7 +46,7 @@ Set an explicit specialized `taskKind` in `.harness/tasks/<task-id>/task.json` o
 - `taskKind: "backend-test"` selects the dedicated backend test DAG. Its Pi nodes analyze requirements, generate and review backend cases, generate pytest, and retrospect on results; shell gate/execution nodes enforce the review verdict and run the target project's pytest. The backend test templates (`backend-test-dag.json` and the `backend-test-dag.*.prompt.md` files) ship inside the loop-agent package as static references and are projected to target projects under the governance `templates/` directory.
 - `taskKind: "knowledge-sync"` selects the Feature-scoped test-knowledge write-back DAG (collect → draft → validate → apply → pointer). Bind `featureId` in `task.json` (or hardConstraints / requirement text). It writes only under `features/<featureId>/…` after final verification evidence exists.
 - `taskKind: "knowledge-graph-bootstrap"` selects the business knowledge-graph bootstrap DAG (preflight → inventory → propose → validate → review → gate → promote → materialize). AI writes only `knowledge/bootstrap/staging/**`; promote is merge-new-only.
-- `taskKind: "frontend-test"` selects the FE-test RAG DAG. It writes a traceable frontend RAG package and Markdown case manifest, then executes manifest cases serially with `playwright-cli` in isolated test environments and retains per-case evidence. It never generates pytest or Playwright source code. `frontendTest.maxCasesPerBatch` defaults to 20 (maximum 50); optional `maxTokensPerCase` and `maxTotalTokens` stop only later cases after a completed case's token usage is recorded, marking them `blocked: token-budget-exhausted`. Generated browser startup uses `playwright-cli open --browser=chrome --headed <base-url>`; the generic playwright-cli skill is unchanged.
+- `taskKind: "frontend-test"` selects the FE-test RAG DAG. It writes a traceable frontend RAG package and Markdown case manifest, then executes manifest cases serially with `playwright-cli` in isolated test environments and retains per-case evidence. It never generates pytest or Playwright source code. `frontendTest.maxCasesPerBatch` defaults to 20 (maximum 50); optional `maxTokensPerCase` and `maxTotalTokens` stop only later cases after a completed case's token usage is recorded, marking them `blocked: token-budget-exhausted`. Generated browser startup uses `playwright-cli open --browser=chrome <base-url>`; the generic playwright-cli skill is unchanged.
 - Only eligible read-only Pi nodes (planner, scout, reviewer, verifier, closeout with no write-capable tool profile) receive the conservative automatic retry policy. Supervisor, implementer, writer, docs-only, dynamic, shell, static, and decision-gate nodes are not retried automatically. Eligible nodes cannot write repository files; the controller only records immutable attempt evidence under `.harness/dag-runs/<state>/<run-id>/<node-id>/attempt-<n>.json`.
 
 Use the package-backed public knowledge CLI for graph operations. Do not require target projects to run package-only kb runtime scripts:
@@ -52,7 +54,7 @@ Use the package-backed public knowledge CLI for graph operations. Do not require
 ```bash
 loop-agent knowledge graph-init --product-name <name>
 # edit knowledge/bootstrap/scope.yaml, then:
-loop-agent dag run-task <task-id>   # taskKind: knowledge-graph-bootstrap
+loop-agent task advance <task-id> --task-kind knowledge-graph-bootstrap --json
 loop-agent knowledge query --mode by_feature --feature F-2026-004 --json
 loop-agent knowledge query --mode by_id --id SVC-order --json
 loop-agent knowledge query --mode search --text "keyword" --json

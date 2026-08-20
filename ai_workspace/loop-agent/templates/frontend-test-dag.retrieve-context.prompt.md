@@ -2,16 +2,20 @@
 
 Write only `testcase/frontend/rag/context.md` and `coverage-map.md`. Record traceable facts from the task source, routes, components, API/Mock contracts, existing tests and execution contract. Do not invent fields, credentials, limits or test data.
 
-## Base URL resolution (required)
+## Runtime Base URL resolution (required)
 
-Resolve a single absolute browser base URL and record it explicitly in `context.md` (both a human-readable `base URL` line and a machine-readable `baseUrl: <url>` line):
+Read the bound task source and environment/config references, then select one concrete browser entry URL. Prefer `TARGET_URL`/`targetUrl`, then `BASE_URL`/`baseUrl` or `FRONTEND_BASE_URL`/`frontendUrl`, then `LOGIN_URL`/`loginUrl`; accept common case, underscore, kebab and space variants. If no usable URL exists, use `http://localhost:5173`.
 
-1. Prefer frontend URL facts from task source `config.md` (including `source/references/**/config.md` or any attached reference named `config.md`): keys such as `baseUrl`, `base_url`, `frontendBaseUrl`, `FRONTEND_BASE_URL`, `url`, or labeled frontend base URL text.
-2. If no usable absolute `http://` / `https://` URL is found in `config.md` (or equivalent source facts), default to `http://localhost:5173`.
-3. Never use production hosts. Prefer local / isolated non-production URLs.
-4. Also record `baseUrlSource: config.md|<path>` or `baseUrlSource: default-localhost-5173` so later nodes can audit the choice.
-5. Write `environmentProbe: pending`. The environment preflight shell will replace this with `reachable`, `unreachable`, or `curl-unavailable` plus a structured `blockedReason` (for example `frontend-base-url-unreachable`).
-6. Include the exact browser start prefix that generators must copy:
-   `playwright-cli open --browser=chrome --headed <resolved-base-url>`.
+- Write the selected value and its bound source into `context.md` as `baseUrl: <url>` and `baseUrlSource: <source>|default-localhost-5173`.
+- Never select API-only endpoints, production hosts, credential URLs, query-bearing URLs or fragment URLs.
+- Write `environmentProbe: pending`. The following environment shell deterministically parses `context.md`, validates URL safety, probes curl HEAD→GET, and replaces this with `reachable`, `unreachable`, or `curl-unavailable` plus a structured `blockedReason`.
+- Include the exact browser start prefix using the selected concrete URL:
+  `playwright-cli open --browser=chrome <resolved-base-url>`.
 
 Do not claim the environment is reachable until preflight completes. Preflight does not start the application.
+
+
+## Standard scenario coverage
+
+- Copy or reference `docs/templates/frontend-test-standard-scenarios.v1.json` into `testcase/frontend/rag/standard-scenarios.v1.json` when available.
+- Add `## Standard scenario coverage` to coverage-map.md with planned/n/a for each must scenario.

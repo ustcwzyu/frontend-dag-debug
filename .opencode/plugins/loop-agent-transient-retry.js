@@ -5,11 +5,35 @@
  * Compensates transient UnknownError cases that OpenCode built-in APIError
  * retry does not cover. Never runs concurrently with session.status === "retry".
  * Permanent failures use interaction "plugin-ignore-permanent-error".
+ * User aborts (MessageAbortedError / cancel words) are silently cleared.
+ * Best-effort file log: .opencode/plugins/loop-agent-transient-retry.log.
  */
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { appendFile, mkdir } from "node:fs/promises";
+
 const PLUGIN_PATH = ".opencode/plugins/loop-agent-transient-retry.js";
+const LOG_FILE_NAME = "loop-agent-transient-retry.log";
+const LOG_PATH = (() => {
+  try {
+    const dir =
+      import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
+    return path.join(dir, LOG_FILE_NAME);
+  } catch {
+    return ".opencode/plugins/loop-agent-transient-retry.log";
+  }
+})();
 const PERMANENT_INTERACTION = "plugin-ignore-permanent-error";
 const BACKOFF_MS = [2000,4000,8000,16000,30000];
 const MAX_RETRIES = 5;
+const CONTEXT_OVERFLOW_PHRASES = ["请求上下文过大","context_length_exceeded","context overflow","context length overflow","too many tokens","maximum context","prompt is too long","request_too_large","context window"];
+const OVERFLOW_PATTERN = new RegExp(
+  CONTEXT_OVERFLOW_PHRASES.map((phrase) =>
+    phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  ).join("|"),
+  "i",
+);
+void logToFile("load ok");
 
 const sessionState = new Map();
 const sessionStatus = new Map();
@@ -35,14 +59,35 @@ function textOf(error) {
   }
 }
 
+async function logToFile(line) {
+  try {
+    await mkdir(path.dirname(LOG_PATH), { recursive: true });
+    await appendFile(
+      LOG_PATH,
+      new Date().toISOString() + " " + line + "\n",
+      "utf-8",
+    );
+  } catch {
+    // Best-effort observability log; never throw (ENOENT/EISDIR tolerated).
+  }
+}
+
+function isUserAbort(error) {
+  if (error && typeof error === "object" && typeof error.name === "string") {
+    if (/^MessageAbortedError$/i.test(error.name)) return true;
+  }
+  return /aborted by user|user cancel|cancelled|canceled/i.test(textOf(error));
+}
+
 function isPermanent(error) {
   const text = textOf(error);
   if (error && typeof error === "object" && typeof error.name === "string") {
     if (/^APIError$/i.test(error.name)) return true;
     if (/^(AuthError|PermissionError)$/i.test(error.name)) return true;
   }
-  return /\b(401|403|unauthorized|forbidden|quota|rate.?limit|context (length )?overflow|too many tokens|cancelled|canceled|business validation|invalid task|schema validation)\b/i.test(
-    text,
+  return (
+    OVERFLOW_PATTERN.test(text) ||
+    /\b(401|403|unauthorized|forbidden|quota|rate.?limit|cancelled|canceled|business validation|invalid task|schema validation)\b/i.test(text)
   );
 }
 
@@ -116,6 +161,7 @@ function promptWasAccepted(response) {
 export default async function loopAgentTransientRetryPlugin({ client, $ }) {
   void $;
   void PLUGIN_PATH;
+  void logToFile("setup ok");
 
   async function drainPendingRecovery(sessionId) {
     const state = getState(sessionId);
@@ -154,9 +200,16 @@ export default async function loopAgentTransientRetryPlugin({ client, $ }) {
         throwOnError: true,
       });
     } catch {
+      void logToFile(
+        "prompt attempt=" + nextAttempt + " accepted=false session=" + sessionId,
+      );
       return;
     }
-    if (!promptWasAccepted(response)) return;
+    const accepted = promptWasAccepted(response);
+    void logToFile(
+      "prompt attempt=" + nextAttempt + " accepted=" + accepted + " session=" + sessionId,
+    );
+    if (!accepted) return;
 
     state.attempt = nextAttempt;
     if (pendingErrors.get(sessionId) === pending) {
@@ -172,9 +225,11 @@ export default async function loopAgentTransientRetryPlugin({ client, $ }) {
     }
     state.locked = true;
     state.rerunRequested = false;
+    void logToFile("worker start session=" + sessionId);
     const worker = drainPendingRecovery(sessionId)
       .catch(() => {})
       .finally(() => {
+        void logToFile("worker end session=" + sessionId);
         recoveryWorkers.delete(sessionId);
         const rerun = state.rerunRequested;
         state.rerunRequested = false;
@@ -243,12 +298,19 @@ export default async function loopAgentTransientRetryPlugin({ client, $ }) {
       if (event.type === "session.error") {
         if (!sessionId) return;
         const error = properties.error || properties;
+        if (isUserAbort(error)) {
+          clearSession(sessionId);
+          void logToFile("classify abort session=" + sessionId);
+          return undefined;
+        }
         if (!isTransientUnknown(error)) {
           pendingErrors.delete(sessionId);
           getState(sessionId).rerunRequested = false;
+          void logToFile("classify permanent session=" + sessionId);
           return { interaction: PERMANENT_INTERACTION, reason: "plugin-ignore-permanent-error" };
         }
         pendingErrors.set(sessionId, { error });
+        void logToFile("classify transient session=" + sessionId);
         startRecoveryWorker(sessionId);
         return { pending: true };
       }

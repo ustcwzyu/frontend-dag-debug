@@ -14,6 +14,7 @@
 - `branch-merge-report.md` — source-SHA 分支合并报告。
 - `init-evolution-review.md` — 初始化能力演化审查。
 - `production-readiness-checklist.md` — Production Readiness 检查。
+- `agent-worker-production-readiness-checklist.md` — agent-worker Feature/Task Pool Production Readiness v1 campaign 检查清单。
 - `worker-dogfood-setup.md`、`worker-dogfood-evidence.md` — 已发布控制器下的 Worker dogfood 设置与证据。
 - `interactive-ui-round2-experiment.md` — 交互式 UI 对照实验。
 
@@ -29,7 +30,7 @@
 
 ## Backend-test
 
-- `backend-test-dag.json` — backend-test DAG 模板。
+- `backend-test-dag.json` — backend-test DAG 模板；其中 `generate-backend-md-cases-pi` 是唯一允许 `writer-empty-diff` 重试的 writer（总共两次，仅限 post-write-guard attribution 确认的空 diff）。
 - `backend-test-dag.classify.prompt.md`、`backend-test-dag.generate-pytest.prompt.md`、`backend-test-dag.review-cases.prompt.md`、`backend-test-dag.retrospect.prompt.md` — 分类、生成、审查和复盘提示。
 - `backend-test-analysis.schema.json`、`backend-test-execution.schema.json`、`backend-test-result.schema.json`、`backend-test-case-manifest.schema.json` — 分析、执行、结果与用例清单 schema。
 
@@ -37,9 +38,18 @@
 
 - `frontend-task-requirement.md`、`frontend-task-constraints.md`、`frontend-design-contract.md` — 前端任务输入与设计合同。
 - `frontend-implementation-contract.schema.json` — 前端实现合同 schema。
-- `frontend-test-dag.json` — frontend-test DAG 模板。
+- `frontend-test-dag.json` — frontend-test DAG 模板；其 deterministic checklist 会拒绝 alternative executable instructions，仅允许 allowlisted `playwright-cli` command。Pi generator/reviser 的 runtime writeSet 仅授权下列目标项目生成路径（不是本仓库文档索引目标）：
+
+  ~~~text
+  testcase/frontend/cases/FE-*.md
+  testcase/frontend/cases/index.md
+  testcase/frontend/cases/manifest.draft.json
+  ~~~
+
+  Pi writer writeSet 不包含 final manifest（文件名 manifest.json）。依赖 checklist 的 exclusive shell materializer 是 final manifest 的唯一写入者，以 temp+rename 原子生成 final，后续 map 只消费该 materializer 输出。
 - `frontend-test-dag.retrieve-context.prompt.md`、`frontend-test-dag.generate-cases.prompt.md`、`frontend-test-dag.review-cases.prompt.md`、`frontend-test-dag.review-execution.prompt.md`、`frontend-test-dag.retrospect.prompt.md` — 上下文、用例、审查、执行审查和复盘提示。
 - `frontend-test-case-checklist.md` — 前端测试用例检查清单。
+- `frontend-test-standard-scenarios.v1.json` — frontend-test 标准场景规范（generate 覆盖 must 场景；运行时可物化到目标项目 testcase/frontend/rag 下的 standard-scenarios.v1.json）。
 
 ## 知识同步与配置
 

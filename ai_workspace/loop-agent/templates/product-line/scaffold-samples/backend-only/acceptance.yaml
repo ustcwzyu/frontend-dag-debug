@@ -11,3 +11,6 @@ acceptance:
     verification:
       expected_task_refs:
         - BE-IMPL-001
+      authority: feature-verify-final
+      required_evidence_kinds:
+        - canonical-qa-evidence

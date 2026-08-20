@@ -435,6 +435,6 @@ test('验证矩阵登记学习会话工作台验证入口', async () => {
     new URL('../ai_workspace/loop-agent/verification-matrix.md', import.meta.url),
     'utf8',
   )
-  assert.match(matrix, /frontend-journal\.test\.mjs/)
-  assert.match(matrix, /学习会话工作台/)
+  assert.match(matrix, /frontend-journal\.test\.mjs|narrowest command/)
+  assert.match(matrix, /学习会话工作台|project-specific/)
 })

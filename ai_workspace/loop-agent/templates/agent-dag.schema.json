@@ -56,7 +56,12 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         },
-        "writePolicy": { "$ref": "#/$defs/writePolicy" }
+        "writePolicy": { "$ref": "#/$defs/writePolicy" },
+        "writeGuardPolicy": {
+          "type": "string",
+          "enum": ["full", "tools-only"],
+          "description": "full (default): git baseline + post-diff write-guard. tools-only: keep tool sandbox only (frontend-test)."
+        }
       }
     },
     "skillsByRole": {
@@ -396,7 +401,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["maxAttempts"],
-      "description": "Retry policy for safe read-only planner/scout/reviewer/verifier/closeout Pi nodes. Total attempts include the first try and are capped at five. Supervisors, implementers, and side-effecting nodes are ineligible. Only the categories listed in retryCategories are retried; quota/auth/invalid-output/write-guard are never retried.",
+      "description": "Retry policy for safe read-only Pi nodes and validation-gated bounded writer exceptions. Total attempts include the first try and are capped at five. Standard implementation-outcome writers may use exactly two attempts with only writer-clean-timeout after the executor proves zero attributed writes and zero write-tool calls; requireChangedFiles writers retain their dedicated writer-empty-diff/completeness policies.",
       "properties": {
         "maxAttempts": {
           "type": "integer",
@@ -418,10 +423,10 @@
         "retryCategories": {
           "type": "array",
           "items": {
-            "enum": ["timeout", "network", "rate-limit", "unavailable", "output-too-large", "protocol-invalid"]
+            "enum": ["timeout", "network", "rate-limit", "unavailable", "empty-output", "output-too-large", "protocol-invalid", "invalid-output", "writer-empty-diff", "incomplete-write-set", "writer-clean-timeout"]
           },
-          "default": ["timeout", "network", "rate-limit", "unavailable"],
-          "description": "Failure categories eligible for retry. quota is never eligible. output-too-large is reserved for explicit structured-required nodes. protocol-invalid is for nodes that declare outputProtocol with retryOnInvalid."
+          "default": ["timeout", "network", "rate-limit", "unavailable", "empty-output"],
+          "description": "Failure categories eligible for retry. quota/auth/write-guard are never eligible. invalid-output is allowed only on explicit structured/protocol policies; writer-empty-diff and incomplete-write-set are reserved for requireChangedFiles generation/completeness writers; writer-clean-timeout is reserved for standard bounded writers after explicit zero-write-tool-call and empty-diff evidence."
         }
       }
     },
@@ -533,7 +538,11 @@
           "required": ["type"],
           "description": "Fail-closed outcome/diff consistency protocol for bounded Pi writers. The first non-empty assistant line must be IMPLEMENTATION_OUTCOME: changed, already-satisfied, or blocked.",
           "properties": {
-            "type": { "const": "implementation-outcome-v1" }
+            "type": { "const": "implementation-outcome-v1" },
+            "requireChangedFiles": {
+              "type": "boolean",
+              "description": "When true, already-satisfied and every empty run-attributed diff fail closed. Use for generation nodes whose output contract requires fresh files."
+            }
           }
         },
         "allowedPaths": {

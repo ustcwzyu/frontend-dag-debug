@@ -51,7 +51,7 @@ check_skill "agent-worker" "references/agent-worker-operator.md"
 # against the whole skill file so host auto-discovery phrasing cannot drift.
 loop_agent_skill=".agents/skills/loop-agent/SKILL.md"
 loop_agent_text="$(tr '[:upper:]' '[:lower:]' < "${loop_agent_skill}")"
-for term in "loop-agent 帮我完成" "帮我实现" "帮我修复" "帮我开发" "agent dag" "new-task" "dag run-task" "dag validate" "run-dag"; do
+for term in "loop-agent 帮我完成" "帮我实现" "帮我修复" "帮我开发" "agent dag" "task advance" "task status" "dag validate" "dag execute"; do
   if [[ "${loop_agent_text}" != *"${term}"* ]]; then
     echo "skill entry 检查失败（loop-agent）：description 缺少触发/路由词 ${term}" >&2
     exit 1

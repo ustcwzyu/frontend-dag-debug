@@ -10,6 +10,27 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 没有完成 Phase 1（根因调查），就不能提出任何修复方案。修症状 = 失败。
 
+## 前置：构建反馈回路（Phase 1 的地基）
+
+在读代码猜原因、列假设或动手修复之前，先建立一条**快速、确定性、Agent 可运行**的 pass/fail 信号。后续复现、假设、插桩和修复都消费这条回路，而不是依赖聊天里的印象。
+
+按优先级选用（能用更靠前的就不要降级）：
+
+1. 失败测试（已有或最小新增）
+2. HTTP / API 脚本（固定输入 → 断言状态码或响应）
+3. CLI fixture / snapshot
+4. 浏览器脚本（确定性交互 + 断言）
+5. Trace / log replay
+6. 一次性本地 harness（最小复现命令）
+7. Property / fuzz（非确定性边界）
+8. `git bisect run`（回归定位）
+9. 新旧版本 differential
+10. 结构化 HITL 脚本（仅当自动化回路不可得，且人工步骤可重复）
+
+把回路本身当作产品优化：更快、更锋利、更确定性。间歇性问题先提高复现率，再进入根因调查。
+
+**不能建立回路时：停下。** 请求缺失的环境、artifact、凭据或临时插桩许可；不要在没有 pass/fail 信号时继续猜。
+
 ## 何时使用
 
 适用于任何技术问题：
@@ -28,7 +49,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 ## 四阶段流程
 
-每个阶段必须完成才能进入下一个。
+每个阶段必须完成才能进入下一个。反馈回路是 Phase 1 的地基，不是第五阶段。
 
 ### Phase 1：根因调查
 
@@ -113,6 +134,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ## Red Flags：停止并回到 Phase 1
 
 如果你发现自己这样想：
+- "没有 pass/fail 回路，先读代码猜原因"
 - "先快速修一下，后面再调查"
 - "试试改 X 看看行不行"
 - "一次改多个东西然后跑测试"
@@ -121,13 +143,14 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - "不太确定但可能有用"
 - "再试一个修复"（已经试了 2+ 次）
 
-**以上任何一种 → 停止。回到 Phase 1。**
+**以上任何一种 → 停止。回到反馈回路 / Phase 1。**
 
 ## 和 Harness 工作流的对齐
 
 | 调试阶段 | Harness 步骤 |
 |---------|-------------|
-| Phase 1：根因调查 | Baseline：先验证当前基线，确认 bug 是可复现的 |
+| 反馈回路 | Baseline / Reproduction evidence：先有可重复的 pass/fail 信号 |
+| Phase 1：根因调查 | Baseline：确认 bug 可复现，并收集证据 |
 | Phase 2：模式分析 | Orient：读相关代码、文档、测试，找参考 |
 | Phase 3：假设测试 | Contract：写清修复假设和验证方法 |
 | Phase 4：实现 | Implement → Verify（TDD：先写失败测试） |
@@ -137,6 +160,7 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 | 阶段 | 关键活动 | 成功标准 |
 |------|---------|---------|
+| 0. 反馈回路 | 建立快速确定性 pass/fail 信号 | 有可重复命令与退出码 |
 | 1. 根因 | 读错误、复现、查变更、收集证据 | 理解 WHAT 和 WHY |
 | 2. 模式 | 找工作中的例子、对比 | 识别差异 |
 | 3. 假设 | 形成理论、最小测试 | 确认或新假设 |

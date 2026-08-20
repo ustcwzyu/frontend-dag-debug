@@ -24,7 +24,7 @@
 - Shell 搜索优先 `rg`，按名找文件优先 `fd`；脚本用 Git Bash / 兼容 Bash。
 - 用 loop-agent 迭代本仓库时，控制器必须来自已发布 npm 包（记录实际版本）；启动后不要中途升级；不要用工作区 `npm link` / `npm run dev` 控制可能改 CLI/runtime/package 的任务。
 - 反复出现的约束固化为文档、脚本、检查、测试或模板；禁止占位实现（除非 contract 标明脚手架）。
-- 非微小实现：`exec-plan` 不能替代 Agent DAG；除非用户要求 one-shot 或计划记录 escape hatch，否则改实现前完成 `new-task`、结构化路径、`dag run-task`、`dag validate` 与 writeSet 审查。
+- 非微小实现：`exec-plan` 不能替代 Agent DAG；除非用户要求 one-shot 或计划记录 escape hatch，否则改实现前完成 `task advance`（结构化路径 + writeSet 审查），不得主会话直接改实现。
 - 不要自行引入外部 SDD/spec-first 等强制平行治理树；以本文件与 `docs/` 为准（ADR 0006）。
 
 ## 开始顺序
@@ -37,7 +37,7 @@
 4. 涉及测试纪律/验证声明/调试时继续读：`docs/harness-methodology-*.md`。
 5. 查看最近提交、相关 plan/progress/report；`git status --short --branch`；跑最小基线验证。
 6. 后端/接口/pytest → `taskKind: "backend-test"`（不是 `--profile`）；知识回写 `knowledge-sync`；图谱开荒 `knowledge-graph-bootstrap`。`--profile` 仅 `auto|minimal|standard|reviewed|supervised`。
-7. 看板/observe → `agent-worker console`（默认 repo=当前目录、port=8790；兼容 `agent-worker console serve --repo . --port 8790`）（`/inspect/` 只读）；`observe serve` 仅为兼容入口。
+7. 看板/observe → `agent-worker console`（默认 repo=当前目录、port=8790；`--no-open` 禁止自动打开浏览器）（`/inspect/` 只读）；`observe serve` 已下线（REMOVED / exit 2）；`observe snapshot` 仍可用。
 8. 分支合并 → 先读 `docs/operations/branch-merge-guideline.md`。
 
 ## 会话协议

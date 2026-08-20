@@ -1,3 +1,14 @@
 schema_version: 1
 feature_id: F-2099-901
 profile: generic
+acceptance_policy:
+  schema_version: 1
+  authority: feature-verify-final
+  independent_qa_required: true
+  coverage_writer: feature-verify-final
+  final_verification:
+    command: agent-worker feature verify-final
+  delivery_sequence:
+    - verify-final
+    - delivery
+    - closeout

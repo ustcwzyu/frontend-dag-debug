@@ -13,3 +13,6 @@ acceptance:
         - CONTRACT-001
         - BE-IMPL-001
         - FE-IMPL-001
+      authority: feature-verify-final
+      required_evidence_kinds:
+        - canonical-qa-evidence

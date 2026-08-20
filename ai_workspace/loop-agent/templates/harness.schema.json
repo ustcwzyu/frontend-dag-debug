@@ -63,9 +63,9 @@
               "default": "zh-CN"
             },
             "defaultEntry": {
-              "enum": ["dag run-task", "run-dag"],
+              "enum": ["task advance", "dag execute"],
               "description": "默认 DAG 入口，用于任务 DAG 生成或直接 DAG 执行。",
-              "default": "dag run-task"
+              "default": "task advance"
             },
             "profileRouting": {
               "type": "object",
@@ -106,6 +106,113 @@
               "description": "需要暂停并等待人类输入的决策风险类别。",
               "items": { "type": "string", "minLength": 1 },
               "default": []
+            }
+          }
+        }
+      }
+    },
+    "workerPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "agent-worker 侧声明式策略（含 Night Scheduler）。运行时以 Zod harnessManifestSchema 为准。",
+      "properties": {
+        "nightScheduler": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "本地夜间 once 调度默认策略；每个 schedule 会冻结 effective snapshot。",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "是否启用 Night Scheduler 能力面。",
+              "default": false
+            },
+            "timezone": {
+              "type": "string",
+              "minLength": 1,
+              "description": "展示与 allowedHours 解释使用的 IANA 时区。",
+              "default": "Asia/Shanghai"
+            },
+            "allowedHours": {
+              "type": "array",
+              "description": "允许派发的本地时间窗，格式 HH:MM-HH:MM，可跨午夜。",
+              "items": {
+                "type": "string",
+                "pattern": "^\\d{2}:\\d{2}-\\d{2}:\\d{2}$"
+              },
+              "default": ["00:00-08:00"]
+            },
+            "maxConcurrency": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "全局同时 running 的 schedule 上限（按有效 execution lease 计数）。",
+              "default": 1
+            },
+            "maxAutoAttempts": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "独立 Worker execution attempt 上限；MVP 为 1。",
+              "default": 1
+            },
+            "misfirePolicy": {
+              "enum": ["run-immediately", "wait-next-window", "human-required"],
+              "description": "机器休眠或 tick 延迟后的 misfire 策略。",
+              "default": "wait-next-window"
+            },
+            "keepFailedWorktree": {
+              "type": "boolean",
+              "description": "失败后是否默认保留 worktree 供人工 inspect。",
+              "default": true
+            },
+            "mergePolicy": {
+              "enum": ["manual-on-success", "auto-on-success"],
+              "description": "成功后的 merge 策略；MVP 仅 manual-on-success。",
+              "default": "manual-on-success"
+            },
+            "autoFollowUp": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "ADR 0010：失败后是否自动 draft Follow-up（永不 auto-approve）。默认 off。",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "为 true 时，terminal failed night execution 可调用 draftFollowUpDecision。",
+                  "default": false
+                },
+                "mode": {
+                  "enum": ["draft-only"],
+                  "description": "MVP 仅 draft-only；自动 Ready/approve 需另 ADR。",
+                  "default": "draft-only"
+                }
+              }
+            },
+            "traceability": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "可 push commit 的工作项可追溯策略（任务卡片）。",
+              "properties": {
+                "required": {
+                  "type": "boolean",
+                  "description": "创建 schedule 时是否强制任务卡片。",
+                  "default": false
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "default": "Task Card"
+                },
+                "pattern": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "workItemRef 正则；默认通用公司卡片格式。",
+                  "default": "^[A-Z][A-Z0-9]+-[A-Z0-9]+#[0-9]+$"
+                },
+                "commitMessageTemplate": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "必须包含 {workItemRef} 占位符。",
+                  "default": "{summary}\n\n{workItemRef}"
+                }
+              }
             }
           }
         }
@@ -175,8 +282,8 @@
     },
     "executors": {
       "type": "object",
-      "description": "按 executor id 分组的执行器配置。受治理 runtime 仅支持 pi；Cursor 仅通过 cursor-prompt sidecar 使用，不得配置在 executors 中。",
-      "additionalProperties": { "$ref": "#/$defs/executor" },
+      "description": "受治理 runtime 仅支持 pi；Cursor 仅通过 cursor-prompt sidecar 使用，不得配置在 executors 中。",
+      "additionalProperties": false,
       "properties": {
         "pi": { "$ref": "#/$defs/executor" }
       }
@@ -195,6 +302,11 @@
           "additionalProperties": false,
           "required": ["model"],
           "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1,
+              "description": "可选 Pi provider id。与 model 组合为无歧义的 provider/model 路由；省略时从 model 字符串中的 provider/model 或运行时 available 列表推断。"
+            },
             "model": {
               "type": "string",
               "minLength": 1,
@@ -212,13 +324,13 @@
     "executor": {
       "type": "object",
       "additionalProperties": false,
-      "description": "executor 设置。DAG 模型选择优先读取 LOW/MED/HIGH，其次读取 defaultModel，最后回退到 loop-agent runtime 默认矩阵。字面值 default 表示不覆盖。LOW/MED/HIGH 可为字符串或 { model, thinking? } 对象。",
+      "description": "Pi executor 设置。DAG 模型选择优先读取 LOW/MED/HIGH，其次读取 defaultModel，最后回退到 loop-agent runtime 默认矩阵。fresh init 只写 LOW/MED/HIGH；三档有效值齐全时不保留 defaultModel。defaultModel 仅兼容旧项目。字面值 default 表示不覆盖。LOW/MED/HIGH 可为字符串或 { model, thinking? } 对象。",
       "properties": {
         "description": { "type": "string" },
         "enabled": { "type": "boolean" },
         "defaultModel": {
           "type": "string",
-          "description": "executor 默认模型。设置为 default 或省略时，会继续回退到 loop-agent runtime 默认值。",
+          "description": "旧项目兼容默认模型。fresh init 不输出该字段；设置为 default 或省略时，会继续回退到 loop-agent runtime 默认值。",
           "default": "default"
         },
         "LOW": {
@@ -232,10 +344,6 @@
         "HIGH": {
           "$ref": "#/$defs/executorTierModel",
           "description": "HIGH 复杂度 DAG task 的模型覆盖值，优先级高于 defaultModel。可为模型字符串，或 { model, thinking? } 对象。"
-        },
-        "requiresApiKey": {
-          "type": "string",
-          "description": "该 executor 需要的环境变量名，通常用于 Cursor 等可选外部 executor。init update 会剥离过时的 pi.requiresApiKey。"
         }
       }
     }

@@ -88,6 +88,15 @@ Record overlapping or high-risk files that Git merged without conflict. These ar
 
 Add focused tests and real init/update/browser/CLI smokes required by the merged capabilities.
 
+### Full-suite authority (local same-tree dedupe)
+
+- Canonical full-verification authority: `<valid receipt | target pre-push | npm run verify:tree | authorized skip/release workflow>`
+- Verified tree SHA: `<git rev-parse HEAD^{tree} or equivalent>`
+- Receipt status/path: `<matched|missing|expired|invalid|ineligible-dirty|n/a; path if any>`
+- Full-suite local execution count: `<number of full local suite runs for this merge tree>`
+- Additional full run reason: `<none | env drift | new merge tree | command contract change | other>`
+- Apparent duplicate skipped and evidence: `<yes/no; receipt matched log or explain output summary>`
+
 ## Mode Completion Check
 
 - Required gates for selected mode: `<list>`.

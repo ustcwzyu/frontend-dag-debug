@@ -23,10 +23,10 @@
 
 ## DAG 主路径
 
-- [ ] 已运行 `loop-agent new-task <task-id> "Task title"` 或 task 已存在
-- [ ] `loop-agent dag run-task <task-id> --profile auto --strict-models --output <dag-path>` 产出 DAG spec
+- [ ] 已运行 `loop-agent task advance <task-id> "Task title" --prd <prd.md> --allowed-path "<glob>" --json`（或 task 已存在且契约就绪）
+- [ ] `task advance` 产出/刷新 `.harness/tasks/<task-id>/dag.json` 并打开 writeSet gate
 - [ ] `loop-agent dag validate --dag <dag-path> --strict-models --strict-governance` 通过
-- [ ] `loop-agent run-dag --dag <dag-path> --cwd .` 产出 run id
+- [ ] `loop-agent task advance <task-id> --approve-gate "write-set-review:<digest>" --json` 产出 run id / lifecycle 事实（advanced arbitrary DAG 才用 `dag execute`）
 - [ ] `loop-agent dag report --run-id <run-id> --markdown` 可读
 - [ ] `loop-agent dag doctor --run-id <run-id>` 能解释失败或 paused run
 
