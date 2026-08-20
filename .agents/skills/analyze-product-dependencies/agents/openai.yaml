@@ -1,4 +1,0 @@
-interface:
-  display_name: "产品依赖分析"
-  short_description: "把故事、输出规范和验收标准映射到真实代码与 API 文档"
-  default_prompt: "使用 $analyze-product-dependencies 将 Product Requirement 映射到代码，并按需生成 API 文档。"

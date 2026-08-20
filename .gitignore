@@ -27,52 +27,11 @@ server/data/
 *.sw?
 
 # LOOP_AGENT_INIT_START
-# loop-agent runtime: ignore personal/session facts; keep prompts and directory placeholders shareable
-
-# tasks (source + runtime state per developer/session)
-.harness/tasks/*
-!.harness/tasks/.gitkeep
-
-# DAG runs
-.harness/dag-runs/active/*
-!.harness/dag-runs/active/.gitkeep
-.harness/dag-runs/completed/*
-!.harness/dag-runs/completed/.gitkeep
-.harness/dag-runs/paused/*
-!.harness/dag-runs/paused/.gitkeep
-.harness/dag-runs/.operator-requests/
-.harness/dag-runs/archived-inactive/
-
-# one-shot executor runs
-.harness/runs/*
-!.harness/runs/.gitkeep
-!.harness/runs/active/
-!.harness/runs/active/.gitkeep
-!.harness/runs/completed/
-!.harness/runs/completed/.gitkeep
-!.harness/runs/failed/
-!.harness/runs/failed/.gitkeep
-
-# session / cache / logs / recomputable surface state
-.harness/live/
-.harness/cache/
-.harness/*.log
-.harness/init-surface.json
-.harness/init-upgrades/
-
-# Eval Lab runtime (candidates, campaigns, scorecards, dogfood scratch)
-.harness/evaluation/
-
-# fullstack / worker dogfood evidence (local campaign scratch)
-.harness/dogfood-evidence/
-
-# worker task pool
-.harness/task-pool/*
+# loop-agent runtime: local, rebuildable facts; do not ignore scripts/ or ai_workspace/loop-agent/
+.harness/
+.agents/
 .task-pool/
-
-# repo-local skill dependencies installed inside projected skills
-.agents/skills/*/node_modules/
-
-# multi-worktree parallel mode
 .worktrees/
 # LOOP_AGENT_INIT_END
+.agents/**
+.harness/**

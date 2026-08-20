@@ -23,7 +23,8 @@
 | **允许** | 已发布 `loop-agent` / `agent-worker` CLI；只读 status/doctor/report/inspect/observe；准备 `source/*` 与 `task.json` 边界；human gate；shell 验证与 handoff。 |
 | **禁止** | 绕过 CLI 用宿主 Edit/Write/ApplyPatch 直接改业务实现；CLI/DAG 失败后「救火改文件」；用聊天自述代替 shell 验证。 |
 | **失败时** | 先 `dag report` / `dag doctor`；优先 `dag rerun --from-node` 安全子图续跑；仅契约/源真变或 plan 不合格时同 task 重 advance / `dag rerun-task`；paused 用 approve→`dag resume`。 |
-| **实现写入** | 业务代码 **只** 经受治理 DAG writer（`implement-pi` / `repair-pi`）经 `task advance`（批准 writeSet gate 后长跑）。 |
+| **实现写入** | 业务代码 **只** 经受治理 DAG writer（`implement-pi` / `repair-pi`）经 `task advance`（批准 writeSet gate 后长跑）由 Console operation 后台持有；主会话**不得**在前台 Bash 直接执行 `task advance --approve-gate`，不得把长跑命令管道到 `tail`/`head`，不得自行拼接 `nohup` / `Start-Process` / `start`。 |
+| **契约漂移** | 直接编辑 `source/需求.md` / `执行约束.md` 后契约会进入 `externally-modified`，此时 advance/dagRunTask 拒用新内容（DIRTY_SOURCE / hash 不一致）。合法收编路径：`task contract adopt --task <id> --expected-revision <n> --expected-observed-hash <hash> --request-id <id> --request-payload-sha256 <sha>`（hash 从 `task status --json` 的 `contract.observedCanonicalHash` 取）；或改 PRD 后重新 importPrd 走完整重投影。禁止手工改 `lifecycle.json` / `.transactions/` 绕过。 |
 
 **永远不要**：`loop-agent` / `agent-worker` 失败 ⇒ 主会话直接改仓库实现；也勿因 provider 抖动或只读节点失败**新建无关 task-id**。
 
@@ -99,6 +100,8 @@ loop-agent task status <task-id> --json
 # 有 plan 时收尾：loop-agent plan complete <plan-id> --summary "..."
 ```
 
+长跑 DAG 采用 `prepareDagExecution → runDag → operationId` 异步 operation 路径（`--approve-gate` 不在前台 Bash 中同步等待）；监督退避 60 → 90 → 120 → 180 秒，状态变化后重置为 60 秒，疑似 stall 用 30–60 秒复查。
+
 `--verify` 命令应取项目 `AGENTS.md` / `ai_workspace/loop-agent/verification-matrix.md` 登记的验证命令（不要假定 `npm run typecheck` 存在）；`--verify` 可选，省略时自动从 package.json scripts 或既有 managed `task.json.verifyCommands` 推导建议。
 
 `source/需求.md` 与 `source/执行约束.md` 仍必需（M8/M9），但默认由 `task advance --prd` 投影生成，而不是主会话手写。`plan create` 不是 `task advance` 的硬依赖。写入前同步 `task.json.allowedPaths` / `task.json.forbiddenPaths` 并审查 writer `writeSet`。高级任意 DagSpec 才用 `dag validate|execute|report`，不进入标准 happy path。
@@ -129,7 +132,7 @@ live run 先用 `loop-agent dag status --run-id <run-id>` 看 lifecycle 与 live
 
 **失败默认恢复序**：`dag report`/`dag doctor` → 优先 `dag rerun --from-node <node> --plan` 再带 `--plan-hash`（provider 抖动、plan/review/verify 安全下游；writer/decision/fingerprint 不合格勿硬跑）→ paused：approve→`dag resume` → 契约/源真变或 R1 不合格：同 task `task advance` / `dag rerun-task`（禁无理由新建 task-id）→ Worker-owned：`agent-worker task retry`。
 
-Operator 须监控 live run 至终态（FINISHED / FAILED / partial_failed）或 Decision Gate 需要 approve；可在节点/rank 变化、verify/closeout、stall 或需 approve 时简短汇报（告知非请求确认）。判活须组合 runner heartbeat、session events 与 `dag doctor` liveness/provider meaningful progress（heartbeat alone ≠ progress）。bounded writer 运行期间不得并发修改工作区（write guard / write-guard 会把越界 diff 错误归因到 writer）；只读 status/doctor/report 与 approve/reject/resume 仍允许。恢复：report/doctor → **优先** `dag rerun --from-node` → 必要时 rerun-task/同 task advance → shell verify。**禁止**把主会话直接 Edit 业务代码当作恢复手段。
+Operator 须监控 live run 至终态（FINISHED / FAILED / partial_failed）或 Decision Gate 需要 approve；监督退避 60 → 90 → 120 → 180 秒（状态变化后重置 60 秒，疑似 stall 用 30–60 秒复查），长跑 DAG 由 Console operation 后台持有（`prepareDagExecution → runDag → operationId`），禁止前台 Bash 直接 `task advance --approve-gate`、禁止管道 `tail`/`head`、禁止自行拼接 `nohup` / `Start-Process` / `start`；可在节点/rank 变化、verify/closeout、stall 或需 approve 时简短汇报（告知非请求确认）。判活须组合 runner heartbeat、session events 与 `dag doctor` liveness/provider meaningful progress（heartbeat alone ≠ progress）。bounded writer 运行期间不得并发修改工作区（write guard / write-guard 会把越界 diff 错误归因到 writer）；只读 status/doctor/report 与 approve/reject/resume 仍允许。恢复：report/doctor → **优先** `dag rerun --from-node` → 必要时 rerun-task/同 task advance → shell verify。**禁止**把主会话直接 Edit 业务代码当作恢复手段。
 
 ### 运行态与验证
 
