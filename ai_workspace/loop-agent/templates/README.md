@@ -30,7 +30,7 @@
 
 ## Backend-test
 
-- `backend-test-dag.json` — backend-test DAG 模板；其中 `generate-backend-md-cases-pi` 是唯一允许 `writer-empty-diff` 重试的 writer（总共两次，仅限 post-write-guard attribution 确认的空 diff）。
+- `backend-test-dag.json` — backend-test DAG 模板；其中 `generate-backend-md-cases-pi` 是唯一允许 `writer-empty-diff` 重试的 writer（总共两次，仅限 post-write-guard attribution 确认的空 diff）；N2/N5 合同限定 Scenario Partition 必须有源有限域。
 - `backend-test-dag.classify.prompt.md`、`backend-test-dag.generate-pytest.prompt.md`、`backend-test-dag.review-cases.prompt.md`、`backend-test-dag.retrospect.prompt.md` — 分类、生成、审查和复盘提示。
 - `backend-test-analysis.schema.json`、`backend-test-execution.schema.json`、`backend-test-result.schema.json`、`backend-test-case-manifest.schema.json` — 分析、执行、结果与用例清单 schema。
 
