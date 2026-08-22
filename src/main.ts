@@ -8,6 +8,8 @@ import {
 } from './api.ts'
 import { loadSession, saveSession, clearSession } from './auth.ts'
 import { initJournalWorkbench, setJournalSession } from './journal.ts'
+import { initArchiveWorkbench, setArchiveSession } from './archive.ts'
+import { initExportCenter, setExportSession } from './exporter.ts'
 import { navigate, parseHash, startRouter } from './router.ts'
 import type { PageName, ParsedRoute, RouteId } from './router.ts'
 import type { CapabilityData, LabData, LessonData } from './api.ts'
@@ -945,6 +947,34 @@ const loggedInProgressMarkup = `
       </div>
     </section>`
 
+// ── 学习实验归档中心页（AC-002 / AC-ARC-002）：页面骨架由 main.ts 渲染（标题 + 新建按钮 +
+//     挂载点），表单/列表/同步工作台由 src/archive.ts 挂载；本文件不出现网络/存储字面量。 ──
+
+const archivePageMarkup = `
+    <section class="archive-panel container" id="archive-panel" aria-labelledby="archive-title">
+      <p class="section-kicker">归档与复盘</p>
+      <h2 class="section-title" id="archive-title">学习实验归档中心</h2>
+      ${serviceBannerMarkup}
+      <div class="archive-panel__toolbar">
+        <button type="button" class="btn btn--primary" id="archive-create-btn">新建实验记录</button>
+      </div>
+      <div id="archive-workbench-mount"></div>
+    </section>`
+
+// ── 学习实验导出中心页（AC-002 / AC-EXP-002）：页面骨架由 main.ts 渲染（标题 + 生成导出按钮 +
+//     挂载点），字段/格式/预览/历史工作台由 src/exporter.ts 挂载；本文件不出现网络/存储字面量。 ──
+
+const exportPageMarkup = `
+    <section class="export-panel container" id="export-panel" aria-labelledby="export-title">
+      <p class="section-kicker">学习实验导出</p>
+      <h2 class="section-title" id="export-title">学习实验导出中心</h2>
+      ${serviceBannerMarkup}
+      <div class="export-panel__toolbar">
+        <button type="button" class="btn btn--primary" id="export-generate-btn">生成导出</button>
+      </div>
+      <div id="export-workbench-mount"></div>
+    </section>`
+
 // ── 404 兜底页（AC-FE-010 / BR-RT-001）：地址栏保留用户输入，不自动重定向 ──
 
 const notFoundMarkup = `
@@ -968,6 +998,8 @@ const navItems: NavItem[] = [
   { hash: '#/', label: '主页', page: 'home' },
   { hash: '#/lesson/beginner', label: '课程', page: 'lesson' },
   { hash: '#/progress', label: '进度', page: 'progress' },
+  { hash: '#/archive', label: '归档', page: 'archive' },
+  { hash: '#/export', label: '导出', page: 'export' },
   { hash: '#/login', label: '登录', page: 'login' },
 ]
 
@@ -1060,6 +1092,10 @@ function pageMainMarkup(parsed: ParsedRoute): string {
       return lessonPageMarkup(parsed.routeId as RouteId)
     case 'progress':
       return progressPageMarkup()
+    case 'archive':
+      return archivePageMarkup
+    case 'export':
+      return exportPageMarkup
     case 'login':
       return loginPageMarkup
     case 'not-found':
@@ -1108,6 +1144,10 @@ ${footerMarkup}`
   } else if (parsed.page === 'progress') {
     wireProgressPage()
     mountJournalWorkbench()
+  } else if (parsed.page === 'archive') {
+    wireArchivePage()
+  } else if (parsed.page === 'export') {
+    wireExportPage()
   } else if (parsed.page === 'login') {
     wireLoginPage()
   }
@@ -1277,6 +1317,8 @@ function enterLoggedIn(username: string, token: string): void {
   currentSession = { token, username }
   saveSession(currentSession)
   setJournalSession(currentSession)
+  setArchiveSession(currentSession)
+  setExportSession(currentSession)
   render()
 }
 
@@ -1284,6 +1326,8 @@ function enterLoggedOut(): void {
   currentSession = null
   clearSession()
   setJournalSession(null)
+  setArchiveSession(null)
+  setExportSession(null)
   render()
 }
 
@@ -1373,6 +1417,22 @@ function mountJournalWorkbench(): void {
   }
   initJournalWorkbench(host)
   workbenchMount = document.getElementById('journal-workbench')
+}
+
+// ── 学习实验归档中心：每次进入 archive 页重建挂载点并初始化（AC-ARC-002） ──
+
+function wireArchivePage(): void {
+  const host = document.getElementById('archive-workbench-mount')
+  if (!host) return
+  initArchiveWorkbench(host)
+}
+
+// ── 学习实验导出中心：每次进入 export 页重建挂载点并初始化（AC-002） ──
+
+function wireExportPage(): void {
+  const host = document.getElementById('export-workbench-mount')
+  if (!host) return
+  initExportCenter(host, currentSession)
 }
 
 // ── 启动：注册唯一 hashchange 监听并完成首次渲染分派；随后后台拉取服务端内容 ──

@@ -4,6 +4,8 @@
 //   '' / '#' / '#/'                      → home
 //   '#/lesson/beginner|builder|advanced' → lesson
 //   '#/progress'                         → progress
+//   '#/archive'                          → archive
+//   '#/export'                           → export
 //   '#/login'                            → login
 //   其余（含 '#/lesson/unknown'）        → not-found
 //
@@ -12,7 +14,7 @@
 
 export type RouteId = 'beginner' | 'builder' | 'advanced'
 
-export type PageName = 'home' | 'lesson' | 'progress' | 'login' | 'not-found'
+export type PageName = 'home' | 'lesson' | 'progress' | 'archive' | 'export' | 'login' | 'not-found'
 
 export interface ParsedRoute {
   page: PageName
@@ -29,6 +31,12 @@ export function parseHash(hash: string): ParsedRoute {
   }
   if (value === '#/progress') {
     return { page: 'progress', routeId: null }
+  }
+  if (value === '#/archive') {
+    return { page: 'archive', routeId: null }
+  }
+  if (value === '#/export') {
+    return { page: 'export', routeId: null }
   }
   if (value === '#/login') {
     return { page: 'login', routeId: null }

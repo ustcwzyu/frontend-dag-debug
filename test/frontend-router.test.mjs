@@ -32,6 +32,18 @@ test('parseHash：#/progress、#/login → progress、login（BR-RT-001）', () 
   assert.deepEqual(parseHash('#/login'), { page: 'login', routeId: null })
 })
 
+test('parseHash：#/archive → archive（全等匹配，AC-001 / AC-ARC-001）', () => {
+  assert.deepEqual(parseHash('#/archive'), { page: 'archive', routeId: null })
+  // 带尾斜杠 '#/archive/' 落入 not-found，与 #/progress/、#/login/ 同构
+  assert.deepEqual(parseHash('#/archive/'), { page: 'not-found', routeId: null })
+})
+
+test('parseHash：#/export → export（全等匹配，AC-001 / AC-EXP-001）', () => {
+  assert.deepEqual(parseHash('#/export'), { page: 'export', routeId: null })
+  // 带尾斜杠 '#/export/' 落入 not-found，与 #/archive/ 同构
+  assert.deepEqual(parseHash('#/export/'), { page: 'not-found', routeId: null })
+})
+
 test('parseHash：其余（含 #/lesson/unknown、#/nonsense）→ not-found（AC-FE-010 / BR-RT-001）', () => {
   for (const hash of [
     '#/nonsense',
@@ -40,6 +52,7 @@ test('parseHash：其余（含 #/lesson/unknown、#/nonsense）→ not-found（A
     '#/lesson',
     '#/progress/',
     '#/login/',
+    '#/archive/',
     '#/capability-map',
     '#first-lesson-beginner',
     '#foo',
