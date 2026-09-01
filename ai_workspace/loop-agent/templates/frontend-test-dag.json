@@ -66,12 +66,11 @@
         ".harness/**",
         "artifacts/**"
       ],
-      "outputContract": "Write testcase/frontend/rag/standard-scenarios.v1.json for generate-time standard scenario coverage.",
-      "subtask_prompt": "Materialize frontend-test standard scenarios v1 into the RAG package.",
+      "outputContract": "Write testcase/frontend/rag/standard-scenarios.v1.json for generate-time standard scenario coverage. Copy docs/templates or harness.json governanceRoot templates (including ai_workspace/loop-agent/templates) when present; otherwise write the minimal STD-FE-SMOKE-ENTRY fallback.",
+      "subtask_prompt": "Prepare frontend-test package: materialize standard-scenarios.v1.json into the RAG package from docs/templates, governanceRoot/templates, or the init-projected ai_workspace/loop-agent/templates path.",
       "shell": {
-        "commands": [
-          "node -e \"const fs=require('fs'),path=require('path');const dest='testcase/frontend/rag/standard-scenarios.v1.json';const candidates=[path.join('docs','templates','frontend-test-standard-scenarios.v1.json')];let src=null;for(const c of candidates){if(fs.existsSync(c)){src=c;break;}}fs.mkdirSync(path.dirname(dest),{recursive:true});if(src){fs.copyFileSync(src,dest);process.stdout.write(JSON.stringify({status:'copied',from:src,to:dest}));}else{const minimal={schemaVersion:1,id:'frontend-test-standard-scenarios-v1',scenarios:[{id:'STD-FE-SMOKE-ENTRY',title:'入口可打开',category:'smoke',priority:'must',testPoints:['open'],minCases:1}]};fs.writeFileSync(dest,JSON.stringify(minimal,null,2)+'\\n');process.stdout.write(JSON.stringify({status:'fallback',to:dest}));}"
-        ],
+        "commands": [],
+        "frontendTestStandardScenarios": {},
         "cwd": ".",
         "timeoutMs": 60000
       }
@@ -120,12 +119,11 @@
         ".harness/**",
         "artifacts/**"
       ],
-      "outputContract": "Fail-closed environment preflight: absolute non-production baseUrl + curl HTTP reachability; writes environmentProbe facts; unreachable => blockedReason frontend-base-url-unreachable (node ERROR so generate/map do not run).",
-      "subtask_prompt": "Parse the concrete baseUrl selected by retrieve-frontend-test-context-pi from testcase/frontend/rag/context.md. Reject production, non-http(s), credentials, query and fragment. Probe with curl (HEAD then GET fallback; connect/max-time; no auth/cookie). 2xx/3xx => reachable and continue. 4xx/5xx/DNS/timeout/connection refused/TLS => blockedReason frontend-base-url-unreachable. Missing curl => blockedReason curl-unavailable. Do not start the app. Runtime hybrid generator embeds the authoritative probe script.",
+      "outputContract": "Fail-closed environment preflight: absolute non-production baseUrl + curl HTTP reachability; writes environmentProbe facts; unreachable => blockedReason frontend-base-url-unreachable with errorClass (connection-refused / dns-unresolved / connect-timeout / http-N). Node ERROR so generate/map do not run. Does not start the app.",
+      "subtask_prompt": "Parse the concrete baseUrl selected by retrieve-frontend-test-context-pi from testcase/frontend/rag/context.md. Reject production, non-http(s), credentials, query and fragment. Probe with curl (HEAD then GET fallback; connect/max-time; no auth/cookie). 2xx/3xx => reachable and continue. Connection refused records errorClass=connection-refused and tells the operator to start the local app then rerun from this node. 4xx/5xx/DNS/timeout/TLS => blockedReason frontend-base-url-unreachable. Missing curl => blockedReason curl-unavailable. Do not start the app.",
       "shell": {
-        "commands": [
-          "node -e \"console.log('template placeholder: runtime hybrid DAG embeds curl preflight; do not use this static command as source of truth')\""
-        ],
+        "commands": [],
+        "frontendTestEnvironmentProbe": {},
         "cwd": ".",
         "timeoutMs": 60000
       }

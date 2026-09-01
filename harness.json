@@ -65,9 +65,9 @@
   "executors": {
     "pi": {
       "description": "Pi planning, review, diagnosis, and bounded writing when DAG toolProfile=write",
-      "LOW": "deepseek/deepseek-v4-flash",
-      "MED": "deepseek/deepseek-v4-flash",
-      "HIGH": "deepseek/deepseek-v4-flash"
+      "LOW": "opencode-go/deepseek-v4-flash",
+      "MED": "opencode-go/deepseek-v4-pro",
+      "HIGH": "opencode-go/deepseek-v4-pro"
     }
   }
 }

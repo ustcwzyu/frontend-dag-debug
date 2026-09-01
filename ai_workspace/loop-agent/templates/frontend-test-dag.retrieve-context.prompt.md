@@ -17,5 +17,5 @@ Do not claim the environment is reachable until preflight completes. Preflight d
 
 ## Standard scenario coverage
 
-- Copy or reference `docs/templates/frontend-test-standard-scenarios.v1.json` into `testcase/frontend/rag/standard-scenarios.v1.json` when available.
+- Copy or reference `docs/templates/frontend-test-standard-scenarios.v1.json`, `harness.json` `governanceRoot`/templates, or the init-projected `ai_workspace/loop-agent/templates/frontend-test-standard-scenarios.v1.json` into `testcase/frontend/rag/standard-scenarios.v1.json` when available.
 - Add `## Standard scenario coverage` to coverage-map.md with planned/n/a for each must scenario.

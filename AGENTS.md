@@ -70,9 +70,19 @@ loop-agent init update --repo-root . --apply-safe
 当用户要求初始化 loop-agent（“初始化 loop-agent”“loop agent 初始化”“loop agent初始化”“loop-agent 初始化”），或发现 `README.md` / `ai_workspace/loop-agent/verification-matrix.md` 仍停留在通用初始化状态时，模型应在同一轮工作中完成初始化闭环，不要把补全文档和验证矩阵留给用户交互。
 
 1. 运行 `loop-agent init instructions --repo-root .`。
-2. 运行 `loop-agent init --repo-root . --profile full --merge`。
-3. 基于真实项目文件补全根 `README.md`、`ai_workspace/loop-agent/verification-matrix.md`，必要时适配 `scripts/ci-tests.sh`。
-4. 运行 `loop-agent init doctor --repo-root .`、`loop-agent inspect`、`loop-agent docs audit` 并完成 quick verification。
+2. 运行 `loop-agent init model-catalog --repo-root . --json`。loop-agent 不直接打开或解析认证文件原文，只让 Pi/OpenCode 自己的 runtime 加载其配置，并输出白名单模型元数据、Pi setup 状态、Pi 兼容性与 credential-ready 布尔值；token、headers、URL、原始命令输出和认证路径不会进入 catalog。
+3. 先处理 `piSetup`：如果没有模型定义，向用户索取无法推断的 provider/model id、API/base URL、上下文窗口、最大输出、输入/推理能力、成本约束和凭据方式，帮助按 Pi 原生 schema 合并 `~/.pi/agent/models.json`；不得让用户把凭据值写入对话、harness 或报告，优先 Pi 登录/auth storage 或环境变量引用。如果已有定义但凭据未就绪，只修复认证。随后重跑 catalog，未出现 credential-ready Pi model 前不得继续初始化。
+4. 对已有 `harness.json`，逐档保留仍存在于 Pi 的 LOW/MED/HIGH 原值；只为已移除或缺失的档位重新选择。结合目标项目实际技术栈、模型能力、成本与上下文窗口，从 `eligibleForHarness=true` 的候选中自主选择，并直接运行带完整三档参数的 init/update；代码会拒绝改动仍有效的档位。三档可以相同。只有凭据、成本、合规或可用性存在无法推断的实质歧义时才询问用户；OpenCode-only 候选不能证明 Pi executor 可用。
+5. 基于真实项目文件补全根 `README.md`、`ai_workspace/loop-agent/verification-matrix.md`，必要时适配 `scripts/ci-tests.sh`。
+6. 运行 `loop-agent init doctor --repo-root .`、`loop-agent inspect`、`loop-agent docs audit` 并完成 quick verification；doctor 未确认 Pi model matrix 时不得开始 DAG。
+
+```bash
+loop-agent init --repo-root . --profile full --merge \
+  --low-model <provider/model> --med-model <provider/model> --high-model <provider/model>
+# 已初始化项目只替换失效档位；仍有效档位在完整参数中保持当前引用
+loop-agent init update --repo-root . --apply-safe \
+  --low-model <current-or-selected> --med-model <current-or-selected> --high-model <current-or-selected>
+```
 
 信息不足时写明尚未识别到的事实；不要留下泛化占位符。
 

@@ -15,7 +15,7 @@ LLM review (when `frontendTest.reviewMode=blocking`) must not invent blocking ru
 | `unknown-ac` | When task `sourceBinding.requirementIds` lists ACs, every `acIds` entry must be in that set |
 | `case-id-shape` | `caseId` matches `FE-<FEATURE>-<NNN>-...` (never `AC-FE-*`) |
 | `case-id-is-ac` | Do not use acceptance id as `caseId` / filename |
-| `case-path-mismatch` | `casePath === testcase/frontend/cases/{caseId}.md` |
+| `case-path-mismatch` | `casePath === {casesDir}/{caseId}.md`（默认 `testcase/frontend/cases/{caseId}.md`） |
 | `case-file-missing` | `casePath` exists |
 
 ## Tool guidance (non-blocking)
@@ -40,5 +40,5 @@ LLM review (when `frontendTest.reviewMode=blocking`) must not invent blocking ru
 
 ## Pipeline vs quality
 
-- **Pipeline acceptance**: final `testcase/frontend/reports/frontend-test-retrospect-*.md` exists after result materialize
+- **Pipeline acceptance**: final `{reportsDir}/frontend-test-retrospect-*.md` exists after result materialize (default `testcase/frontend/reports/`)
 - **Quality**: `frontend-test-result-v1.outcome=passed` with 0 blocked/failed (opt-in via `frontendTest.strictOutcomeGate`)

@@ -31,7 +31,7 @@ constraints:
   hard_constraints:
     - Do not access production secrets
 # Explicit runtime workflow → taskKind. For fullstack-v1 packets this should be set
-# on every TaskSpec. Allowed: agent-dag | frontend-implementation | backend-test | frontend-test
+# on every TaskSpec. Allowed: agent-dag | frontend-implementation | backend-test-analysis | backend-test | frontend-test
 execution:
   workflow: agent-dag
 verify:

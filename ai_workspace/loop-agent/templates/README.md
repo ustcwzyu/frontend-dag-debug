@@ -37,7 +37,7 @@
 ## Frontend
 
 - `frontend-task-requirement.md`、`frontend-task-constraints.md`、`frontend-design-contract.md` — 前端任务输入与设计合同。
-- `frontend-implementation-contract.schema.json` — 前端实现合同 schema。
+- `frontend-implementation-contract.schema.json` — 前端实现合同 schema（sourceBinding v2 ledger 字段 all-or-none：任一出现则四项齐全，禁止 v1+optional 冒充 v2）。`requirements[].sourceRefs[].items` 使用合法 `$ref: #/$defs/path`（相对路径、无 `..` 逃逸、无反斜杠），模板 JSON 无非法键，运行时加载器可直接编译（AC-003）。
 - `frontend-test-dag.json` — frontend-test DAG 模板；其 deterministic checklist 会拒绝 alternative executable instructions，仅允许 allowlisted `playwright-cli` command。Pi generator/reviser 的 runtime writeSet 仅授权下列目标项目生成路径（不是本仓库文档索引目标）：
 
   ~~~text

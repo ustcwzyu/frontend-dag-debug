@@ -1,0 +1,92 @@
+{
+  "taskId": "2026-09-01-complex-frontend-regression-wave-1",
+  "title": "Agent 学习实验室复杂多需求前端回归 Wave 1",
+  "sourceFiles": [
+    ".harness/tasks/2026-09-01-complex-frontend-regression-wave-1/source/需求.md",
+    ".harness/tasks/2026-09-01-complex-frontend-regression-wave-1/source/执行约束.md"
+  ],
+  "taskKind": "frontend-test",
+  "taskKindExplicit": true,
+  "referenceDocs": [
+    {
+      "name": "frontend-test-design",
+      "path": "ai_workspace/loop-agent/design/2026-09-01-complex-multi-requirement-frontend-test.md"
+    },
+    {
+      "name": "ui-anchor-ledger",
+      "path": "testcase/frontend/rag/ui-anchors.md"
+    }
+  ],
+  "allowedPaths": [
+    "testcase/frontend/**"
+  ],
+  "forbiddenPaths": [
+    ".harness/**",
+    "artifacts/**",
+    "src/**",
+    "server/**",
+    "test/**",
+    "scripts/**",
+    "ai_workspace/**",
+    ".agents/**",
+    "public/**",
+    "dist/**",
+    "node_modules/**",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    "AGENTS.md",
+    "harness.json"
+  ],
+  "hardConstraints": [
+    "只生成 Markdown 用例、manifest、浏览器证据和报告；禁止生成 pytest、Playwright 测试源码或修改业务实现。",
+    "只允许非生产隔离环境；禁止真实账号、真实凭据和跨用户数据操作。",
+    "所有通过态语义断言必须来自 testcase/frontend/rag/ui-anchors.md 中同页面同状态的有效唯一字面。",
+    "涉及创建、更新或删除的用例必须创建当前用例拥有且可清理的数据，并在同一用例结束前恢复基线。",
+    "浏览器用例串行执行；每条用例在下一条开始前写完 execution.md 与 case-result.json。",
+    "静态检查、snapshot、screenshot 或模型结论都不能替代成功的 find 语义断言和控制器收据。"
+  ],
+  "autoCommitAfterVerify": false,
+  "contextProfile": "slim",
+  "complexity": "large",
+  "capabilities": [
+    "interactive-ui"
+  ],
+  "verifyMode": "serial",
+  "verifyPreset": "full",
+  "verifyCommands": [
+    {
+      "label": "test",
+      "command": "npm run test",
+      "timeoutMs": 180000
+    },
+    {
+      "label": "typecheck",
+      "command": "npm run typecheck",
+      "timeoutMs": 120000
+    },
+    {
+      "label": "build",
+      "command": "npm run build",
+      "timeoutMs": 180000
+    }
+  ],
+  "verifyQuota": "full",
+  "verifyRetryCount": 0,
+  "verifyFailFast": false,
+  "verifyEnv": "clean",
+  "frontendTest": {
+    "testRoot": "testcase/frontend",
+    "maxCasesPerBatch": 18,
+    "maxTokensPerCase": 12000,
+    "maxTotalTokens": 180000,
+    "reviewMode": "blocking",
+    "strictOutcomeGate": true,
+    "maxRerunAttempts": 2,
+    "reports": {
+      "retrospect": true,
+      "l5": true
+    }
+  },
+  "notes": "Proposal configuration for the reviewed 19-node frontend-test DAG. Apply through the managed task contract before DAG generation; do not hand-edit a frozen task after gate creation."
+}

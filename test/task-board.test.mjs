@@ -94,10 +94,46 @@ test('filterTasks 对 all 返回全部任务', async () => {
   assert.match(source, /return\s+tasks\b/)
 })
 
+test('filterTasks 对 pending 仅返回未完成任务', async () => {
+  const source = await readTaskSource()
+  assert.match(
+    source,
+    /filter\s*===\s*['"]pending['"]\s*\)\s*return\s+tasks\.filter\s*\(\s*\(t\)\s*=>\s*!t\.completed/,
+  )
+})
+
+test('filterTasks 对 done 仅返回已完成任务', async () => {
+  const source = await readTaskSource()
+  assert.match(
+    source,
+    /filter\s*===\s*['"]done['"]\s*\)\s*return\s+tasks\.filter\s*\(\s*\(t\)\s*=>\s*t\.completed/,
+  )
+})
+
+test('「全部」按钮默认携带激活 class 且文案为 全部', async () => {
+  const source = await readTaskSource()
+  assert.match(
+    source,
+    /class\s*=\s*['"]task-board-filters__btn\s+task-board-filters__btn--active['"][\s\S]*?data-filter\s*=\s*['"]all['"][\s\S]*?>\s*全部\s*<\/button>/,
+  )
+})
+
+test('筛选按钮文案为 全部 / 进行中 / 已完成', async () => {
+  const source = await readTaskSource()
+  assert.match(
+    source,
+    /data-filter\s*=\s*['"]pending['"][\s\S]*?>\s*进行中\s*<\/button>/,
+  )
+  assert.match(
+    source,
+    /data-filter\s*=\s*['"]done['"][\s\S]*?>\s*已完成\s*<\/button>/,
+  )
+})
+
 test('空状态消息覆盖全部三种筛选', async () => {
   const source = await readTaskSource()
   assert.match(source, /暂无任务/)
-  assert.match(source, /暂无待完成的任务/)
+  assert.match(source, /暂无进行中的任务/)
   assert.match(source, /暂无已完成的任务/)
 })
 

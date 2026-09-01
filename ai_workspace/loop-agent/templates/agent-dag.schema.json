@@ -130,6 +130,18 @@
     "toolProfile": {
       "enum": ["read-only", "write"]
     },
+    "piExtensionId": {
+      "type": "string",
+      "enum": ["pi-codegraph", "pi-lens"],
+      "description": "Frozen Pi extension short id resolved at run time against the Pi settings package inventory. Adding a package requires changing the plan and this enum."
+    },
+    "piExtensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/piExtensionId" },
+      "description": "Node-level explicit Pi extension allowlist (backend implementation DAGs only). Omitted = extension discovery stays fully closed (R8.1). Only executor 'pi' nodes may declare it."
+    },
     "role": {
       "enum": ["planner", "scout", "implementer", "reviewer", "supervisor", "verifier", "closeout"]
     },
@@ -356,6 +368,31 @@
           "properties": { "schemaVersion": { "const": 1 }, "requireBaseline": { "const": true } }
         },
         "frontendTestCaseChecklist": { "type": "object", "additionalProperties": false },
+        "frontendBrowserToolPreflight": { "type": "object", "additionalProperties": false },
+        "frontendTestStandardScenarios": { "type": "object", "additionalProperties": false },
+        "frontendTestEnvironmentProbe": { "type": "object", "additionalProperties": false },
+        "frontendTestCaseManifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxCases": { "type": "integer", "minimum": 1 },
+            "declaredAcIds": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "frontendTestResultFinalize": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "declaredAcIds": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "frontendTestReports": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "l5": { "type": "boolean" }
+          }
+        },
         "frontendTestEvidenceValidation": { "type": "object", "additionalProperties": false },
         "frontendTestHtmlReport": { "type": "object", "additionalProperties": false },
         "backendTestPipeline": {
@@ -383,6 +420,12 @@
         { "required": ["frontendVerificationBundle"] },
         { "required": ["frontendReviewContext"] },
         { "required": ["frontendTestCaseChecklist"] },
+        { "required": ["frontendBrowserToolPreflight"] },
+        { "required": ["frontendTestStandardScenarios"] },
+        { "required": ["frontendTestEnvironmentProbe"] },
+        { "required": ["frontendTestCaseManifest"] },
+        { "required": ["frontendTestResultFinalize"] },
+        { "required": ["frontendTestReports"] },
         { "required": ["frontendTestEvidenceValidation"] },
         { "required": ["frontendTestHtmlReport"] },
         { "required": ["backendTestPipeline"] }
@@ -440,6 +483,28 @@
         "sha256": { "type": "string", "minLength": 1 }
       }
     },
+    "producedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "kind", "path", "mediaType", "revisionPolicy"],
+      "properties": {
+        "artifactId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+        "kind": { "enum": ["structured", "assistant", "stdout"] },
+        "path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$" },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "schemaId": { "type": "string", "minLength": 1 },
+        "revisionPolicy": { "enum": ["immutable", "replace-file"] }
+      }
+    },
+    "consumedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId"],
+      "properties": {
+        "artifactId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+        "required": { "type": "boolean", "default": true }
+      }
+    },
     "task": {
       "type": "object",
       "additionalProperties": false,
@@ -485,6 +550,7 @@
           "items": { "type": "string", "minLength": 1 }
         },
         "toolProfile": { "$ref": "#/$defs/toolProfile" },
+        "piExtensions": { "$ref": "#/$defs/piExtensions" },
         "governanceStandardReview": {
           "type": "boolean",
           "description": "Explicitly opts this node into writer-change-scoped AGENTS.md and repository-local code-standard review. Never inferred from node id or role."
@@ -493,6 +559,24 @@
         "writeSet": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
+        },
+        "readSet": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Strict repository-relative read allowlist for bounded Pi nodes."
+        },
+        "contextBudget": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Online per-attempt Pi SDK conversation guard. At least one threshold is required; exhaustion aborts the active session with context-budget-exhausted partial evidence.",
+          "properties": {
+            "maxTurns": { "type": "integer", "minimum": 1 },
+            "maxTokens": { "type": "integer", "minimum": 1 }
+          },
+          "anyOf": [
+            { "required": ["maxTurns"] },
+            { "required": ["maxTokens"] }
+          ]
         },
         "piStep": {
           "type": "string",
@@ -507,6 +591,16 @@
         "outputContract": {
           "type": "string",
           "minLength": 1
+        },
+        "producesArtifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/producedArtifact" },
+          "description": "Frozen producer declarations. Artifact lineage and impact analysis must use these declarations, never prompt/outputContract/path heuristics."
+        },
+        "consumesArtifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/consumedArtifact" },
+          "description": "Frozen logical artifact inputs consumed by this node."
         },
         "outputMode": {
           "enum": ["default", "structured-required"],

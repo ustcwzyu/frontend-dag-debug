@@ -156,7 +156,7 @@ export function initTaskBoard(root: HTMLElement): void {
           class="task-board-filters__btn"
           data-filter="pending"
         >
-          待完成
+          进行中
         </button>
         <button
           type="button"
@@ -211,7 +211,7 @@ export function initTaskBoard(root: HTMLElement): void {
       // 筛选空状态
       listEl.innerHTML = ''
       if (currentFilter === 'pending') {
-        emptyEl.textContent = '暂无待完成的任务'
+        emptyEl.textContent = '暂无进行中的任务'
       } else if (currentFilter === 'done') {
         emptyEl.textContent = '暂无已完成的任务'
       } else {
