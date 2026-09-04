@@ -131,7 +131,7 @@ export function createApp(options: AppOptions): Express {
 
   app.get('/api/v1/lessons/:routeId', (req, res) => {
     const routeId = req.params.routeId
-    if (routeId !== 'beginner' && routeId !== 'beginner-2') {
+    if (routeId !== 'beginner' && routeId !== 'beginner-2' && routeId !== 'builder') {
       res.status(404).json({ code: 'LESSON_NOT_FOUND', message: `lesson not found for route: ${routeId}` })
       return
     }
@@ -149,11 +149,17 @@ export function createApp(options: AppOptions): Express {
             title: '接入第一个 Tool：声明可验证的工具调用',
             meta: '预计用时：60–90 分钟 · 完整交付：七份本地文件',
           }
-        : {
-            kicker: '入门路线 · 第 01 课',
-            title: '从一次模型调用到可验证的 Agent Run',
-            meta: '预计用时：60–90 分钟 · 完整交付：五份本地文件',
-          }
+        : routeId === 'builder'
+          ? {
+              kicker: '构建路线 · 第 01 课',
+              title: '为原型建立一条 Eval 基线',
+              meta: '预计用时：60–90 分钟 · 完整交付：新增三份本地文件（eval-set.md、baseline-run.md、eval-report.md）+ 复盘追加',
+            }
+          : {
+              kicker: '入门路线 · 第 01 课',
+              title: '从一次模型调用到可验证的 Agent Run',
+              meta: '预计用时：60–90 分钟 · 完整交付：五份本地文件',
+            }
     res.json({
       data: {
         routeId: row.id,

@@ -117,9 +117,9 @@ test('R4 裁决：style.css 仍只有一处 @keyframes', () => {
 test('AC-L2-008 api.ts 并行拉取第二课端点并做形状校验', () => {
   assert.match(apiSource, /fetch\(`\$\{BASE\}\/lessons\/beginner-2`\)/)
   assert.match(apiSource, /lesson2 payload is malformed/)
-  assert.match(apiSource, /return \{ routes, capabilities, lab, lesson, lesson2 \}/)
+  assert.match(apiSource, /return \{ routes, capabilities, lab, lesson, lesson2, lessonBuilder \}/)
   const contentFetches = (apiSource.match(/fetch\(`\$\{BASE\}\//g) || []).length
-  assert.ok(contentFetches >= 5, `期望至少 5 个内容 fetch 端点，实际 ${contentFetches}`)
+  assert.ok(contentFetches >= 6, `期望至少 6 个内容 fetch 端点，实际 ${contentFetches}`)
 })
 
 test('AC-L2-008 main.ts 双课替换路径与缓存类型扩展', () => {
@@ -130,17 +130,17 @@ test('AC-L2-008 main.ts 双课替换路径与缓存类型扩展', () => {
     mainSource,
     /getElementById\('second-lesson-beginner'\)[\s\S]{0,400}cachedContent\.lesson2\.html/,
   )
-  assert.match(mainSource, /cachedContent: \{ lesson: LessonData; lesson2: LessonData \}/)
-  assert.match(mainSource, /cachedContent = \{ lesson: content\.lesson, lesson2: content\.lesson2 \}/)
+  assert.match(mainSource, /cachedContent: \{ lesson: LessonData; lesson2: LessonData; lessonBuilder: LessonData \}/)
+  assert.match(mainSource, /cachedContent = \{ lesson: content\.lesson, lesson2: content\.lesson2, lessonBuilder: content\.lessonBuilder \}/)
   assert.doesNotMatch(mainSource, /querySelector(?:All)?\([^)]*second-lesson-beginner/)
   assert.match(mainSource, /lessonPageMarkup[\s\S]*lessonSectionMarkup[\s\S]*secondLessonSectionMarkup/)
 })
 
 test('AC-L2-005/006 第二课落入课程区纯净断言范围且 main.ts 无网络/存储字面量', () => {
   const start = mainSource.indexOf('<section class="lesson container" id="second-lesson-beginner"')
-  const end = mainSource.indexOf('const lessonPlaceholderMarkup', start)
+  const end = mainSource.indexOf('const builderLessonSectionMarkup', start)
   assert.ok(start >= 0, 'second-lesson-beginner section 存在')
-  assert.ok(end > start, '第二课区域可定位')
+  assert.ok(end > start, '第二课区域可定位（止于构建第一课字面量之前）')
   const secondLesson = mainSource.slice(start, end)
   for (const pattern of [
     /<button/i,
@@ -193,5 +193,62 @@ test('R3 裁决：第二课 main.ts 内层与 server/content.ts 逐字一致（A
   for (const anchor of ['tool-contract.md', 'tool-call-log.md', '10 分评估量表', '8 分及以上才算完成']) {
     assert.ok(mainInner.includes(anchor), `main.ts 第二课缺少锚点 ${anchor}`)
     assert.ok(serverInner.includes(anchor), `server 第二课缺少锚点 ${anchor}`)
+  }
+})
+
+// ── 构建路线第一课（AC-BUILDER-003 / R3） ──
+
+test('[VT-BUILDER-API] 构建第一课第六端点拉取校验与两侧逐字一致（AC-BUILDER-003）', () => {
+  assert.match(apiSource, /fetch\(`\$\{BASE\}\/lessons\/builder`\)/)
+  assert.match(apiSource, /lessonBuilder payload is malformed/)
+  assert.match(apiSource, /return \{ routes, capabilities, lab, lesson, lesson2, lessonBuilder \}/)
+  const contentFetches = (apiSource.match(/fetch\(`\$\{BASE\}\//g) || []).length
+  assert.ok(contentFetches >= 6, `期望至少 6 个内容 fetch 端点，实际 ${contentFetches}`)
+  assert.match(mainSource, /getElementById\('first-lesson-builder'\)/)
+  assert.match(
+    mainSource,
+    /getElementById\('first-lesson-builder'\)[\s\S]{0,400}cachedContent\.lessonBuilder\.html/,
+  )
+  assert.match(mainSource, /cachedContent = \{ lesson: content\.lesson, lesson2: content\.lesson2, lessonBuilder: content\.lessonBuilder \}/)
+  assert.doesNotMatch(mainSource, /querySelector(?:All)?\([^)]*first-lesson-builder/)
+
+  // R3：构建第一课 main.ts 内层与 server/content.ts 逐字一致
+  const serverSource = readFileSync(new URL('../server/content.ts', import.meta.url), 'utf8')
+  const literalStart = mainSource.indexOf('const builderLessonSectionMarkup = `')
+  assert.ok(literalStart >= 0, 'main.ts 构建第一课字面量存在')
+  const contentStart = mainSource.indexOf('`', literalStart) + 1
+  const contentEnd = mainSource.indexOf('`', contentStart)
+  const mainSection = mainSource.slice(contentStart, contentEnd)
+  const mainInner = mainSection
+    .replace(/^\s*<section class="lesson container" id="first-lesson-builder"[^>]*>\n/, '')
+    .replace(/\n\s*<\/section>\s*$/, '')
+  const serverLiteralStart = serverSource.indexOf('lessonBuilderHtml = `')
+  assert.ok(serverLiteralStart >= 0, 'server 构建第一课字面量存在')
+  const serverContentStart = serverSource.indexOf('`', serverLiteralStart) + 1
+  const serverContentEnd = serverSource.indexOf('`', serverContentStart)
+  const serverInner = serverSource.slice(serverContentStart, serverContentEnd)
+  const canonical = (text) =>
+    text
+      .split('\n')
+      .map((line) => line.replace(/\s+$/, ''))
+      .join('\n')
+      .replace(/^\n+|\n+$/g, '')
+  assert.equal(canonical(mainInner), canonical(serverInner))
+  for (let i = 1; i <= 6; i++) {
+    assert.ok(mainInner.includes(`builder-0${i}-title`), `main.ts 缺少 builder-0${i}-title`)
+    assert.ok(serverInner.includes(`builder-0${i}-title`), `server 缺少 builder-0${i}-title`)
+  }
+  for (const anchor of ['eval-set.md', 'baseline-run.md', 'eval-report.md', '10 分评估量表', '8 分及以上才算完成']) {
+    assert.ok(mainInner.includes(anchor), `main.ts 构建第一课缺少锚点 ${anchor}`)
+    assert.ok(serverInner.includes(anchor), `server 构建第一课缺少锚点 ${anchor}`)
+  }
+
+  // 构建课程区纯净：无交互控件、无 aria-live、无动画字面量
+  const builderStart = mainSource.indexOf('<section class="lesson container" id="first-lesson-builder"')
+  const builderEnd = mainSource.indexOf('const lessonPlaceholderMarkup', builderStart)
+  assert.ok(builderStart >= 0 && builderEnd > builderStart, '构建第一课区域可定位')
+  const builderRegion = mainSource.slice(builderStart, builderEnd)
+  for (const pattern of [/<button/i, /<details/i, /<input/i, /<select/i, /<textarea/i, /checkbox/i, /aria-live/i, /@keyframes/]) {
+    assert.doesNotMatch(builderRegion, pattern)
   }
 })

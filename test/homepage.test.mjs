@@ -14,12 +14,12 @@ function lessonRegion(source) {
   return source.slice(start, end)
 }
 
-// 截取第二课课程 section 的源码区域（第二课模板字面量位于 lessonPlaceholderMarkup 定义之前）
+// 截取第二课课程 section 的源码区域（第二课模板字面量位于构建第一课字面量定义之前）
 function secondLessonRegion(source) {
   const start = source.indexOf(
     '<section class="lesson container" id="second-lesson-beginner"',
   )
-  const end = source.indexOf('const lessonPlaceholderMarkup', start)
+  const end = source.indexOf('const builderLessonSectionMarkup', start)
   assert.ok(start !== -1 && end !== -1 && end > start, '无法定位第二课 section 区域')
   return source.slice(start, end)
 }
@@ -462,16 +462,19 @@ test('第一课深化：复盘模板五字段', async () => {
 
 // ── 第一课：静态回归（AC-005 / AC-DEEP-005 / BR-LESSON-001/002/003） ──
 
-test('第一课：builder/advanced 保持空锚点，课程区无交互控件且不被 JS 触碰', async () => {
+test('构建第一课占位已升级：builder 为完整课程 section，advanced 保持空锚点占位', async () => {
   const source = await read('../src/main.ts')
-  assert.match(source, /first-lesson-anchor" id="first-lesson-builder"/)
+  assert.match(source, /<section class="lesson container" id="first-lesson-builder"/)
+  assert.match(source, /aria-labelledby="builder-first-lesson-title"/)
   assert.match(source, /first-lesson-anchor" id="first-lesson-advanced"/)
-  assert.doesNotMatch(source, /<section[^>]*id="first-lesson-builder"/)
   assert.doesNotMatch(source, /<section[^>]*id="first-lesson-advanced"/)
-  assert.doesNotMatch(source, /querySelector(?:All)?\([^)]*first-lesson-beginner/)
+  assert.doesNotMatch(source, /querySelector(?:All)?\([^)]*first-lesson-builder/)
   assert.doesNotMatch(source, /aria-live="polite"[^>]*first-lesson/)
 
-  const lesson = lessonRegion(source)
+  const start = source.indexOf('<section class="lesson container" id="first-lesson-builder"')
+  const end = source.indexOf('const lessonPlaceholderMarkup', start)
+  assert.ok(start !== -1 && end !== -1 && end > start, '无法定位构建第一课 section 区域')
+  const builder = source.slice(start, end)
   for (const pattern of [
     /<button/i,
     /<details/i,
@@ -481,8 +484,69 @@ test('第一课：builder/advanced 保持空锚点，课程区无交互控件且
     /checkbox/i,
     /aria-live/i,
   ]) {
-    assert.doesNotMatch(lesson, pattern)
+    assert.doesNotMatch(builder, pattern)
   }
+})
+
+test('[VT-BUILDER-RENDER] 构建第一课完整静态内容渲染于 #/lesson/builder（AC-BUILDER-001）', async () => {
+  const source = await read('../src/main.ts')
+  // section 与路由装配：builder 返回完整课程 + 降级横幅，advanced 仍返回占位
+  assert.match(source, /<section class="lesson container" id="first-lesson-builder" aria-labelledby="builder-first-lesson-title"/)
+  const lessonPage = source.slice(source.indexOf('function lessonPageMarkup'))
+  assert.match(lessonPage, /if \(routeId === 'builder'\)/)
+  assert.match(lessonPage, /builderLessonSectionMarkup[\s\S]*serviceBannerMarkup/)
+  assert.match(lessonPage, /if \(routeId === 'advanced'\)/)
+  // hero：kicker / 标题 / meta
+  assert.match(source, /构建路线 · 第 01 课/)
+  assert.match(source, /为原型建立一条 Eval 基线/)
+  assert.match(source, /新增三份本地文件（eval-set\.md、baseline-run\.md、eval-report\.md）\+ 复盘追加/)
+  // 六段路径与对照表
+  assert.match(source, /builder-01-title/)
+  assert.match(source, /builder-02-title/)
+  assert.match(source, /感觉变好与可证明不退化的对照/)
+  assert.match(source, /基线四字段：内容与缺失后果/)
+  // 静态基线样例与失败样例
+  assert.match(source, /builder-03-title/)
+  assert.match(source, /研究助手 v0 静态 Eval 基线样例/)
+  assert.match(source, /eval-baseline-2026-08-20-v0-01/)
+  assert.match(source, /看起来测过但不可复跑/)
+  // 设计模板与三个模板 pre 块
+  assert.match(source, /builder-04-title/)
+  assert.match(source, /# eval-set\.md/)
+  assert.match(source, /# baseline-run\.md/)
+  assert.match(source, /# eval-report\.md/)
+  const start = source.indexOf('<section class="lesson container" id="first-lesson-builder"')
+  const end = source.indexOf('const lessonPlaceholderMarkup', start)
+  const builder = source.slice(start, end)
+  const preCount = (builder.match(/<pre><code>/g) || []).length
+  assert.ok(preCount >= 3, `期望至少 3 个模板 pre 块，实际 ${preCount}`)
+  // 10 分量表、四类失败样例、四道自测题与答案区
+  assert.match(source, /builder-06-title/)
+  assert.ok(builder.includes('10 分评估量表'))
+  assert.ok(builder.includes('四类故意失败样例与修复提示'))
+  assert.ok(builder.includes('自测题与参考答案'))
+  for (const q of ['为什么需要一条 Eval 基线？', '输入冻结解决什么风险？', '没有判定规则会怎样？', '何时算退化？']) {
+    assert.ok(builder.includes(q), `缺少自测题 ${q}`)
+  }
+  // advanced 保持占位且含锚点
+  assert.match(source, /first-lesson-anchor" id="first-lesson-advanced"/)
+})
+
+test('[VT-BUILDER-RENDER] 构建课程区纯净无交互控件且 renderLesson 仅放行 builder（AC-BUILDER-002）', async () => {
+  const source = await read('../src/main.ts')
+  const start = source.indexOf('<section class="lesson container" id="first-lesson-builder"')
+  const end = source.indexOf('const lessonPlaceholderMarkup', start)
+  const builder = source.slice(start, end)
+  for (const pattern of [/<button/i, /<details/i, /<input/i, /<select/i, /<textarea/i, /checkbox/i, /aria-live/i, /@keyframes/]) {
+    assert.doesNotMatch(builder, pattern)
+  }
+  assert.doesNotMatch(builder, /fetch\(/)
+  assert.doesNotMatch(builder, /localStorage/)
+  // renderLesson('builder') 执行替换，renderLesson('advanced') 直接返回占位
+  assert.match(source, /function renderLesson\(routeId: RouteId\): void \{\s*\n\s*if \(routeId !== 'beginner' && routeId !== 'builder'\) return/)
+  assert.match(source, /getElementById\('first-lesson-builder'\)/)
+  const css = await read('../src/style.css')
+  assert.equal((css.match(/@keyframes/g) || []).length, 1)
 })
 
 test('第一课：课程区无网络请求、无 localStorage 写入（BR-LESSON-001）', async () => {

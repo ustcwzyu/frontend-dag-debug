@@ -775,6 +775,332 @@ const secondLessonSectionMarkup = `
       </div>
     </section>`
 
+// ── 构建路线第一课：为原型建立一条 Eval 基线（AC-BUILDER-001）。课程区纯静态：
+//     无交互控件、无实时播报、无动画、无网络/存储写入；内层与 server/content.ts lessonBuilderHtml 逐字一致（R3）。 ──
+
+const builderLessonSectionMarkup = `
+    <section class="lesson container" id="first-lesson-builder" aria-labelledby="builder-first-lesson-title">
+      <div class="lesson__header">
+        <p class="lesson__kicker">构建路线 · 第 01 课</p>
+        <h2 class="lesson__title" id="builder-first-lesson-title">为原型建立一条 Eval 基线</h2>
+        <p class="lesson__meta">预计用时：60–90 分钟 · 完整交付：新增三份本地文件（eval-set.md、baseline-run.md、eval-report.md）+ 复盘追加</p>
+      </div>
+
+      <div class="lesson__body">
+        <section class="lesson-block" aria-labelledby="builder-01-title">
+          <h3 id="builder-01-title">01 · 课程定位：这门课交付什么</h3>
+
+          <dl class="lesson-facts">
+            <div class="lesson-fact">
+              <dt>适合人群</dt>
+              <dd>已有可跑原型、总被“感觉变好”困扰的开发者；需先完成入门第一课，知道一次可验证的 run 长什么样。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>预计用时</dt>
+              <dd>60–90 分钟，其中设计评估集与复跑基线约占一半。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>前置知识</dt>
+              <dd>入门第一课五份交付物（run-contract.md、input-freeze.md、run-log.md、evaluation.md、retrospective.md）；会冻结输入、会按量表评估。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>完成后能力</dt>
+              <dd>能写出 8–12 条带判定规则的 Eval 集；能冻结一条基线并完整复跑一次；能用 10 分评估量表判定基线是否合格。</dd>
+            </div>
+            <div class="lesson-fact">
+              <dt>课程产物</dt>
+              <dd>新增三份本地文本文件：eval-set.md（评估集）、baseline-run.md（基线执行记录）、eval-report.md（评估报告），并在 retrospective.md 追加本课复盘。</dd>
+            </div>
+          </dl>
+
+          <h4>六段学习路径</h4>
+          <p>概念 → 拆解 → 设计 → 实验 → 评估 → 复盘。每段都有明确目的、学习动作与产出：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>六段学习路径：目的、学习动作与产出</caption>
+              <thead>
+                <tr><th>阶段</th><th>目的</th><th>学习动作</th><th>产出</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>概念</td><td>建立“感觉变好 ≠ 可证明不退化”心智模型</td><td>读基线三要素、四字段与五个边界问题</td><td>能说出基线缺一不可的三要素</td></tr>
+                <tr><td>拆解</td><td>读懂一条基线的每个字段</td><td>逐字段对照风险说明</td><td>能解释每个字段防止什么问题</td></tr>
+                <tr><td>设计</td><td>把研究助手 v0 写成可复跑的评估集</td><td>按八项模板逐项填写 8–12 条用例</td><td>eval-set.md</td></tr>
+                <tr><td>实验</td><td>冻结并执行一次完整基线</td><td>冻结用例 → 执行 → 记录</td><td>baseline-run.md</td></tr>
+                <tr><td>评估</td><td>用量表逐项核对并给分</td><td>逐项检查，写下通过/不通过依据</td><td>eval-report.md</td></tr>
+                <tr><td>复盘</td><td>写下结论与下一步改进</td><td>填复盘五字段模板</td><td>retrospective.md（追加）</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>「读完」与「完成」不是一回事</h4>
+          <p>读完 = 看完本页全部内容，大约 20 分钟；完成 = 交付以下文件并通过评估（8 分及以上）：</p>
+          <ul class="lesson-contract">
+            <li>评估集（eval-set.md，8–12 条用例、每条含判定规则）</li>
+            <li>基线执行记录（baseline-run.md，冻结版本与逐条实际记录）</li>
+            <li>评估报告（eval-report.md，通过率与逐条明细）</li>
+            <li>复盘追加（retrospective.md，最不确定处与改进）</li>
+          </ul>
+
+          <h4>四类交付物验收关系</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>四类交付物：验收关系、最低标准、优秀标准与补救路径</caption>
+              <thead>
+                <tr><th>交付物</th><th>验收关系</th><th>最低完成标准</th><th>优秀标准</th><th>补救路径</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">评估集</th><td>eval-set.md，8–12 条用例</td><td>每条有判定规则与来源</td><td>覆盖难度分级与边界用例</td><td>修订：补全判定规则后重做评估</td></tr>
+                <tr><th scope="row">基线执行记录</th><td>baseline-run.md，冻结版本</td><td>版本可复现、逐条有记录</td><td>含冻结时间与复跑承诺</td><td>重跑：修正用例后从冻结阶段重来</td></tr>
+                <tr><th scope="row">评估报告</th><td>eval-report.md，通过率与明细</td><td>通过率与逐条明细一致</td><td>每条明细引用执行记录证据</td><td>修订：明细缺失则补写并重新计分</td></tr>
+                <tr><th scope="row">复盘追加</th><td>retrospective.md，五字段</td><td>最不确定处与改进各一句具体内容</td><td>指向 baseline-run / eval-report 证据</td><td>修订：补写具体结论后收尾</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="builder-02-title">
+          <h3 id="builder-02-title">02 · 概念：Eval 基线三要素</h3>
+          <p class="lesson__core-statement">
+            一条 Eval 基线 = 评估集 + 判定规则 + 基线快照：缺任何一个，结论都不可复跑。
+          </p>
+          <p>
+            评估集回答“测什么”，判定规则回答“什么算通过”，基线快照回答“当时跑出了什么”。
+            三者冻结在一起，后续任何改动都能被证明“没有退化”，而不是“感觉变好”。
+          </p>
+
+          <h4>“感觉变好”与“可证明不退化”对照表</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>感觉变好与可证明不退化的对照</caption>
+              <thead>
+                <tr><th>维度</th><th>感觉变好</th><th>可证明不退化</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">测什么</th><td>随手试两三个例子</td><td>冻结的 8–12 条评估集</td></tr>
+                <tr><th scope="row">什么算通过</th><td>看起来不错</td><td>每条用例写明的期望判定</td></tr>
+                <tr><th scope="row">当时结果</th><td>记不清上次跑成什么样</td><td>基线快照：版本 + 逐条实际记录</td></tr>
+                <tr><th scope="row">改动依据</th><td>改完再随手试一次</td><td>同一评估集复跑，对比通过率与明细</td></tr>
+                <tr><th scope="row">退化发现</th><td>上线后用户先发现</td><td>复跑即发现哪一条退化</td></tr>
+                <tr><th scope="row">复核证据</th><td>只有结论没有过程</td><td>eval-set / baseline-run / eval-report 三份文件</td></tr>
+                <tr><th scope="row">协作方式</th><td>口头说“我测过”</td><td>任何人拿到文件都能复跑验证</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>基线四字段：内容与缺失后果</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>基线四字段：内容与缺失后果</caption>
+              <thead>
+                <tr><th>字段</th><th>内容</th><th>缺失时会发生什么</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">用例</th><td>8–12 条评估用例，每条有目标与来源</td><td>用例漂移：每次测的都不一样，无法对比。</td></tr>
+                <tr><th scope="row">输入冻结</th><td>用例输入与版本、冻结时间</td><td>输入漂移：中途改用例，结果无法复现。</td></tr>
+                <tr><th scope="row">期望判定</th><td>每条用例的通过标准</td><td>判定主观：什么都算通过，评估失去意义。</td></tr>
+                <tr><th scope="row">实际记录</th><td>逐条实际输出与通过/不通过</td><td>无记录：只有通过率数字，无法定位退化。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>五个边界问题</h4>
+          <p>建立任何一条基线，先回答这五个问题：</p>
+          <ul class="lesson-contract">
+            <li><strong>谁定标准？</strong>学习者——写进 eval-set.md 的判定规则，作为通过标准。</li>
+            <li><strong>谁提供用例？</strong>冻结的评估集——本课为内联 [E1]/[E2] 示例扩展出的 8–12 条，冻结后不得新增。</li>
+            <li><strong>谁允许改动？</strong>版本规则——改用例即升版本，旧基线保留，不得原地修改。</li>
+            <li><strong>何时算退化？</strong>复跑对比——同一版本下通过率下降或任一条曾通过变为不通过。</li>
+            <li><strong>谁判定通过？</strong>10 分评估量表——逐项核对，8 分及以上才算完成。</li>
+          </ul>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="builder-03-title">
+          <h3 id="builder-03-title">03 · 拆解：一条静态 Eval 基线样例</h3>
+          <p>下面是研究助手 v0 的一条静态基线样例。每个字段右侧都写着“解决什么问题、缺失时会发生什么”：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>研究助手 v0 静态 Eval 基线样例：字段、取值与风险说明</caption>
+              <thead>
+                <tr><th>字段</th><th>本基线的值</th><th>解决什么问题 · 缺失时会发生什么</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">基线 ID</th><td><code>eval-baseline-2026-08-20-v0-01</code></td><td>让一条基线可被唯一指认与回溯；缺失时多次基线对不上（无记录风险）。</td></tr>
+                <tr><th scope="row">目标版本</th><td>研究助手 v0（冻结版本 v0.1.0，改用例即升版本）</td><td>锁定被测对象；缺失时不知道测的是哪个版本（用例漂移风险）。</td></tr>
+                <tr><th scope="row">评估集摘要</th><td>10 条用例：6 条常规 + 2 条边界 + 2 条反例，来源均为内联 [E1]/[E2]</td><td>覆盖常规与边界；缺失时只测“好说话”的用例（用例漂移风险）。</td></tr>
+                <tr><th scope="row">判定规则</th><td>每条用例写明期望判定：来源标注齐全、字数达标、格式符合模板</td><td>消除主观判定；缺失时什么都算通过（判定主观风险）。</td></tr>
+                <tr><th scope="row">输入冻结</th><td>eval-set.md v1，冻结时间 2026-08-20 10:20，冻结后不再增删</td><td>锁定事实来源；缺失时中途换用例，结论无法复现（用例漂移风险）。</td></tr>
+                <tr><th scope="row">执行记录</th><td>baseline-run.md：逐条实际输出与通过/不通过，共 10 条明细</td><td>逐条可复核；缺失时只有通过率数字（无记录风险）。</td></tr>
+                <tr><th scope="row">通过率</th><td>9 / 10（90%），明细与执行记录逐条一致</td><td>量化结论；无明细的通过率无法定位退化（无记录风险）。</td></tr>
+                <tr><th scope="row">证据引用</th><td>eval-set.md 快照、baseline-run.md 明细、eval-report.md 评分</td><td>让复核者找到原始记录；缺失时任何结论都无法复核（无快照风险）。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>“看起来测过但不可复跑”</h4>
+          <div class="lesson-sample">
+            <span class="lesson-sample__label">失败样例</span>
+            <p>“我试了几个问题，回答看着都不错，通过率大概九成。”</p>
+            <p class="lesson-sample__why">没有冻结用例、没有判定规则、没有快照——换人换时间重测，结果对不上，不可复跑。</p>
+          </div>
+          <div class="lesson-sample lesson-sample--fixed">
+            <span class="lesson-sample__label">改写样例（冻结用例、判定规则、快照齐全）</span>
+            <p>基线 eval-baseline-2026-08-20-v0-01：评估集 10 条（来源 [E1]/[E2]，冻结于 eval-set.md v1）；每条有期望判定（来源标注、字数、格式）；逐条实际记录写入 baseline-run.md，通过 9 / 10；报告写入 eval-report.md，任何人复跑同一版本可得同一结论。</p>
+          </div>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="builder-04-title">
+          <h3 id="builder-04-title">04 · 设计：写出研究助手 v0 评估集</h3>
+          <p class="lesson__lab-note">
+            本实验零网络、零账号、零 API key：只使用下方 [E1]/[E2] 两条示例用例扩展出的评估集，
+            用本地文本文件完成一次基线，不发起任何远程请求。
+          </p>
+
+          <h4>示例用例（[E1]/[E2]）</h4>
+          <ul>
+            <li><code>[E1]</code> 示例一：只根据内联资料说明“单次模型调用”与“一个 Agent Run”的区别，要求三条区别、每条标注来源。</li>
+            <li><code>[E2]</code> 示例二：同一问题换一种问法（“为什么一次调用不是 Agent？”），期望判定不变，检验用例稳定性。</li>
+          </ul>
+
+          <h4>eval-set.md 八项模板</h4>
+          <p>复制下面的 eval-set.md 模板，为每条用例逐项填写。八项缺一不可：</p>
+          <pre><code># eval-set.md — 研究助手 v0 评估集（v1）
+- 用例目标：本条用例要验证什么能力。
+- 输入：给被测版本的完整输入原文。
+- 期望判定：什么算通过（来源标注、字数、格式逐项写明）。
+- 来源：[E1] 或 [E2]，或注明扩展来源。
+- 难度标签：常规 / 边界 / 反例。
+- 版本：eval-set v1（改用例即升版本）。
+- 冻结时间：____年__月__日 __:__。
+- 通过门槛：整套 8–12 条中允许不通过条数与复跑规则。</code></pre>
+
+          <h4>一条示例用例</h4>
+          <pre><code>用例 E1-01（常规）：
+- 用例目标：验证“区别说明”是否带来源标注。
+- 输入：只根据内联资料说明两者的三个关键区别。
+- 期望判定：三条区别、每条以“来源：[E1]/[E2]”结尾、不超过 200 字。
+- 来源：[E1]。
+- 难度标签：常规。
+- 版本：eval-set v1。
+- 冻结时间：2026-08-20 10:20。
+- 通过门槛：计入整套通过率，单条不通过需在报告中说明。</code></pre>
+
+          <h4>输出格式示例</h4>
+          <pre><code>输出格式示例：
+1. 用例 E1-01……（期望判定：三条区别、来源齐全）
+2. 用例 E2-01……（期望判定：换问法结论不变）</code></pre>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="builder-05-title">
+          <h3 id="builder-05-title">05 · 实验：五阶段本地基线实验</h3>
+          <p>三步速览：<strong>冻结评估集：</strong>把 8–12 条用例写进 eval-set.md 并记录冻结时间，锁定本次基线。<strong>执行一次：</strong>按冻结版本逐条执行并记录实际输出，不调用任何远程 API。<strong>评估并记录：</strong>用下方 10 分量表逐项核对，把通过率与明细写入 eval-report.md。</p>
+          <p>展开成五阶段，每阶段都有动作、检查点、产物与常见错误：</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>五阶段实验：动作、检查点、产物与常见错误</caption>
+              <thead>
+                <tr><th>阶段</th><th>动作</th><th>检查点</th><th>产物</th><th>常见错误</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">准备</th><td>按八项模板写出 8–12 条用例</td><td>八项全部填写；每条有判定规则</td><td>eval-set.md</td><td>只写问题不写判定规则</td></tr>
+                <tr><th scope="row">冻结</th><td>记录版本与冻结时间，锁定评估集</td><td>冻结后不再增删改用例</td><td>eval-set.md（含版本）</td><td>边测边改用例——用例漂移</td></tr>
+                <tr><th scope="row">执行</th><td>逐条执行并记录实际输出</td><td>逐条有记录；未达判定即记不通过</td><td>baseline-run.md</td><td>只记通过率不记明细</td></tr>
+                <tr><th scope="row">评估</th><td>汇总通过率并逐条核对明细</td><td>通过率与明细一致；退化可定位</td><td>eval-report.md</td><td>全通过不给依据；明细与数字对不上</td></tr>
+                <tr><th scope="row">复盘</th><td>填五字段模板并追加</td><td>结论具体、指向证据；改进可执行</td><td>retrospective.md（追加）</td><td>口号式复盘；不指向证据</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>本地模板（可直接复制；eval-set.md 见“04 · 设计”）</h4>
+          <pre><code># baseline-run.md — 基线执行记录
+- 基线 ID：eval-baseline-____（与 eval-set.md 版本一致）
+- 目标版本：v0.____（改用例即升版本）
+- 冻结时间：____年__月__日 __:__
+- 用例 E1-01：____（通过 / 不通过，实际输出快照）
+- 用例 E2-01：____（通过 / 不通过，实际输出快照）
+- 通过率：____ / ____
+- 复跑承诺：同一版本复跑可得同一结论。</code></pre>
+          <pre><code># eval-report.md — 评估报告
+- 基线 ID：eval-baseline-____
+- 通过率：____ / ____（与 baseline-run.md 明细一致）
+- 逐条明细：（粘贴每条通过/不通过与依据）
+- 退化判定：____（是否退化、哪一条退化）
+- 证据（指向 baseline-run 记录）：____</code></pre>
+          <pre><code># retrospective.md — 复盘追加（本课）
+- 本次目标：建立第一条 Eval 基线。
+- 最不确定处：____
+- 一次失败或边界：____
+- 证据（指向 baseline-run / eval-report 记录）：____
+- 下一步改进：____</code></pre>
+        </section>
+
+        <section class="lesson-block" aria-labelledby="builder-06-title">
+          <h3 id="builder-06-title">06 · 评估：量表、失败样例与自测</h3>
+
+          <h4>四类故意失败样例</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>四类故意失败样例与修复提示</caption>
+              <thead>
+                <tr><th>样例</th><th>问题</th><th>修复提示</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>“出了 10 道题，但没写什么算答对。”</td><td>无判定规则——什么都算通过</td><td>为每条用例写明期望判定后再冻结</td></tr>
+                <tr><td>“测到一半又加了三道新题。”</td><td>用例漂移——前后测的不是同一套</td><td>冻结后不再增删；新题升版本另建基线</td></tr>
+                <tr><td>“通过率 90%，明细找不到了。”</td><td>只记通过率无明细——无法定位退化</td><td>逐条实际记录写入 baseline-run.md</td></tr>
+                <tr><td>“上次跑了 9 分，这次从头重测。”</td><td>无基线快照——历史结论无法对比</td><td>保留基线快照，复跑对比而非重测</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>10 分评估量表</h4>
+          <p>逐项检查并写下判定依据；8 分及以上才算完成，低于 8 分必须修订或重跑（修订 = 改评估集后重做评估；重跑 = 修正用例后从冻结阶段重来）。</p>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>10 分评估量表：逐项检查问题与通过/不通过判定依据</caption>
+              <thead>
+                <tr><th>项</th><th>分值</th><th>检查问题</th><th>通过/不通过判定依据</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">基线目标明确</th><td>1 分</td><td>是否写明了“为研究助手 v0 建立可复跑基线”这一可判定目标？</td><td>目标含对象、范围与可观察结果 → 通过；只写“测一下” → 不通过</td></tr>
+                <tr><th scope="row">用例冻结</th><td>1 分</td><td>eval-set.md 是否记录了 8–12 条用例、版本与冻结时间？</td><td>用例可完整复现 → 通过；执行中新增或更换用例 → 不通过</td></tr>
+                <tr><th scope="row">判定规则</th><td>2 分</td><td>每条用例是否有明确的期望判定？</td><td>全部有判定 → 2 分；部分有 → 1 分；无判定 → 0 分</td></tr>
+                <tr><th scope="row">约束遵守</th><td>1 分</td><td>是否只使用内联 [E1]/[E2] 扩展用例、无外部事实与远程请求？</td><td>全部内容来自冻结用例 → 通过；出现外部事实 → 不通过</td></tr>
+                <tr><th scope="row">输出结构</th><td>1 分</td><td>baseline-run.md 是否逐条记录实际输出与通过/不通过？</td><td>逐条齐全 → 通过；只记通过率 → 不通过</td></tr>
+                <tr><th scope="row">退化判定</th><td>1 分</td><td>eval-report.md 是否写明退化判定与退化用例？</td><td>判定明确且可定位 → 通过；无判定 → 不通过</td></tr>
+                <tr><th scope="row">证据记录</th><td>1 分</td><td>通过率是否与逐条明细一致、可复核？</td><td>数字与明细一致 → 通过；对不上 → 不通过</td></tr>
+                <tr><th scope="row">通过门槛明确</th><td>1 分</td><td>是否写明整套通过门槛与复跑规则？</td><td>门槛与规则明确 → 通过；只写“差不多就行” → 不通过</td></tr>
+                <tr><th scope="row">复盘具体</th><td>1 分</td><td>复盘是否写了最不确定处与下一步改进，而非“整体不错”？</td><td>具体、指向证据、可执行 → 通过；口号式 → 不通过</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>四道自测题（参考答案区，直接可读）</h4>
+          <div class="lesson-table-wrap">
+            <table class="lesson-table">
+              <caption>自测题与参考答案</caption>
+              <thead>
+                <tr><th>问题</th><th>参考答案</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">为什么需要一条 Eval 基线？</th><td>没有基线，改动只能靠“感觉变好”判断；有基线才能复跑同一评估集，证明没有退化。</td></tr>
+                <tr><th scope="row">输入冻结解决什么风险？</th><td>防止用例漂移：中途增删用例会让前后结论不可比，复跑失去参照。</td></tr>
+                <tr><th scope="row">没有判定规则会怎样？</th><td>什么都算通过，“看起来正确”与“实际正确”不可区分，基线不可验证。</td></tr>
+                <tr><th scope="row">何时算退化？</th><td>同一版本复跑时通过率下降，或任一条曾通过变为不通过；达到即判定退化并定位用例。</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>复盘模板</h4>
+          <p>评估通过后再花五分钟复盘，五字段见 retrospective.md 追加模板（实验区）：本次目标、最不确定处、一次失败或边界、证据、下一步改进。</p>
+
+          <p class="lesson__next">
+            下一课：为基线接入回归门禁 —— 让每一次改动都被同一条基线检验。
+            本页第一课下方不再展开，预告不指向任何虚构页面或后端能力。
+          </p>
+        </section>
+      </div>
+    </section>`
+
 // builder/advanced 课程占位：内容筹备中 + 返回主页链接 + 静态空锚点 span（AC-FE-005）。
 const lessonPlaceholderMarkup = `
     <div class="lesson-placeholder container">
@@ -1085,7 +1411,11 @@ function homePageMarkup(): string {
 }
 
 function lessonPageMarkup(routeId: RouteId): string {
-  if (routeId === 'builder' || routeId === 'advanced') {
+  if (routeId === 'builder') {
+    return `${builderLessonSectionMarkup}
+    ${serviceBannerMarkup}`
+  }
+  if (routeId === 'advanced') {
     return lessonPlaceholderMarkup
   }
   return `${lessonSectionMarkup}
@@ -1123,7 +1453,7 @@ function pageMainMarkup(parsed: ParsedRoute): string {
 
 let currentCapabilities = capabilities
 let currentLab = weeklyLab
-let cachedContent: { lesson: LessonData; lesson2: LessonData } | null = null
+let cachedContent: { lesson: LessonData; lesson2: LessonData; lessonBuilder: LessonData } | null = null
 let contentLoadFailed = false
 let currentSession = loadSession()
 let authMode: 'login' | 'register' = 'login'
@@ -1188,6 +1518,7 @@ interface LoadedContent {
   lab: LabData
   lesson: LessonData
   lesson2: LessonData
+  lessonBuilder: LessonData
 }
 
 function applyLessonContent(): void {
@@ -1199,17 +1530,21 @@ function applyLessonContent(): void {
   if (secondSection && cachedContent && cachedContent.lesson2.html) {
     secondSection.innerHTML = cachedContent.lesson2.html
   }
+  const builderSection = document.getElementById('first-lesson-builder')
+  if (builderSection && cachedContent && cachedContent.lessonBuilder.html) {
+    builderSection.innerHTML = cachedContent.lessonBuilder.html
+  }
 }
 
 function renderLesson(routeId: RouteId): void {
-  if (routeId !== 'beginner') return
+  if (routeId !== 'beginner' && routeId !== 'builder') return
   applyLessonContent()
 }
 
 function applyCourseContent(content: LoadedContent): void {
   currentCapabilities = content.capabilities
   currentLab = content.lab
-  cachedContent = { lesson: content.lesson, lesson2: content.lesson2 }
+  cachedContent = { lesson: content.lesson, lesson2: content.lesson2, lessonBuilder: content.lessonBuilder }
   contentLoadFailed = false
   applyLessonContent()
   render()
@@ -1223,6 +1558,7 @@ async function loadServerContent(): Promise<boolean> {
       lab: content.lab,
       lesson: content.lesson,
       lesson2: content.lesson2,
+      lessonBuilder: content.lessonBuilder,
     })
     return true
   } catch {

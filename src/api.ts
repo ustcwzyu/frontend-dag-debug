@@ -71,25 +71,28 @@ export async function loadCourseContent(): Promise<{
   lab: LabData
   lesson: LessonData
   lesson2: LessonData
+  lessonBuilder: LessonData
 }> {
-  const [routesRes, capabilitiesRes, labRes, lessonRes, lesson2Res] = await Promise.all([
+  const [routesRes, capabilitiesRes, labRes, lessonRes, lesson2Res, lessonBuilderRes] = await Promise.all([
     fetch(`${BASE}/routes`),
     fetch(`${BASE}/capabilities`),
     fetch(`${BASE}/lab`),
     fetch(`${BASE}/lessons/beginner`),
     fetch(`${BASE}/lessons/beginner-2`),
+    fetch(`${BASE}/lessons/builder`),
   ])
-  for (const res of [routesRes, capabilitiesRes, labRes, lessonRes, lesson2Res]) {
+  for (const res of [routesRes, capabilitiesRes, labRes, lessonRes, lesson2Res, lessonBuilderRes]) {
     if (!res.ok) {
       throw new Error(`request failed with status ${res.status}`)
     }
   }
-  const [routesBody, capabilitiesBody, labBody, lessonBody, lesson2Body] = (await Promise.all([
+  const [routesBody, capabilitiesBody, labBody, lessonBody, lesson2Body, lessonBuilderBody] = (await Promise.all([
     routesRes.json(),
     capabilitiesRes.json(),
     labRes.json(),
     lessonRes.json(),
     lesson2Res.json(),
+    lessonBuilderRes.json(),
   ])) as { data: unknown }[]
 
   const routes = (routesBody.data as RouteData[]).filter((route: RouteData) =>
@@ -140,7 +143,17 @@ export async function loadCourseContent(): Promise<{
     throw new Error('lesson2 payload is malformed')
   }
 
-  return { routes, capabilities, lab, lesson, lesson2 }
+  const lessonBuilder = lessonBuilderBody.data as LessonData
+  if (
+    !lessonBuilder ||
+    typeof lessonBuilder.routeId !== 'string' ||
+    typeof lessonBuilder.html !== 'string' ||
+    lessonBuilder.html.length === 0
+  ) {
+    throw new Error('lessonBuilder payload is malformed')
+  }
+
+  return { routes, capabilities, lab, lesson, lesson2, lessonBuilder }
 }
 
 export async function register(username: string, password: string): Promise<AuthResponse> {

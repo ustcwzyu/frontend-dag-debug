@@ -98,15 +98,11 @@ test('AC-BE-001 四个内容端点返回完整课程内容', async () => {
   assert.match(html, /八步最小闭环/)
   assert.match(html, /四道自测题/)
 
-  const builderRes = await api('/api/v1/lessons/builder')
-  assert.equal(builderRes.status, 404)
-  const builderErr = await builderRes.json()
-  assert.equal(builderErr.code, 'LESSON_NOT_FOUND')
-
   const advancedRes = await api('/api/v1/lessons/advanced')
   assert.equal(advancedRes.status, 404)
   const advancedErr = await advancedRes.json()
   assert.equal(advancedErr.code, 'LESSON_NOT_FOUND')
+  // builder 端点由 [VT-BUILDER-SERVER-API] 专项断言覆盖
 })
 
 test('AC-BE-002 错误响应结构稳定且不含堆栈', async () => {
@@ -386,10 +382,47 @@ test('AC-L2-007 /lessons/beginner DTO 逐字不变且未知 routeId 仍 404', as
   assert.equal(typeof body.data.html, 'string')
   assert.ok(body.data.html.length > 0)
 
-  for (const routeId of ['builder', 'advanced', 'nonsense']) {
+  for (const routeId of ['advanced', 'nonsense']) {
     const missingRes = await api(`/api/v1/lessons/${routeId}`)
     assert.equal(missingRes.status, 404)
     const missingErr = await missingRes.json()
     assert.equal(missingErr.code, 'LESSON_NOT_FOUND')
   }
+})
+// ── 构建路线第一课端点（AC-BUILDER-003） ──
+
+test('[VT-BUILDER-SERVER-API] /lessons/builder 返回同源课程 DTO 与锚点', async () => {
+  const res = await api('/api/v1/lessons/builder')
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.data.routeId, 'builder')
+  assert.equal(body.data.kicker, '构建路线 · 第 01 课')
+  assert.equal(body.data.title, '为原型建立一条 Eval 基线')
+  assert.equal(
+    body.data.meta,
+    '预计用时：60–90 分钟 · 完整交付：新增三份本地文件（eval-set.md、baseline-run.md、eval-report.md）+ 复盘追加',
+  )
+  assert.equal(typeof body.data.html, 'string')
+  assert.ok(body.data.html.length > 0)
+  const html = body.data.html
+  // 六个章节锚点
+  for (let i = 1; i <= 6; i++) {
+    assert.match(html, new RegExp(`builder-0${i}-title`))
+  }
+  // 关键内容锚点：hero、对照表、基线样例、模板、量表、失败样例、自测题
+  assert.match(html, /构建路线 · 第 01 课/)
+  assert.match(html, /为原型建立一条 Eval 基线/)
+  assert.match(html, /感觉变好与可证明不退化的对照/)
+  assert.match(html, /研究助手 v0 静态 Eval 基线样例/)
+  assert.match(html, /eval-baseline-2026-08-20-v0-01/)
+  assert.match(html, /# eval-set\.md/)
+  assert.match(html, /# baseline-run\.md/)
+  assert.match(html, /# eval-report\.md/)
+  assert.match(html, /10 分评估量表/)
+  assert.match(html, /8 分及以上才算完成/)
+  assert.match(html, /无判定规则/)
+  assert.match(html, /用例漂移/)
+  assert.match(html, /只记通过率无明细/)
+  assert.match(html, /无基线快照/)
+  assert.match(html, /自测题与参考答案/)
 })

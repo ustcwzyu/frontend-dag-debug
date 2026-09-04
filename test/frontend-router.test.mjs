@@ -189,7 +189,7 @@ test('main.ts 404 兜底：页面不存在 + 返回主页链接，无自动重�
 test('main.ts builder/advanced 占位含静态空锚点 span 且不渲染为 section（AC-FE-005）', () => {
   assert.match(mainSource, /first-lesson-anchor" id="first-lesson-builder"/)
   assert.match(mainSource, /first-lesson-anchor" id="first-lesson-advanced"/)
-  assert.doesNotMatch(mainSource, /<section[^>]*id="first-lesson-builder"/)
+  assert.match(mainSource, /<section[^>]*id="first-lesson-builder"/)
   assert.doesNotMatch(mainSource, /<section[^>]*id="first-lesson-advanced"/)
   assert.match(mainSource, /内容筹备中/)
 })

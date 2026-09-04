@@ -9,6 +9,7 @@ import {
   contentLab,
   lessonBeginnerHtml,
   lessonBeginnerSecondHtml,
+  lessonBuilderHtml,
 } from './content.ts'
 
 export interface UserRow {
@@ -141,6 +142,7 @@ function seed(db: DatabaseSync): void {
   `)
   insertLesson.run('beginner', lessonBeginnerHtml)
   insertLesson.run('beginner-2', lessonBeginnerSecondHtml)
+  insertLesson.run('builder', lessonBuilderHtml)
 }
 
 /**
