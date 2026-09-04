@@ -57,7 +57,7 @@ bash scripts/ci.sh
 
 ### 前端 DAG 调试
 
-当前已使用 npm 发布版 `@tea-agent/loop-agent@0.16.17` 完成初始化；日常治理命令直接使用全局 `loop-agent`。本仓库的 `dag:*` npm 脚本仍保留为相邻 `loop-agent` 源码仓库的前端 DAG 调试入口，用于验证开发中的本地候选构建：
+当前已使用 npm next 版 `@tea-agent/loop-agent@0.42.0-next.2` 完成初始化；日常治理命令直接使用全局 `loop-agent`。本仓库的 `dag:*` npm 脚本仍保留为相邻 `loop-agent` 源码仓库的前端 DAG 调试入口，用于验证开发中的本地候选构建：
 
 ```bash
 # 仅在调试相邻 loop-agent 源码候选时，先构建本地 CLI

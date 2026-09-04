@@ -38,6 +38,7 @@
 
 - `frontend-task-requirement.md`、`frontend-task-constraints.md`、`frontend-design-contract.md` — 前端任务输入与设计合同。
 - `frontend-implementation-contract.schema.json` — 前端实现合同 schema（sourceBinding v2 ledger 字段 all-or-none：任一出现则四项齐全，禁止 v1+optional 冒充 v2）。`requirements[].sourceRefs[].items` 使用合法 `$ref: #/$defs/path`（相对路径、无 `..` 逃逸、无反斜杠），模板 JSON 无非法键，运行时加载器可直接编译（AC-003）。
+- `frontend-implementation-dag.json` — 自包含的前端实现 DAG 模板：契约 → 侦察 → 计划 → 设计策略/评审 → writer 准入 → 有界写入 → 验证 → 真实 diff 审查 → closeout。它不依赖 runtime builder 或其他模板；执行前必须将所有 `REPLACE/WITH/...` 路径和确定性命令替换为当前项目的具体值。
 - `frontend-test-dag.json` — frontend-test DAG 模板；其 deterministic checklist 会拒绝 alternative executable instructions，仅允许 allowlisted `playwright-cli` command。Pi generator/reviser 的 runtime writeSet 仅授权下列目标项目生成路径（不是本仓库文档索引目标）：
 
   ~~~text
@@ -56,6 +57,7 @@
 - `knowledge-sync-dag.json`、`knowledge-graph-bootstrap-dag.json` — 知识同步与图谱初始化 DAG。
 - `knowledge-sync-draft.schema.json` — 知识同步草稿 schema。
 - `harness.schema.json` — `harness.json` 的 IDE JSON Schema。
+- `spec-registry.schema.json` — 项目级 `ai_workspace/loop-agent/spec-registry.json` 的机器校验 schema。
 
 ## 子目录
 

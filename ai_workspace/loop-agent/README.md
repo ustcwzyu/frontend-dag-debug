@@ -40,4 +40,4 @@ bash scripts/ci-tests.sh
 bash scripts/ci.sh
 ```
 
-`ci-tests.sh` 刻意保持语言中立：它会探测常见的项目验证入口，初始化模型应在已知目标项目专属命令时按实际情况适配本文件。 / `ci-tests.sh` is intentionally language-neutral. It detects common project verification entrypoints and should be adapted by the initialization model when the target project has custom commands.
+本项目的 `ci-tests.sh` 会从 `package.json` 确定性执行现有的 `typecheck`、`test`、`build` 脚本；当前项目未定义 `lint` 脚本，因此不会臆造该门禁。完整验证由 `ci.sh` 串行组合治理检查与这些项目检查。 / This project's `ci-tests.sh` deterministically runs the existing `typecheck`, `test`, and `build` scripts from `package.json`. No lint gate is invented because the project does not currently define one; `ci.sh` combines governance and project checks serially.

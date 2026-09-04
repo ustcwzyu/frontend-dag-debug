@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "roots": [],
+  "discovery": {
+    "enabled": true,
+    "maxDepth": 3,
+    "maxFiles": 100,
+    "maxBytes": 1048576,
+    "timeoutMs": 2000
+  }
+}

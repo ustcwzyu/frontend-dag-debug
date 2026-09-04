@@ -77,7 +77,7 @@ if (
   (assessment.status === "passed" && assessment.currentExitCode !== 0) ||
   (assessment.status === "baseline-debt" && assessment.currentExitCode === 0)
 ) fail();
-if (!assessment.baselineRef || assessment.baselineRef.nodeId !== "frontend-lint-baseline-shell") fail();
+if (!assessment.baselineRef || assessment.baselineRef.nodeId !== "frontend-writer-admission-shell") fail();
 const baselineRaw = readContained(assessment.baselineRef.path);
 if (sha256(baselineRaw) !== assessment.baselineRef.sha256) fail();
 let baseline;

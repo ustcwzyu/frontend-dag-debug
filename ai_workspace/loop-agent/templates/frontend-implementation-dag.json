@@ -1,0 +1,89 @@
+{
+  "$schema": "./agent-dag.schema.json",
+  "version": 2,
+  "title": "Frontend implementation independent DAG template",
+  "objective": "Replace with the concrete, bounded frontend implementation objective for this DAG run.",
+  "successCriteria": [
+    "The contract covers every required user-visible behavior, state, and interaction.",
+    "The implementation is admitted only after a concrete, narrow writeSet is reviewed.",
+    "Static and behavior verification are recorded before final review.",
+    "The final closeout distinguishes passed, not-run, and residual-risk evidence."
+  ],
+  "globalConstraints": [
+    "This is a self-contained static template: do not generate, import, or merge a DAG from a runtime builder before execution.",
+    "Replace every REPLACE/WITH/... placeholder with concrete repository paths or deterministic commands before execution.",
+    "Do not commit runtime traces under .harness/dag-runs/.",
+    "Every node must explicitly declare its executor; defaults.executor is schema-only and not a runtime fallback.",
+    "Only frontend-implement-pi may write project files, and only inside its concrete writeSet.",
+    "Read-only nodes must not write root artifacts/**; root artifacts/ is not a per-node scratchpad.",
+    "Do not infer missing behavior, states, interactions, design decisions, or verification commands. Stop for an explicit task-contract revision instead.",
+    "Do not add dependencies unless they are already declared by the project contract."
+  ],
+  "defaults": {"executor":"pi","contextProfile":"slim","skills":["ai-engineering-context"],"writePolicy":"read-only"},
+  "skillsByRole": {
+    "planner":["loop-agent"], "scout":["ai-engineering-context"], "implementer":["verification-before-completion"], "reviewer":["requesting-code-review"], "verifier":["verification-before-completion","systematic-debugging"], "closeout":["loop-agent","verification-before-completion"]
+  },
+  "executorModels": {"pi":{"LOW":"gpt-5.3-codex-spark","MED":"gpt-5.5","HIGH":"gpt-5.5"}},
+  "tasks": [
+    {
+      "id":"frontend-contract-pi", "depends_on":[], "complexity":"MED", "executor":"pi", "role":"planner", "writePolicy":"read-only", "allowedPaths":["**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Plain Markdown frontend contract: required behavior, states, interactions, non-goals, concrete verification expectations, and unresolved gaps; no file writes.",
+      "subtask_prompt":"Read the task inputs. Produce a concise frontend contract that maps each required behavior, UI state, and interaction to observable outcomes. Identify missing or conflicting requirements as blockers; do not infer them and do not edit files."
+    },
+    {
+      "id":"frontend-scout-pi", "depends_on":["frontend-contract-pi"], "complexity":"LOW", "executor":"pi", "role":"scout", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Plain Markdown source and verification reconnaissance: relevant routes, components, styles, state patterns, focused tests, and risks; no file writes.",
+      "subtask_prompt":"Inspect only the declared frontend source and test paths. Report reusable component, styling, accessibility, state-management, and verification patterns that satisfy the contract. Do not edit files or broaden the allowed paths."
+    },
+    {
+      "id":"frontend-plan-pi", "depends_on":["frontend-scout-pi"], "complexity":"MED", "executor":"pi", "role":"planner", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Plain Markdown implementation plan: ordered changes, concrete target files, behavior/state/interaction coverage, and focused verification mapping; no file writes.",
+      "subtask_prompt":"Turn the contract and reconnaissance into a minimal implementation plan. Every target file and verification step must be concrete. Preserve existing design and accessibility conventions. If any behavior lacks a verifiable target, report it as blocked instead of guessing."
+    },
+    {
+      "id":"frontend-design-policy-shell", "depends_on":["frontend-plan-pi"], "complexity":"LOW", "executor":"shell", "role":"verifier", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Archived deterministic design-policy result proving the plan uses declared dependencies, concrete requirements, and approved design evidence; no worktree writes.",
+      "subtask_prompt":"Run the project-specific deterministic design-policy check selected for this task. It must reject missing requirement coverage, unauthorized dependencies, and unresolved design conflicts.",
+      "shell":{"commands":["REPLACE/WITH/DESIGN-POLICY/COMMAND"],"cwd":".","timeoutMs":300000}
+    },
+    {
+      "id":"frontend-design-review-pi", "depends_on":["frontend-design-policy-shell"], "complexity":"MED", "executor":"pi", "role":"reviewer", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Plain Markdown design review: approved plan or explicit blocking findings for behavior, state, interaction, design-system, and accessibility coverage; no file writes.",
+      "subtask_prompt":"Review the approved plan against the frontend contract and design-policy result. Reject missing visible states, interaction behavior, accessibility obligations, or unsupported design claims. Do not edit files."
+    },
+    {
+      "id":"frontend-writer-admission-shell", "depends_on":["frontend-design-review-pi"], "complexity":"LOW", "executor":"shell", "role":"verifier", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Archived deterministic writer-admission result with a concrete, narrow writeSet and pre-write baseline; no worktree writes.",
+      "subtask_prompt":"Run the project-specific writer-admission check. It must derive and record a concrete writeSet from the approved plan, reject broad paths and scope drift, and capture the pre-write baseline before authorizing the writer.",
+      "shell":{"commands":["REPLACE/WITH/WRITER-ADMISSION/COMMAND"],"cwd":".","timeoutMs":300000}
+    },
+    {
+      "id":"frontend-implement-pi", "depends_on":["frontend-writer-admission-shell"], "complexity":"HIGH", "executor":"pi", "role":"implementer", "toolProfile":"write", "writePolicy":"exclusive", "writeSet":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Implementation summary with changed files, contract coverage, focused checks run, and residual risks.",
+      "subtask_prompt":"Implement only the admitted frontend changes. Preserve established component, styling, accessibility, and state-management conventions. Cover every approved behavior, state, and interaction, then report changed files and focused verification. Do not broaden writeSet or add undeclared dependencies."
+    },
+    {
+      "id":"frontend-verify-shell", "depends_on":["frontend-implement-pi"], "complexity":"LOW", "executor":"shell", "role":"verifier", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Archived static and behavior verification output with command exit codes; no worktree writes.",
+      "subtask_prompt":"Run the contract-selected deterministic static and behavior verification commands. Record all exit codes. A failed required command is terminal for this DAG run; do not silently substitute a different command.",
+      "shell":{"preset":"loop-agent-standard-verify","cwd":".","timeoutMs":300000}
+    },
+    {
+      "id":"frontend-review-context-shell", "depends_on":["frontend-verify-shell"], "complexity":"LOW", "executor":"shell", "role":"verifier", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Archived deterministic final-review context: admitted writeSet, cumulative diff, and required verification evidence; no worktree writes.",
+      "subtask_prompt":"Run the project-specific review-context collector. It must bind the admitted writeSet, actual cumulative diff, and required verification results so final review cannot rely on summaries alone.",
+      "shell":{"commands":["REPLACE/WITH/REVIEW-CONTEXT/COMMAND"],"cwd":".","timeoutMs":300000}
+    },
+    {
+      "id":"frontend-review-pi", "depends_on":["frontend-review-context-shell"], "complexity":"MED", "executor":"pi", "role":"reviewer", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Plain Markdown final review: approved result or explicit findings for contract coverage, regression risk, accessibility, and verification gaps; no file writes.",
+      "subtask_prompt":"Review the actual diff and archived verification evidence against the frontend contract. Do not treat missing, weak, mock-only, or not-run evidence as passed. Report explicit residual risks; do not edit files."
+    },
+    {
+      "id":"frontend-closeout-shell", "depends_on":["frontend-review-pi"], "complexity":"LOW", "executor":"shell", "role":"closeout", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
+      "outputContract":"Archived deterministic closeout summarizing contract coverage, verification status, review findings, evidence gaps, and residual risks; no worktree writes.",
+      "subtask_prompt":"Run the project-specific deterministic closeout renderer. Preserve evidence status exactly: passed, failed, not-run, mock-backed, and baseline debt must never be promoted to a stronger result.",
+      "shell":{"commands":["REPLACE/WITH/CLOSEOUT/COMMAND"],"cwd":".","timeoutMs":300000}
+    }
+  ]
+}

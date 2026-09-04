@@ -502,9 +502,12 @@
               ]
             },
             "then": {
+              "required": [
+                "specReference"
+              ],
               "properties": {
                 "specReference": {
-                  "type": "null"
+                  "$ref": "#/$defs/uiComponentSpecReference"
                 }
               }
             }

@@ -466,7 +466,7 @@
         "retryCategories": {
           "type": "array",
           "items": {
-            "enum": ["timeout", "network", "rate-limit", "unavailable", "empty-output", "output-too-large", "protocol-invalid", "invalid-output", "writer-empty-diff", "incomplete-write-set", "writer-clean-timeout"]
+            "enum": ["timeout", "network", "rate-limit", "unavailable", "empty-output", "output-too-large", "protocol-invalid", "invalid-output", "writer-empty-diff", "incomplete-write-set", "writer-clean-timeout", "read-burst", "context-overflow"]
           },
           "default": ["timeout", "network", "rate-limit", "unavailable", "empty-output"],
           "description": "Failure categories eligible for retry. quota/auth/write-guard are never eligible. invalid-output is allowed only on explicit structured/protocol policies; writer-empty-diff and incomplete-write-set are reserved for requireChangedFiles generation/completeness writers; writer-clean-timeout is reserved for standard bounded writers after explicit zero-write-tool-call and empty-diff evidence."

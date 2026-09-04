@@ -176,7 +176,8 @@
         "humanEscalationJson",
         "humanEscalationMd",
         "humanApproval",
-        "humanRejection"
+        "humanRejection",
+        "changeManifest"
       ],
       "properties": {
         "resultSummary": { "$ref": "#/$defs/dagArtifactRef" },
@@ -188,7 +189,12 @@
         "humanEscalationJson": { "$ref": "#/$defs/dagArtifactRef" },
         "humanEscalationMd": { "$ref": "#/$defs/dagArtifactRef" },
         "humanApproval": { "$ref": "#/$defs/dagArtifactRef" },
-        "humanRejection": { "$ref": "#/$defs/dagArtifactRef" }
+        "humanRejection": { "$ref": "#/$defs/dagArtifactRef" },
+        "changeManifest": { "$ref": "#/$defs/dagArtifactRef" },
+        "changeManifestChangedFiles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     },
     "repairArtifact": {

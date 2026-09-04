@@ -5,10 +5,12 @@ Use the narrowest command that proves the claim. This matrix is language-neutral
 | Claim | Minimum verification | Stronger verification |
 |---|---|---|
 | loop-agent governance is valid | `bash scripts/check-repo.sh` | `bash scripts/ci-governance.sh` |
-| target project tests are valid | `bash scripts/ci-tests.sh` | project-specific full test/build command |
-| full local delivery is valid | `bash scripts/ci.sh` | add deployment/package-specific checks when relevant |
+| frontend and backend behavior is valid | `npm test` | `bash scripts/ci-tests.sh` |
+| TypeScript contracts are valid | `npm run typecheck` | `bash scripts/ci-tests.sh` |
+| production frontend bundle is valid | `npm run build` | `bash scripts/ci-tests.sh` |
+| full local delivery is valid | `bash scripts/ci.sh` | add browser acceptance when the claim includes rendered UI behavior |
 | docs/governance changed | `bash scripts/check-repo.sh` | `loop-agent docs audit` plus `bash scripts/ci-governance.sh` |
-| model writer changed files | `git status --short` + relevant verification | `bash scripts/ci.sh` |
+| model writer changed files | `git status --short` + task-scoped commands above | `bash scripts/ci.sh` |
 
 ## Generated Commands
 
@@ -29,6 +31,10 @@ bash scripts/ci.sh
 
 ## Project-Specific Verification
 
-`scripts/ci-tests.sh` detects common entrypoints such as package.json, Makefile, go.mod, Cargo.toml, Python test metadata, Maven, Gradle, and .NET projects. If no safe command is detected, it exits successfully with a clear message so the initialization model can adapt this file to the target project.
+This repository is a Node.js/TypeScript project. `scripts/ci-tests.sh` inspects the committed `package.json` and currently executes the available scripts in deterministic order: `npm run typecheck`, `npm test`, then `npm run build`. The project has no `lint` script, so lint is not claimed as part of the current baseline.
 
-After initialization, update this matrix with the target project's actual quick, standard, and full verification commands.
+- Quick project behavior: `npm test`
+- Standard project verification: `npm run typecheck && npm test`
+- Full project verification: `npm run typecheck && npm test && npm run build` (or the equivalent `bash scripts/ci-tests.sh`)
+- Full governance plus project verification: `bash scripts/ci.sh`
+- Browser-visible acceptance: run the frontend/backend and collect browser evidence separately; shell checks alone do not prove rendered UI behavior.
