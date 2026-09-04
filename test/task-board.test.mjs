@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import test from 'node:test'
+// Jest 全局提供 test（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 
 const readTaskSource = () =>
   readFile(new URL('../src/task-board.ts', import.meta.url), 'utf8')

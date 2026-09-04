@@ -1,10 +1,10 @@
-// 学习会话工作台契约测试（node --test）：运行时纯函数断言 + 静态源码断言。
+// 学习会话工作台契约测试（jest）：运行时纯函数断言 + 静态源码断言。
 // 运行时：Node 26 原生 TS type-stripping 直接导入 src/journal.ts 验证纯函数
 // （isTemplateCompleted / computeFirstLessonCompleted / mergeProgressForSync /
 // validateScore / formatDuration / syncJournalProgress 失败语义等）。
 // 静态：断言 main.ts 挂载点位于 progress-panel 之后、登录态联动、隔离性
 // （journal-* 类名与 frontend-dag-debug:journal key，不触碰 auth/tasks key）。
-import { test } from 'node:test'
+// Jest 全局提供 test（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import {

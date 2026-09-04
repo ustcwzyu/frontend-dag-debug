@@ -10,6 +10,7 @@ import { loadSession, saveSession, clearSession } from './auth.ts'
 import { initJournalWorkbench, setJournalSession } from './journal.ts'
 import { initArchiveWorkbench, setArchiveSession } from './archive.ts'
 import { initExportCenter, setExportSession } from './exporter.ts'
+import { initPlannerWorkbench } from './planner.ts'
 import { navigate, parseHash, startRouter } from './router.ts'
 import type { PageName, ParsedRoute, RouteId } from './router.ts'
 import type { CapabilityData, LabData, LessonData } from './api.ts'
@@ -975,6 +976,18 @@ const exportPageMarkup = `
       <div id="export-workbench-mount"></div>
     </section>`
 
+// ── 学习任务规划中心页（AC-PLN-001/002）：页面骨架由 main.ts 渲染（标题 + 本机存储说明 +
+//     挂载点），表单/筛选/队列工作台由 src/planner.ts 挂载；本文件不出现网络/存储字面量。 ──
+
+const plannerPageMarkup = `
+    <section class="planner-panel container" id="planner-panel" aria-labelledby="planner-title">
+      <p class="section-kicker">任务与专注</p>
+      <h2 class="section-title" id="planner-title">学习任务规划中心</h2>
+      <p class="planner-panel__intro">把未来练习拆成可执行任务并选出短期专注队列，数据只保存在本机浏览器。</p>
+      ${serviceBannerMarkup}
+      <div id="planner-workbench-mount"></div>
+    </section>`
+
 // ── 404 兜底页（AC-FE-010 / BR-RT-001）：地址栏保留用户输入，不自动重定向 ──
 
 const notFoundMarkup = `
@@ -999,6 +1012,7 @@ const navItems: NavItem[] = [
   { hash: '#/lesson/beginner', label: '课程', page: 'lesson' },
   { hash: '#/progress', label: '进度', page: 'progress' },
   { hash: '#/archive', label: '归档', page: 'archive' },
+  { hash: '#/planner', label: '计划', page: 'planner' },
   { hash: '#/export', label: '导出', page: 'export' },
   { hash: '#/login', label: '登录', page: 'login' },
 ]
@@ -1096,6 +1110,8 @@ function pageMainMarkup(parsed: ParsedRoute): string {
       return archivePageMarkup
     case 'export':
       return exportPageMarkup
+    case 'planner':
+      return plannerPageMarkup
     case 'login':
       return loginPageMarkup
     case 'not-found':
@@ -1148,6 +1164,8 @@ ${footerMarkup}`
     wireArchivePage()
   } else if (parsed.page === 'export') {
     wireExportPage()
+  } else if (parsed.page === 'planner') {
+    wirePlannerPage()
   } else if (parsed.page === 'login') {
     wireLoginPage()
   }
@@ -1433,6 +1451,14 @@ function wireExportPage(): void {
   const host = document.getElementById('export-workbench-mount')
   if (!host) return
   initExportCenter(host, currentSession)
+}
+
+// ── 学习任务规划中心：每次进入 planner 页重建挂载点并初始化（AC-PLN-002） ──
+
+function wirePlannerPage(): void {
+  const host = document.getElementById('planner-workbench-mount')
+  if (!host) return
+  initPlannerWorkbench(host)
 }
 
 // ── 启动：注册唯一 hashchange 监听并完成首次渲染分派；随后后台拉取服务端内容 ──

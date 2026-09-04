@@ -1,12 +1,12 @@
-// 学习实验归档中心契约测试（node --test）：运行时纯函数断言 + 静态源码断言。
-// 运行时：Node 26 原生 TS type-stripping 直接导入 src/archive.ts 验证纯函数
+// 学习实验归档中心契约测试（jest）：运行时纯函数断言 + 静态源码断言。
+// 运行时：babel-jest 类型剥离后直接导入 src/archive.ts 验证纯函数
 // （validateArchiveEntry / searchArchiveEntries / filterArchiveEntries /
 // sortArchiveEntries / computeArchiveSummary / mergeArchiveSummaryForSync /
 // syncArchiveProgress 失败语义 / 存储降级 / escapeHtml 等）。
 // 静态：断言 main.ts archive 页面骨架（精确文案、type="button"、aria-labelledby、
 // 挂载点、登录态联动、零 fetch/localStorage）、archive.ts 结构与 window.confirm、
-// style.css archive-* 类与 390px 收窄、package.json 登记本测试文件。
-import { test } from 'node:test'
+// style.css archive-* 类与 390px 收窄、jest 入口与发现规则登记本测试文件。
+// Jest 全局提供 test（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
@@ -35,6 +35,7 @@ const mainSource = readFile('../src/main.ts')
 const routerSource = readFile('../src/router.ts')
 const cssSource = readFile('../src/style.css')
 const pkgSource = readFile('../package.json')
+const jestConfigSource = readFile('../jest.config.mjs')
 
 // ── 常量与隔离（AC-ARC-003 / AC-003） ──
 
@@ -405,9 +406,10 @@ test('style.css 工具栏 flex-wrap + 480px 收窄 + 无新增 @keyframes（R4 �
   assert.equal((cssSource.match(/@keyframes/g) || []).length, 1)
 })
 
-// ── 静态：package.json 登记（AC-006） ──
+// ── 静态：jest 入口与发现规则（AC-006） ──
 
-test('package.json test 脚本登记 test/frontend-archive.test.mjs（AC-006）', () => {
-  assert.match(pkgSource, /frontend-archive\.test\.mjs/)
-  assert.match(pkgSource, /node --test test\/homepage\.test\.mjs test\/task-board\.test\.mjs test\/server-api\.test\.mjs test\/frontend-api\.test\.mjs test\/frontend-journal\.test\.mjs test\/frontend-router\.test\.mjs test\/frontend-archive\.test\.mjs/)
+test('package.json test 脚本走 jest 入口且 jest 发现规则覆盖本文件（AC-006）', () => {
+  assert.match(pkgSource, /node --experimental-vm-modules node_modules\/jest\/bin\/jest\.js/)
+  assert.match(pkgSource, /jest/)
+  assert.match(jestConfigSource, /test\/\*\.test\.mjs/)
 })

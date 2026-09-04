@@ -1,13 +1,13 @@
-// 后端 API 端到端测试（node --test）：真实启动 Express 应用（内存 SQLite）。
+// 后端 API 端到端测试（jest）：真实启动 Express 应用（内存 SQLite）。
 // 覆盖 AC-BE-001~006：内容端点、错误结构、注册/登录/令牌、按用户隔离的进度。
-import { test, before, after } from 'node:test'
+// Jest 全局提供 test/beforeAll/afterAll（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 import assert from 'node:assert/strict'
 import { createApp } from '../server/app.ts'
 
 let server
 let baseUrl
 
-before(async () => {
+beforeAll(async () => {
   const app = createApp({ dbPath: ':memory:' })
   await new Promise((resolve) => {
     server = app.listen(0, () => resolve())
@@ -20,7 +20,7 @@ before(async () => {
   }
 })
 
-after(() => {
+afterAll(() => {
   server.close()
 })
 

@@ -1,6 +1,6 @@
-// 前端后端化静态契约测试（node --test）：断言 src 层源码结构与架构裁决 R1/R2。
+// 前端后端化静态契约测试（jest）：断言 src 层源码结构与架构裁决 R1/R2。
 // 覆盖 AC-FE-001~006 的静态可验证部分：API 客户端、令牌持久化、降级横幅、进度面板。
-import { test } from 'node:test'
+// Jest 全局提供 test（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 

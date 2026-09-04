@@ -33,7 +33,7 @@ bash scripts/ci.sh
 
 This repository is a Node.js/TypeScript project. `scripts/ci-tests.sh` inspects the committed `package.json` and currently executes the available scripts in deterministic order: `npm run typecheck`, `npm test`, then `npm run build`. The project has no `lint` script, so lint is not claimed as part of the current baseline.
 
-- Quick project behavior: `npm test`
+- Quick project behavior: `npm test` (jest, `jest.config.mjs` testMatch auto-discovers `test/*.test.mjs`: all 9 suites, 251 tests, no per-file registration)
 - Standard project verification: `npm run typecheck && npm test`
 - Full project verification: `npm run typecheck && npm test && npm run build` (or the equivalent `bash scripts/ci-tests.sh`)
 - Full governance plus project verification: `bash scripts/ci.sh`

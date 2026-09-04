@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "node server/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/homepage.test.mjs test/task-board.test.mjs test/server-api.test.mjs test/frontend-api.test.mjs test/frontend-journal.test.mjs test/frontend-router.test.mjs test/frontend-archive.test.mjs test/frontend-exporter.test.mjs",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "dag:generate": "node ../loop-agent/bin/loop-agent.js dag run-task add-homepage-hello-world --profile auto --strict-models --output .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json",
@@ -15,9 +15,13 @@
     "dag:run": "node ../loop-agent/bin/loop-agent.js run-dag --dag .harness/tasks/add-homepage-hello-world/artifacts/frontend-dag.json --cwd ."
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
     "@types/express": "^5.0.6",
     "@types/node": "^26.2.0",
+    "babel-jest": "^30.5.1",
     "express": "^5.2.1",
+    "jest": "^30.5.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

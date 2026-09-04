@@ -1951,3 +1951,310 @@ a {
     text-align: center;
   }
 }
+
+/* ── 学习任务规划中心（planner-* 类名隔离；复用 :root token 与 .btn 组件类） ── */
+
+.planner-panel {
+  padding-block: 2rem 4rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.planner-panel .section-title {
+  margin-bottom: 0.75rem;
+}
+
+.planner-panel__intro {
+  margin-bottom: 1.25rem;
+  max-width: 62ch;
+  color: rgba(16, 38, 58, 0.72);
+}
+
+.planner-workbench {
+  display: grid;
+  gap: 1rem;
+}
+
+.planner-storage-error {
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(214, 87, 95, 0.12);
+  border: 1px solid var(--color-coral);
+  color: var(--color-coral);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.planner-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.planner-main {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.planner-side {
+  min-width: 0;
+}
+
+.planner-card--panel {
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.planner-panel__title {
+  margin-bottom: 0.8rem;
+  font-size: 1.05rem;
+  font-family: var(--font-display);
+}
+
+.planner-form__fields {
+  display: grid;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+
+.planner-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.planner-form__field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.planner-form__field input,
+.planner-form__field select,
+.planner-form__field textarea,
+.planner-search input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  font: inherit;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+.planner-form__field textarea {
+  resize: vertical;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.planner-form__error {
+  margin-bottom: 0.7rem;
+  font-size: 0.85rem;
+  color: var(--color-coral);
+}
+
+.planner-form__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.planner-form__status {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+  color: rgba(16, 38, 58, 0.75);
+}
+
+.planner-toolbar {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.planner-search {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.planner-filters {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.planner-summary__list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.planner-summary__item dt {
+  font-size: 0.75rem;
+  color: rgba(16, 38, 58, 0.6);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.planner-summary__item dd {
+  margin: 0.15rem 0 0;
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+}
+
+.planner-list__status {
+  margin-bottom: 0.7rem;
+  font-size: 0.9rem;
+  color: rgba(16, 38, 58, 0.72);
+  min-height: 1.2em;
+}
+
+.planner-list {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planner-card {
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.planner-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.planner-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-display);
+  overflow-wrap: break-word;
+}
+
+.planner-card__badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  color: rgba(16, 38, 58, 0.7);
+}
+
+.planner-card__meta {
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(16, 38, 58, 0.72);
+  overflow-wrap: break-word;
+}
+
+.planner-card__notes {
+  margin-bottom: 0.8rem;
+  font-size: 0.88rem;
+  color: rgba(16, 38, 58, 0.8);
+  overflow-wrap: break-word;
+}
+
+.planner-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.planner-card__actions .btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.planner-focus__total {
+  margin-bottom: 0.7rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+
+.planner-focus__list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.planner-focus__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-mist);
+}
+
+.planner-focus__rank {
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--color-coral);
+}
+
+.planner-focus__name {
+  flex: 1 1 8rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  overflow-wrap: break-word;
+}
+
+.planner-focus__minutes {
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: rgba(16, 38, 58, 0.7);
+}
+
+.planner-focus__item .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+  .planner-panel {
+    padding-block: 1.5rem 3rem;
+  }
+
+  .planner-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-card--panel,
+  .planner-card {
+    padding: 1rem;
+  }
+
+  .planner-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-summary__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

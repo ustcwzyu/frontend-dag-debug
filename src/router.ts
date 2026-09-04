@@ -7,14 +7,15 @@
 //   '#/archive'                          → archive
 //   '#/export'                           → export
 //   '#/login'                            → login
-//   其余（含 '#/lesson/unknown'）        → not-found
+//   '#/planner'                         → planner
+//   其余（含 '#/lesson/unknown'、'#/planner/'）→ not-found
 //
 // 本文件不 import 任何本地模块、不触碰 document；parseHash 可在 Node 测试中直接导入，
 // navigate / startRouter 仅在浏览器运行时使用 window，模块级零副作用、零网络、零存储。
 
 export type RouteId = 'beginner' | 'builder' | 'advanced'
 
-export type PageName = 'home' | 'lesson' | 'progress' | 'archive' | 'export' | 'login' | 'not-found'
+export type PageName = 'home' | 'lesson' | 'progress' | 'archive' | 'export' | 'login' | 'not-found' | 'planner'
 
 export interface ParsedRoute {
   page: PageName
@@ -37,6 +38,9 @@ export function parseHash(hash: string): ParsedRoute {
   }
   if (value === '#/export') {
     return { page: 'export', routeId: null }
+  }
+  if (value === '#/planner') {
+    return { page: 'planner', routeId: null }
   }
   if (value === '#/login') {
     return { page: 'login', routeId: null }

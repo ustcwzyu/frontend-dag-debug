@@ -1,7 +1,7 @@
-// 前端 hash 路由契约测试（node --test）：parseHash 纯函数单元断言 + router/main 静态结构断言。
+// 前端 hash 路由契约测试（jest）：parseHash 纯函数单元断言 + router/main 静态结构断言。
 // 覆盖 vt-parse-hash / vt-router-purity / vt-router-dispatch / vt-auth-gates / vt-state-keep / vt-banner-cache。
 // 路由零依赖：src/router.ts 可在 Node 中直接导入（模块级零副作用、零网络、零存储）。
-import test from 'node:test'
+// Jest 全局提供 test（jest.config.mjs 的 testMatch 发现 test/*.test.mjs）。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parseHash } from '../src/router.ts'
@@ -169,6 +169,13 @@ test('main.ts 路由切换不登出：clearSession 仅出现在 enterLoggedOut�
 })
 
 // ── 404 兜底页（AC-FE-010 / not-found） ──
+
+test('[AC-PLN-001] #/planner 精确解析为 planner，#/planner/ 保持 404，既有路由不回归', () => {
+  assert.deepEqual(parseHash('#/planner'), { page: 'planner', routeId: null })
+  assert.deepEqual(parseHash('#/planner/'), { page: 'not-found', routeId: null })
+  assert.deepEqual(parseHash('#/archive'), { page: 'archive', routeId: null })
+  assert.deepEqual(parseHash('#/export'), { page: 'export', routeId: null })
+})
 
 test('main.ts 404 兜底：页面不存在 + 返回主页链接，无自动重定向字面量', () => {
   assert.match(mainSource, /页面不存在/)
