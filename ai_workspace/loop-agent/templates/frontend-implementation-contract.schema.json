@@ -58,6 +58,12 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "requiredDeliverables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
         }
       }
     },
@@ -108,6 +114,32 @@
             "type": "array",
             "items": {
               "$ref": "#/$defs/path"
+            }
+          },
+          "execution": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "groupId",
+              "kind",
+              "summary"
+            ],
+            "properties": {
+              "groupId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "behavior",
+                  "constraint",
+                  "exclusion"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           }
         }
@@ -433,8 +465,7 @@
         "required": [
           "purpose",
           "component",
-          "decision",
-          "rationale"
+          "decision"
         ],
         "properties": {
           "purpose": {
@@ -465,6 +496,16 @@
           "rationale": {
             "type": "string",
             "minLength": 1
+          },
+          "covers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "evidencePath": {
+            "$ref": "#/$defs/path"
           }
         },
         "allOf": [
@@ -510,6 +551,23 @@
                   "$ref": "#/$defs/uiComponentSpecReference"
                 }
               }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "decision": {
+                  "const": "reuse-existing"
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            },
+            "then": {
+              "required": [
+                "evidencePath"
+              ]
             }
           }
         ]
@@ -612,10 +670,16 @@
       "allOf": [
         {
           "if": {
-            "required": ["ledgerPath"]
+            "required": [
+              "ledgerPath"
+            ]
           },
           "then": {
-            "required": ["ledgerSha256", "inputDigest", "requirementToFragments"]
+            "required": [
+              "ledgerSha256",
+              "inputDigest",
+              "requirementToFragments"
+            ]
           }
         }
       ],

@@ -345,6 +345,16 @@ test('archive.ts 排序切换语义：同字段切换升/降序，不同字段�
   assert.match(archiveSource, /sortDirection = 'asc'/)
 })
 
+test('archive.ts 一键清除筛选：按钮标记、重置筛选并保持排序（archive-filters-clear）', () => {
+  assert.match(archiveSource, /<button type="button" class="archive-toolbar__btn" id="archive-clear-filters" hidden>一键清除筛选<\/button>/)
+  assert.match(archiveSource, /searchQuery = ''[\s\S]*routeFilter = 'all'[\s\S]*statusFilter = 'all'/)
+  assert.match(archiveSource, /clearFiltersBtnEl\?\.addEventListener\('click'/)
+  assert.match(archiveSource, /clearFiltersBtnEl\.hidden =/)
+  assert.match(archiveSource, /sortField = 'updatedAt'/)
+  assert.match(archiveSource, /sortDirection = 'desc'/)
+  assert.doesNotMatch(archiveSource.slice(archiveSource.indexOf("clearFiltersBtnEl?.addEventListener('click'")), /saveArchiveEntries|fetch\(/)
+})
+
 // ── 静态：main.ts 页面骨架与接线（AC-002 / AC-ARC-002 / AC-005） ──
 
 test('main.ts archive 页面容器：精确文案 + 新建按钮 type="button" + aria-labelledby（AC-002）', () => {

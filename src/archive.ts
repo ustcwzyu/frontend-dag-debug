@@ -306,6 +306,7 @@ let syncStatusEl: HTMLElement | null = null
 let sortBtns: HTMLButtonElement[] = []
 let routeBtns: HTMLButtonElement[] = []
 let statusBtns: HTMLButtonElement[] = []
+let clearFiltersBtnEl: HTMLButtonElement | null = null
 
 const workbenchMarkup = `
   <div class="archive-workbench" id="archive-workbench">
@@ -388,6 +389,7 @@ const workbenchMarkup = `
       <button type="button" class="archive-toolbar__btn" data-sort="updatedAt" aria-pressed="true">更新时间</button>
       <button type="button" class="archive-toolbar__btn" data-sort="title" aria-pressed="false">标题</button>
       <button type="button" class="archive-toolbar__btn" data-sort="score" aria-pressed="false">评分</button>
+      <button type="button" class="archive-toolbar__btn" id="archive-clear-filters" hidden>一键清除筛选</button>
     </div>
 
     <ul class="archive-list" id="archive-list"></ul>
@@ -450,6 +452,10 @@ function renderToolbars(): void {
   statusBtns.forEach((btn) => {
     btn.setAttribute('aria-pressed', String(btn.dataset.status === statusFilter))
   })
+  if (clearFiltersBtnEl) {
+    clearFiltersBtnEl.hidden =
+      searchQuery.trim() === '' && routeFilter === 'all' && statusFilter === 'all'
+  }
 }
 
 function renderList(): void {
@@ -656,7 +662,8 @@ export function initArchiveWorkbench(
   syncBtnEl = document.getElementById('archive-sync-btn') as HTMLButtonElement | null
   syncHintEl = document.getElementById('archive-sync-hint')
   syncStatusEl = document.getElementById('archive-sync-status')
-  sortBtns = Array.from(mount.querySelectorAll<HTMLButtonElement>('.archive-toolbar__btn'))
+  clearFiltersBtnEl = document.getElementById('archive-clear-filters') as HTMLButtonElement | null
+  sortBtns = Array.from(mount.querySelectorAll<HTMLButtonElement>('.archive-toolbar__btn[data-sort]'))
   routeBtns = Array.from(mount.querySelectorAll<HTMLButtonElement>('.archive-filter__btn[data-route]'))
   statusBtns = Array.from(mount.querySelectorAll<HTMLButtonElement>('.archive-filter__btn[data-status]'))
 
@@ -722,6 +729,16 @@ export function initArchiveWorkbench(
       renderToolbars()
       renderList()
     })
+  })
+
+  clearFiltersBtnEl?.addEventListener('click', () => {
+    // 仅重置筛选条件；sortField/sortDirection 保持不变。
+    searchQuery = ''
+    routeFilter = 'all'
+    statusFilter = 'all'
+    if (searchInputEl) searchInputEl.value = ''
+    renderToolbars()
+    renderList()
   })
 
   syncBtnEl?.addEventListener('click', () => {

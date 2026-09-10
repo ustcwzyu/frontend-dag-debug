@@ -61,8 +61,8 @@
 - **DAG 如何消费**：进入 `evidenceGaps[]` 与 Non-goals，`frontend-review-pi`/closeout 据它保留风险与后续项。
 - **缺失/冲突时 fail-closed**：范围与需求非目标冲突、或风险被隐藏时阻塞。
 
-## OpenSpec 引用块（openspec-citations）
+## OpenSpec 来源与引用
 
-- **要写什么**：在 fenced `json` 契约块之后追加**恰好一个** fenced `openspec-citations` 块，每行一个 JSON `{"path","section","line"}`（`section` 可空串、`line` 为 int 或 null），逐条列出本计划实际读取并应用的每个 openspec 规范文件。
-- **DAG 如何消费**：`frontend-prewrite-gate-shell` 按 fence 语言标签解析该块，并与生效 plan/review 节点的成功 read 事件核验；`cited` 模式下候选未引用 → `openspec-not-cited`，引用无 read 背书 → `openspec-citation-not-read`，块缺失/不可解析 → `openspec-citation-block-unparseable`。
-- **缺失/冲突时 fail-closed**：候选非空而引用块缺失/不可解析、候选未引用、或引用未真实读取时，prewrite gate 以 `retryable-invalid` fail-closed；不要引用未读取的路径，也不要遗漏已读取的 openspec 文件。
+- Contract 用 `record_openspec_selection` 声明实际使用的 required/relevant 来源，未提及候选不自动升级为 required。
+- Plan 通过 typed tools 引用冻结来源；runtime 从绑定来源与真实读取证据物化引用和 canonical JSON。模型不再输出 JSON 契约块或 `openspec-citations` fence。
+- 来源未绑定、引用不可解析或缺少真实读取背书时，由确定性 gate 阻断；不得伪造读取或引用。

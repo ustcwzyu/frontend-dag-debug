@@ -27,17 +27,17 @@
   "tasks": [
     {
       "id":"frontend-contract-pi", "depends_on":[], "complexity":"MED", "executor":"pi", "role":"planner", "writePolicy":"read-only", "allowedPaths":["**"], "forbiddenPaths":[".harness/**","artifacts/**"],
-      "outputContract":"Plain Markdown frontend contract: required behavior, states, interactions, non-goals, concrete verification expectations, and unresolved gaps; no file writes.",
+      "outputContract":"Incremental Contract typed facts from complete input scopes; complete_contract_scope after all decisions, then one successful finalize_contract. Runtime owns canonical text and source bindings. No file writes.",
       "subtask_prompt":"Read the task inputs. Produce a concise frontend contract that maps each required behavior, UI state, and interaction to observable outcomes. Identify missing or conflicting requirements as blockers; do not infer them and do not edit files."
     },
     {
       "id":"frontend-scout-pi", "depends_on":["frontend-contract-pi"], "complexity":"LOW", "executor":"pi", "role":"scout", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
-      "outputContract":"Plain Markdown source and verification reconnaissance: relevant routes, components, styles, state patterns, focused tests, and risks; no file writes.",
+      "outputContract":"Scout typed target-surface and design-evidence facts backed by fresh read evidence; durable receipts only. No file writes.",
       "subtask_prompt":"Inspect only the declared frontend source and test paths. Report reusable component, styling, accessibility, state-management, and verification patterns that satisfy the contract. Do not edit files or broaden the allowed paths."
     },
     {
       "id":"frontend-plan-pi", "depends_on":["frontend-scout-pi"], "complexity":"MED", "executor":"pi", "role":"planner", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
-      "outputContract":"Plain Markdown implementation plan: ordered changes, concrete target files, behavior/state/interaction coverage, and focused verification mapping; no file writes.",
+      "outputContract":"Plan record_* tools for scoped coverage, shared execution groups and UX, one mock endpoint per record, then one successful finalize_plan. Runtime derives canonical JSON and Markdown. No file writes.",
       "subtask_prompt":"Turn the contract and reconnaissance into a minimal implementation plan. Every target file and verification step must be concrete. Preserve existing design and accessibility conventions. If any behavior lacks a verifiable target, report it as blocked instead of guessing."
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "id":"frontend-design-review-pi", "depends_on":["frontend-design-policy-shell"], "complexity":"MED", "executor":"pi", "role":"reviewer", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/SOURCE/PATH/**","REPLACE/WITH/FRONTEND/TEST/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
-      "outputContract":"Plain Markdown design review: approved plan or explicit blocking findings for behavior, state, interaction, design-system, and accessibility coverage; no file writes.",
+      "outputContract":"record_design_finding for individual findings; approve_design or request_design_changes provides the sole committed terminal. Independently review execution-group member differences. No file writes.",
       "subtask_prompt":"Review the approved plan against the frontend contract and design-policy result. Reject missing visible states, interaction behavior, accessibility obligations, or unsupported design claims. Do not edit files."
     },
     {
@@ -76,7 +76,7 @@
     },
     {
       "id":"frontend-review-pi", "depends_on":["frontend-review-context-shell"], "complexity":"MED", "executor":"pi", "role":"reviewer", "writePolicy":"read-only", "allowedPaths":["REPLACE/WITH/FRONTEND/TARGET/PATH/**"], "forbiddenPaths":[".harness/**","artifacts/**"],
-      "outputContract":"Plain Markdown final review: approved result or explicit findings for contract coverage, regression risk, accessibility, and verification gaps; no file writes.",
+      "outputContract":"record_review_finding for individual findings; approve_review or request_review_changes provides the sole committed terminal. No file writes.",
       "subtask_prompt":"Review the actual diff and archived verification evidence against the frontend contract. Do not treat missing, weak, mock-only, or not-run evidence as passed. Report explicit residual risks; do not edit files."
     },
     {
