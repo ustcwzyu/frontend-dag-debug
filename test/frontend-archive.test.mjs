@@ -350,9 +350,16 @@ test('archive.ts 一键清除筛选：按钮标记、重置筛选并保持排序
   assert.match(archiveSource, /searchQuery = ''[\s\S]*routeFilter = 'all'[\s\S]*statusFilter = 'all'/)
   assert.match(archiveSource, /clearFiltersBtnEl\?\.addEventListener\('click'/)
   assert.match(archiveSource, /clearFiltersBtnEl\.hidden =/)
-  assert.match(archiveSource, /sortField = 'updatedAt'/)
-  assert.match(archiveSource, /sortDirection = 'desc'/)
+  assert.match(archiveSource, /sortField(?:\s*:\s*[^=\n;]+)?\s*=\s*'updatedAt'/)
+  assert.match(archiveSource, /sortDirection(?:\s*:\s*[^=\n;]+)?\s*=\s*'desc'/)
   assert.doesNotMatch(archiveSource.slice(archiveSource.indexOf("clearFiltersBtnEl?.addEventListener('click'")), /saveArchiveEntries|fetch\(/)
+})
+
+test('archive.ts 清除筛选复用单一视图处理器且不触碰排序状态（archive-filters-isolation）', () => {
+  assert.match(archiveSource, /function clearArchiveFilters\(\): void/)
+  assert.match(archiveSource, /clearFiltersBtnEl\?\.addEventListener\('click', \(\) => \{\s*clearArchiveFilters\(\)\s*\}\)/)
+  const clearHandler = archiveSource.slice(archiveSource.indexOf('function clearArchiveFilters'))
+  assert.doesNotMatch(clearHandler.slice(0, clearHandler.indexOf('function generateArchiveId')), /sortField|sortDirection|saveArchiveEntries|fetch\(/)
 })
 
 // ── 静态：main.ts 页面骨架与接线（AC-002 / AC-ARC-002 / AC-005） ──

@@ -492,6 +492,16 @@ function renderArchive(): void {
   renderSyncUi()
 }
 
+function clearArchiveFilters(): void {
+  // 只重置筛选视图状态；排序与归档数据保持不变。
+  searchQuery = ''
+  routeFilter = 'all'
+  statusFilter = 'all'
+  if (searchInputEl) searchInputEl.value = ''
+  renderToolbars()
+  renderList()
+}
+
 function generateArchiveId(): string {
   return `archive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -732,13 +742,7 @@ export function initArchiveWorkbench(
   })
 
   clearFiltersBtnEl?.addEventListener('click', () => {
-    // 仅重置筛选条件；sortField/sortDirection 保持不变。
-    searchQuery = ''
-    routeFilter = 'all'
-    statusFilter = 'all'
-    if (searchInputEl) searchInputEl.value = ''
-    renderToolbars()
-    renderList()
+    clearArchiveFilters()
   })
 
   syncBtnEl?.addEventListener('click', () => {
