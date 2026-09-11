@@ -7,7 +7,13 @@ import {
   putProgress,
 } from './api.ts'
 import { loadSession, saveSession, clearSession } from './auth.ts'
-import { initJournalWorkbench, setJournalSession } from './journal.ts'
+import {
+  initJournalWorkbench,
+  loadJournalDraft,
+  hasJournalDraftContent,
+  setJournalSession,
+  startJournalSession,
+} from './journal.ts'
 import { initArchiveWorkbench, setArchiveSession } from './archive.ts'
 import { initExportCenter, setExportSession } from './exporter.ts'
 import { initPlannerWorkbench } from './planner.ts'
@@ -1794,7 +1800,11 @@ function wireExportPage(): void {
 function wirePlannerPage(): void {
   const host = document.getElementById('planner-workbench-mount')
   if (!host) return
-  initPlannerWorkbench(host)
+  initPlannerWorkbench(host, {
+    hasJournalDraft: () => hasJournalDraftContent(loadJournalDraft()),
+    startJournalSession: (snapshot) => startJournalSession(snapshot),
+    navigateToProgress: () => navigate('#/progress'),
+  })
 }
 
 // ── 启动：注册唯一 hashchange 监听并完成首次渲染分派；随后后台拉取服务端内容 ──

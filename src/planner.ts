@@ -54,6 +54,38 @@ export interface PlannerPayload {
   focusQueueIds: string[]
 }
 
+/** 启动会话时传给 main/journal 的不可变任务快照。 */
+export interface PlannerMissionSnapshot {
+  id: string
+  title: string
+  route: MissionRoute
+  priority: MissionPriority
+  estimateMinutes: MissionEstimate
+  dueDate: string
+  notes: string
+}
+
+export interface PlannerStartDeps {
+  hasJournalDraft: () => boolean
+  startJournalSession: (snapshot: PlannerMissionSnapshot) => void
+  navigateToProgress: () => void
+}
+
+/** 从队列任务创建启动时快照，避免把 planner 可变对象直接交给 journal。 */
+export function createPlannerMissionSnapshot(
+  mission: LearningMission,
+): PlannerMissionSnapshot {
+  return {
+    id: mission.id,
+    title: mission.title,
+    route: mission.route,
+    priority: mission.priority,
+    estimateMinutes: mission.estimateMinutes,
+    dueDate: mission.dueDate,
+    notes: mission.notes,
+  }
+}
+
 export const MISSION_ROUTES: readonly MissionRoute[] = ['beginner', 'builder', 'advanced']
 export const MISSION_PRIORITIES: readonly MissionPriority[] = ['high', 'medium', 'low']
 export const MISSION_STATUSES: readonly MissionStatus[] = ['backlog', 'active', 'done']
@@ -517,7 +549,14 @@ function missionCardMarkup(
     </li>`
 }
 
-export function initPlannerWorkbench(mount: HTMLElement): void {
+export function initPlannerWorkbench(
+  mount: HTMLElement,
+  startDeps: PlannerStartDeps = {
+    hasJournalDraft: () => false,
+    startJournalSession: () => undefined,
+    navigateToProgress: () => undefined,
+  },
+): void {
   const loaded = loadPlannerState()
   let missions: LearningMission[] = loaded.missions
   let focusQueueIds: string[] = loaded.focusQueueIds
@@ -771,6 +810,7 @@ export function initPlannerWorkbench(mount: HTMLElement): void {
               <button type="button" class="btn btn--secondary" data-action="focus-up" data-id="${escapeHtml(id)}"${index === 0 ? ' disabled' : ''}>上移</button>
               <button type="button" class="btn btn--secondary" data-action="focus-down" data-id="${escapeHtml(id)}"${index === focusQueueIds.length - 1 ? ' disabled' : ''}>下移</button>
               <button type="button" class="btn btn--secondary" data-action="focus-leave" data-id="${escapeHtml(id)}">移出</button>
+              <button type="button" class="btn btn--primary" data-action="focus-start" data-id="${escapeHtml(id)}">启动会话</button>
             </li>`
         })
         .join('')
@@ -940,6 +980,15 @@ export function initPlannerWorkbench(mount: HTMLElement): void {
       focusQueueIds = moveFocusQueueItem(focusQueueIds, id, 'down')
       persist()
       renderAll()
+    } else if (action === 'focus-start') {
+      const mission = missions.find((item) => item.id === id)
+      if (!mission || mission.status === 'done' || !focusQueueIds.includes(id)) return
+      if (startDeps.hasJournalDraft() && !window.confirm('当前学习会话已有草稿，确认覆盖并启动此任务吗？')) return
+      missions = changeMissionStatus(missions, id, 'active', new Date().toISOString())
+      focusQueueIds = normalizeFocusQueue(focusQueueIds, missions)
+      persist()
+      startDeps.startJournalSession(createPlannerMissionSnapshot(mission))
+      startDeps.navigateToProgress()
     }
   })
 

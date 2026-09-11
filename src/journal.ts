@@ -91,10 +91,21 @@ export const TEMPLATE_SKELETONS: Record<string, string> = {
 
 // ── 草稿形状 ──
 
+export interface JournalTaskSnapshot {
+  id: string
+  title: string
+  route: 'beginner' | 'builder' | 'advanced'
+  priority: 'high' | 'medium' | 'low'
+  estimateMinutes: 15 | 30 | 45 | 60 | 90
+  dueDate: string
+  notes: string
+}
+
 export interface JournalDraft {
   steps: boolean[]
   templates: Record<string, string>
   score: number | null
+  taskSnapshot?: JournalTaskSnapshot
   elapsedSeconds: number
   running: boolean
   lastStartedAt: number | null
@@ -106,9 +117,10 @@ export interface JournalSession {
   username: string
 }
 
-export function createEmptyDraft(): JournalDraft {
+export function createEmptyDraft(taskSnapshot?: JournalTaskSnapshot): JournalDraft {
   return {
     steps: STEP_LABELS.map(() => false),
+    ...(taskSnapshot ? { taskSnapshot: { ...taskSnapshot } } : {}),
     templates: Object.fromEntries(
       TEMPLATE_IDS.map((id) => [id, TEMPLATE_SKELETONS[id]]),
     ),
@@ -137,6 +149,19 @@ export function countCompletedTemplates(draft: JournalDraft): number {
   return TEMPLATE_IDS.filter((id) =>
     isTemplateCompleted(draft.templates[id] ?? '', TEMPLATE_SKELETONS[id]),
   ).length
+}
+
+/** 只有存在用户会话内容时才需要覆盖确认；初始骨架不阻塞规划任务启动。 */
+export function hasJournalDraftContent(draft: JournalDraft | null): boolean {
+  if (!draft) return false
+  return (
+    Boolean(draft.taskSnapshot) ||
+    countSteps(draft) > 0 ||
+    countCompletedTemplates(draft) > 0 ||
+    draft.score !== null ||
+    draft.elapsedSeconds > 0 ||
+    draft.running
+  )
 }
 
 /** 第一课完成条件：仅 X=8 且 Y=5 且自评分非空为 true（BR-JOURNAL-002）。 */
@@ -244,6 +269,21 @@ export async function syncJournalProgress(
 
 // ── 持久化（BR-JOURNAL-004）：读写均 try/catch 静默降级 ──
 
+function validateSnapshotDueDate(raw: string): boolean {
+  const trimmed = raw.trim()
+  if (trimmed === '') return true
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return false
+  const [year, month, day] = trimmed.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return (
+    month >= 1 && month <= 12 &&
+    day >= 1 && day <= 31 &&
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  )
+}
+
 export function isValidDraft(data: unknown): data is JournalDraft {
   if (typeof data !== 'object' || data === null) return false
   const draft = data as JournalDraft
@@ -259,13 +299,37 @@ export function isValidDraft(data: unknown): data is JournalDraft {
   ) {
     return false
   }
-  if (draft.score !== null && typeof draft.score !== 'number') return false
-  if (typeof draft.elapsedSeconds !== 'number') return false
+  if (
+    draft.score !== null &&
+    (!Number.isInteger(draft.score) || draft.score < 0 || draft.score > 10)
+  ) return false
+  if (
+    typeof draft.elapsedSeconds !== 'number' ||
+    !Number.isFinite(draft.elapsedSeconds) ||
+    draft.elapsedSeconds < 0
+  ) return false
   if (typeof draft.running !== 'boolean') return false
-  if (draft.lastStartedAt !== null && typeof draft.lastStartedAt !== 'number') {
+  if (
+    draft.lastStartedAt !== null &&
+    (typeof draft.lastStartedAt !== 'number' || !Number.isFinite(draft.lastStartedAt))
+  ) {
     return false
   }
   if (draft.savedAt !== null && typeof draft.savedAt !== 'string') return false
+  if (draft.taskSnapshot !== undefined) {
+    const task = draft.taskSnapshot
+    if (
+      typeof task !== 'object' || task === null ||
+      typeof task.id !== 'string' || task.id.trim() === '' ||
+      typeof task.title !== 'string' || task.title.trim().length < 1 ||
+      task.title.trim().length > 80 ||
+      !['beginner', 'builder', 'advanced'].includes(task.route) ||
+      !['high', 'medium', 'low'].includes(task.priority) ||
+      ![15, 30, 45, 60, 90].includes(task.estimateMinutes) ||
+      typeof task.dueDate !== 'string' || !validateSnapshotDueDate(task.dueDate) ||
+      typeof task.notes !== 'string' || task.notes.length > 300
+    ) return false
+  }
   return true
 }
 
@@ -287,6 +351,17 @@ export function saveJournalDraft(draft: JournalDraft): void {
   } catch {
     // 存储不可用（隐私模式/配额）：静默失败，仅影响持久化
   }
+}
+
+/** 用规划任务快照开始全新会话；不读取 planner 存储。 */
+export function startJournalSession(taskSnapshot: JournalTaskSnapshot): void {
+  if (saveTimer !== null) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  currentDraft = createEmptyDraft(taskSnapshot)
+  persistDraft()
+  renderAll()
 }
 
 export function clearJournalDraft(): void {
@@ -317,6 +392,9 @@ let summaryTemplatesEl: HTMLElement | null = null
 let summaryScoreEl: HTMLElement | null = null
 let summaryTimerEl: HTMLElement | null = null
 let summarySavedEl: HTMLElement | null = null
+let taskContextEl: HTMLElement | null = null
+let taskContextTitleEl: HTMLElement | null = null
+let taskContextMetaEl: HTMLElement | null = null
 let syncBtnEl: HTMLButtonElement | null = null
 let syncHintEl: HTMLElement | null = null
 let syncStatusEl: HTMLElement | null = null
@@ -329,6 +407,10 @@ const workbenchMarkup = `
       按八步闭环逐项完成本课会话：勾选步骤、编辑五份模板草稿（与骨架不同且非空即完成）、
       自评 0–10 分、本地计时；草稿自动保存，登录后可同步到服务端进度。
     </p>
+    <section class="journal-task-context" id="journal-task-context" hidden aria-live="polite">
+      <strong>当前规划任务</strong><span id="journal-task-context-title"></span>
+      <small id="journal-task-context-meta"></small>
+    </section>
 
     <div class="journal-grid">
       <section class="journal-card journal-steps" aria-labelledby="journal-steps-title">
@@ -441,6 +523,15 @@ function renderTemplates(): void {
   }
 }
 
+function renderTaskContext(): void {
+  const snapshot = currentDraft.taskSnapshot
+  if (taskContextEl) taskContextEl.hidden = !snapshot
+  if (snapshot && taskContextTitleEl && taskContextMetaEl) {
+    taskContextTitleEl.textContent = snapshot.title
+    taskContextMetaEl.textContent = `任务快照 · ${snapshot.estimateMinutes} 分钟 · ${snapshot.route}`
+  }
+}
+
 function renderScore(): void {
   if (summaryScoreEl) {
     summaryScoreEl.textContent =
@@ -471,6 +562,7 @@ function renderSyncUi(): void {
 function renderAll(): void {
   renderSteps()
   renderTemplates()
+  renderTaskContext()
   renderScore()
   renderTimer()
   renderSummarySaved()
@@ -607,6 +699,9 @@ export function initJournalWorkbench(
   summaryScoreEl = document.getElementById('journal-summary-score')
   summaryTimerEl = document.getElementById('journal-summary-timer')
   summarySavedEl = document.getElementById('journal-summary-saved')
+  taskContextEl = document.getElementById('journal-task-context')
+  taskContextTitleEl = document.getElementById('journal-task-context-title')
+  taskContextMetaEl = document.getElementById('journal-task-context-meta')
   syncBtnEl = document.getElementById('journal-sync-btn') as HTMLButtonElement | null
   syncHintEl = document.getElementById('journal-sync-hint')
   syncStatusEl = document.getElementById('journal-sync-status')
